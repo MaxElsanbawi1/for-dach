@@ -1,0 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@100..900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Noto Kufi Arabic", serif;
+}
+
+/* Custom styles for buttons */
+.btn-primary {
+  background-color: #074d84; /* Secondary color */
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #074d84; /* Primary color */
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .printable-area,
+  .printable-area * {
+    visibility: visible;
+  }
+
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .printable-area img {
+    visibility: visible !important;
+    display: block !important;
+    filter: brightness(0) !important;
+  }
+
+  /* Hide buttons and other unnecessary elements */
+  button,
+  .no-print {
+    display: none;
+  }
+
+  /* Adjust table styles for printing */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: right;
+  }
+
+  th {
+    background-color: #f1f1f1;
+  }
+
+  /* Ensure the invoice fits on one page */
+  .printable-area {
+    font-size: 12px;
+    padding: 10px;
+  }
+}
