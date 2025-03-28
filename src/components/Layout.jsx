@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu, X, Home, Users, Settings, BarChart, Dot, Bell, ChevronDown, ChevronUp, Search, User, LogOut, Contact, Package, Map, FileText, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -12,6 +12,14 @@ const Layout = ({ children }) => {
   const navigate = useNavigate(); // Initialize useNavigate for navigation
   const location = useLocation(); // Get the current route location
   const { logout, user } = useAuth(); // Use the logout function and user from AuthContext
+
+const [totalPending, setTotalPending] = useState(0);
+const [lastSeenCount, setLastSeenCount] = useState(() => {
+  // Initialize from localStorage if available
+  return parseInt(localStorage.getItem('lastSeenNotifications') || 0);
+});
+// Calculate unseen notifications
+const unseenCount = Math.max(0, totalPending - lastSeenCount);
 
   const inventorymanagerMenuCamp = [
     { icon: Home, text: 'الكاشير', href: '/' },
@@ -84,6 +92,7 @@ const Layout = ({ children }) => {
       { text: 'كل الطلاب', href: '/students/all' },
       { text: 'أضافة طالب جديد', href: '/students/add' },
       { text: 'الطلاب المحظورين', href: '/students/blocked' },
+      { text: 'كل الطلاب المحظورين', href: '/students/Allblocked' },
     ]},
     { icon: Users, text: 'المستخدمين', href: '/users', subItems: [
       { text: 'إضافة مستخدم', href: '/users/add' }
@@ -141,7 +150,40 @@ const Layout = ({ children }) => {
   const toggleSidebarMinimize = () => {
     setIsSidebarMinimized(!isSidebarMinimized);
   };
+  useEffect(() => {
+    let isMounted = true;
 
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch("https://backend.camels.center/api/registrations");
+        if (!response.ok) throw new Error('Network error');
+        const data = await response.json();
+        
+        if (!isMounted) return;
+
+        const pending = data.filter(reg => reg.Status === 'Pending').length;
+        setTotalPending(pending);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleNotificationClick = () => {
+    // Update last seen count to current total
+    setLastSeenCount(totalPending);
+    // Persist to localStorage
+    localStorage.setItem('lastSeenNotifications', totalPending.toString());
+    navigate("/notifications");
+  };
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden" dir="rtl">
       {/* Sidebar */}
@@ -246,10 +288,16 @@ const Layout = ({ children }) => {
             <h2 className="mr-5">مرحبا {user.name} - {user.role}</h2>
           </div>
           <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-md hover:bg-gray-100">
-              <Bell
-                onClick={() => {navigate("/notifications")}}
-              size={24} />
+          <button 
+              className="p-2 rounded-md hover:bg-gray-100 relative"
+              onClick={handleNotificationClick}
+            >
+              <Bell size={24} />
+              {unseenCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unseenCount}
+                </span>
+              )}
             </button>
             <div className="relative">
               <button onClick={toggleUserDropdown} className="flex items-center p-2 rounded-md hover:bg-gray-100">

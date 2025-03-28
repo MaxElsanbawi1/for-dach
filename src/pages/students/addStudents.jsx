@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { UserPlus, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
-import { toast, ToastContainer } from 'react-toastify'; // Import toast and ToastContainer
-import 'react-toastify/dist/ReactToastify.css'; // Import toast styles
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AddStudents = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Get the user from the AuthContext
+  const { user } = useAuth();
 
   // State for form fields
   const [nationalId, setNationalId] = useState('');
@@ -16,7 +16,16 @@ const AddStudents = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [role, setRole] = useState(''); // Default role is Student
   const [error, setError] = useState('');
+
+  // Role options
+  const roleOptions = [
+    { value: 'Student', label: 'طالب' },
+    { value: 'manager', label: 'مدير' },
+    { value: 'Admin', label: 'مسؤل'   },
+    // Add more roles as needed
+  ];
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -25,7 +34,7 @@ const AddStudents = () => {
     // Prepare the request headers
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", `Bearer ${user.token}`); // Add the token to the headers
+    myHeaders.append("Authorization", `Bearer ${user.token}`);
 
     // Prepare the request body
     const raw = JSON.stringify({
@@ -35,6 +44,7 @@ const AddStudents = () => {
       FullName: fullName,
       Email: email,
       PhoneNumber: phoneNumber,
+      Role: role,
     });
 
     const requestOptions = {
@@ -50,7 +60,7 @@ const AddStudents = () => {
 
       if (response.ok) {
         console.log('New User Added:', result);
-        toast.success('تمت إضافة المستخدم بنجاح!'); // Show success toast
+        toast.success('تمت إضافة المستخدم بنجاح!');
         // Clear all form inputs
         setNationalId('');
         setUsername('');
@@ -58,15 +68,16 @@ const AddStudents = () => {
         setFullName('');
         setEmail('');
         setPhoneNumber('');
+        setRole('Student'); // Reset to default role
         setError('');
       } else {
         setError(result.message || 'فشل في إضافة المستخدم');
-        toast.error(result.message || 'فشل في إضافة المستخدم'); // Show error toast
+        toast.error(result.message || 'فشل في إضافة المستخدم');
       }
     } catch (error) {
       console.error('Error:', error);
       setError('حدث خطأ أثناء إضافة المستخدم');
-      toast.error('حدث خطأ أثناء إضافة المستخدم'); // Show error toast
+      toast.error('حدث خطأ أثناء إضافة المستخدم');
     }
   };
 
@@ -98,7 +109,7 @@ const AddStudents = () => {
         {/* Page Title */}
         <h2 className="text-2xl font-bold mb-6 text-primary flex items-center">
           <UserPlus size={24} className="ml-2" />
-          إضافة طالب جديد
+          إضافة مستخدم جديد
         </h2>
 
         {/* Error Message */}
@@ -202,13 +213,32 @@ const AddStudents = () => {
             />
           </div>
 
+          {/* Role Field */}
+          <div className="mb-4">
+            <label htmlFor="role" className="block text-sm font-medium text-primary mb-1">
+              الدور
+            </label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              required
+            >
+              {roleOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-secondary text-white py-2 px-4 rounded-md hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            إضافة طالب
+            إضافة مستخدم
           </button>
         </form>
       </div>

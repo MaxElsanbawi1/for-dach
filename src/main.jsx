@@ -34,6 +34,7 @@ import ProfilePage from './pages/sitings/profile';
 import AddCoursesSame from './pages/courses/addSame';
 import { CourseProvider } from './pages/context/DashoaedContexr';
 import BlockUnblockUserPage from './pages/students/blockStudent';
+import BlockedUsers from './pages/students/BlockedUsers';
 
 export default function App() {
   return (
@@ -67,6 +68,7 @@ export default function App() {
               <Route path="/students" element={<Dashboard />} />
               <Route path="/students/add" element={<AddStudents />} />
               <Route path="/students/blocked" element={<BlockUnblockUserPage />} />
+              <Route path="/students/Allblocked" element={<BlockedUsers />} />
               <Route path="/students/all" element={<AllStudents />} />
               <Route path="/students/:userId/details" element={<StudentsDetails />} />
 
