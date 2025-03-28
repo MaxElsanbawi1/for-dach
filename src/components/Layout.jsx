@@ -333,8 +333,16 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <img src="/abad-icon.png" alt="Radwa Icon" className="w-10" />
-            <button className="p-2 rounded-md hover:bg-gray-100">
+            <button 
+              className="p-2 rounded-md hover:bg-gray-100 relative"
+              onClick={handleNotificationClick}
+            >
               <Bell size={24} />
+              {unseenCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unseenCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
