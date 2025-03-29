@@ -117,12 +117,18 @@ const RegistrationsPage = () => {
                   </p>
                 </div>
                 <div>
+                  <p className="text-xs text-gray-500">course start</p>
+                  <p className="text-sm">
+                  {formatDateAndTime(reg.StartingTime)}
+                  </p>
+                </div>
+                
+              </div><div className="flex flex-col items-center text-center justify-center pt-1">
                   <p className="text-xs text-gray-500">Status</p>
                   <p className={`text-sm ${getStatusColor(reg.Status)}`}>
                     {reg.Status}
                   </p>
                 </div>
-              </div>
             </div>
           ))}
         </div>
