@@ -60,7 +60,14 @@ const RegistrationsPage = () => {
         return '';
     }
   };
-
+  const formatDateAndTime = (isoString) => {
+    const options = {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    };
+    return new Date(isoString).toLocaleDateString("en-US", options);
+  };
   // Create a reversed copy of the registrations array
   const reversedRegistrations = [...registrations].reverse();
 
@@ -128,6 +135,7 @@ const RegistrationsPage = () => {
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course ID</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">course start</th>
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg ID</th>
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Name</th>
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
@@ -140,13 +148,14 @@ const RegistrationsPage = () => {
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{reg.UserID}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{reg.Username}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{reg.CourseID}</td>
+                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDateAndTime(reg.StartingTime)}</td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{reg.RegistrationID}</td>
                   <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">
-                    {reg.CourseName.split(' ').slice(0, 5).join(' ')}
                     {reg.CourseName.split(' ').length > 5 && '...'}
+                    {reg.CourseName.split(' ').slice(0, 5).join(' ')}
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(reg.RegistrationDate).toLocaleString()}
+                    {formatDateAndTime(reg.RegistrationDate)}
                   </td>
                   <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${getStatusColor(reg.Status)}`}>
                     {reg.Status}
