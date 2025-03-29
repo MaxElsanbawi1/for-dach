@@ -100,13 +100,8 @@ const CourseDetails = () => {
     fetchCourseDetails();
   }, [courseId]);
   const handleStatusChange = async (registrationId, newStatus) => {
-    window.location.reload()
     try {
-      // Get the registration being updated
-      const registration = registrations.find(r => r.RegistrationID === registrationId);
-      if (!registration) return;
-  
-      // Update local state optimistically
+      // Optimistic UI update
       setRegistrations(prevRegs =>
         prevRegs.map(reg =>
           reg.RegistrationID === registrationId
@@ -117,53 +112,42 @@ const CourseDetails = () => {
   
       // Update status counts
       setStatusCounts(prev => {
-        const counts = { ...prev };
-        const oldStatus = registration.Status.toLowerCase();
+        const updated = { ...prev };
+        const oldStatus = registrations.find(r => r.RegistrationID === registrationId)?.Status?.toLowerCase();
         
-        if (oldStatus && counts[oldStatus] > 0) {
-          counts[oldStatus]--;
+        if (oldStatus && updated[oldStatus] > 0) {
+          updated[oldStatus]--;
         }
-        counts[newStatus.toLowerCase()]++;
-        return counts;
+        updated[newStatus]++;
+        return updated;
       });
   
-      // Prepare API request
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-  
-      const raw = JSON.stringify({
-        "UserID": registration.UserID,
-        "CourseID": registration.CourseID,
-        "Status": newStatus
-      });
-      
-      const requestOptions = {
-        method: "PUT",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow"
-      };
-  
-      // Send API request
+      // API call
       const response = await fetch(
         `https://backend.camels.center/api/registrations/${registrationId}`,
-        requestOptions
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            Status: newStatus
+          }),
+        }
       );
-    
+  
       if (!response.ok) {
-        throw new Error("Failed to update registration status");
+        throw new Error("Failed to update status");
       }
   
-      // Show success notification
-      toast.success(`تم تغيير الحالة إلى ${statusConfig[newStatus.toLowerCase()]?.text}`);
-  
+      // Optional: show success message
+      console.log("Status updated successfully");
+      
     } catch (error) {
       console.error("Error updating status:", error);
-      // Revert local state if API call fails
+      // Revert changes if API call fails
       setRegistrations(registrations);
-      toast.error("حدث خطأ أثناء تحديث الحالة");
     }
-
   };
   // Filter registrations based on search query and status filter
   const filteredRegistrations = registrations.filter((registration) => {
@@ -399,11 +383,7 @@ const CourseDetails = () => {
             <h3 className="text-xl font-bold text-primary mb-4">التسجيلات</h3>
 
             {/* Display a message if there are no registrations */}
-            {noRegistrations && (
-              <div className="text-center text-gray-500">
-                لا توجد تسجيلات لهذه الدورة بعد.
-              </div>
-            )}
+
 
             {/* Status Statistics */}
             {!noRegistrations && (
@@ -533,9 +513,7 @@ const CourseDetails = () => {
     <tr
       key={registration.RegistrationID}
       className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
-      onClick={() =>
-        navigate(`/registrations/${registration.RegistrationID}`)
-      }
+      
     >
       <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
         <span className="font-semibold md:hidden">رقم التسجيل: </span>
@@ -558,32 +536,29 @@ const CourseDetails = () => {
         {registration.PhoneNumber}
       </td>
       <td className="px-6 py-4 text-right text-sm block md:table-cell">
-        <span className="font-semibold md:hidden">الحالة: </span>
-        <select
-          value={registration.Status.toLowerCase()}
-          onChange={(e) => handleStatusChange(registration.RegistrationID, e.target.value)}
-          className={`inline-flex px-2 py-1 rounded-md text-xs font-medium ${
-            statusConfig[registration.Status.toLowerCase()]?.bg || "bg-gray-100"
-          } ${
-            statusConfig[registration.Status.toLowerCase()]?.textColor || "text-gray-800"
-          }`}
-          onClick={(e) => e.stopPropagation() }
-        >
-          <option value="pending">قيد الانتظار</option>
-          <option value="approved">معتمد</option>
-          <option value="rejected">مرفوض</option>
-        </select>
-      </td>
+  <span className="font-semibold md:hidden">الحالة: </span>
+  <div 
+    className="inline-block" 
+    onClick={(e) => e.stopPropagation()}
+  >
+    <select
+      value={registration.Status.toLowerCase()}
+      onChange={(e) => handleStatusChange(registration.RegistrationID, e.target.value)}
+      className={`px-2 py-1 rounded-md text-xs font-medium ${
+        statusConfig[registration.Status.toLowerCase()]?.bg || "bg-gray-100"
+      } ${
+        statusConfig[registration.Status.toLowerCase()]?.textColor || "text-gray-800"
+      }`}
+    >
+      <option value="pending">قيد الانتظار</option>
+      <option value="approved">معتمد</option>
+      <option value="rejected">مرفوض</option>
+    </select>
+  </div>
+</td>
     </tr>
   ))}
 
-  {currentRegistrations.length === 0 && (
-    <tr>
-      <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-        لا توجد تسجيلات مطابقة للمعايير المحددة
-      </td>
-    </tr>
-  )}
 </tbody>
                   </table>
                 </div>
