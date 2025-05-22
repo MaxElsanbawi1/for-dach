@@ -21,6 +21,8 @@ const AddSameCourses = () => {
   const [categoryID, setCategoryID] = useState('');
   const [startingTime, setStartingTime] = useState('');
   const [endingTime, setEndingTime] = useState('');
+  const [lessonsStartTime, setLessonsStartTime] = useState('');
+  const [lessonsEndTime, setLessonsEndTime] = useState('');
   const [lessonsTime, setLessonsTime] = useState('');
   const [instructorID, setInstructorID] = useState('');
   const [error, setError] = useState('');
@@ -67,7 +69,6 @@ const AddSameCourses = () => {
     const formData = new FormData();
     formData.append('CourseName', courseName);
     formData.append('CourseCode', courseCode);
-    formData.append('Description', description);
     formData.append('Price', price);
     formData.append('CourseType', courseType);
     formData.append('CourseLink', courseLink);
@@ -103,6 +104,8 @@ const AddSameCourses = () => {
         setCategoryID('');
         setStartingTime('');
         setEndingTime('');
+        setLessonsStartTime('');
+        setLessonsEndTime('');
         setLessonsTime('');
         setInstructorID('');
         setCourseImage(null);
@@ -117,6 +120,15 @@ const AddSameCourses = () => {
       setError('حدث خطأ أثناء إضافة الدورة');
       toast.error('حدث خطأ أثناء إضافة الدورة');
     }
+  };
+
+  const formatTimeForAPI = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'مساءً' : 'صباحاً';
+    const hour12 = hour % 12 || 12;
+    return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
   };
 
   return (
@@ -164,14 +176,7 @@ const AddSameCourses = () => {
         </div>
 
         {/* Description */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-primary mb-1">الوصف</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-          />
-        </div>
+
 
         {/* Price */}
         <div className="mb-4">
@@ -236,7 +241,7 @@ const AddSameCourses = () => {
         <div className="mb-4">
           <label className="block text-sm font-medium text-primary mb-1">تاريخ البدء</label>
           <input
-            type="datetime-local"
+            type="date"
             value={startingTime}
             onChange={(e) => setStartingTime(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
@@ -248,7 +253,7 @@ const AddSameCourses = () => {
         <div className="mb-4">
           <label className="block text-sm font-medium text-primary mb-1">تاريخ الانتهاء</label>
           <input
-            type="datetime-local"
+            type="date"
             value={endingTime}
             onChange={(e) => setEndingTime(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
@@ -259,14 +264,42 @@ const AddSameCourses = () => {
         {/* Lessons Time */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-primary mb-1">وقت الدروس</label>
-          <input
-            type="text"
-            value={lessonsTime}
-            onChange={(e) => setLessonsTime(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-            placeholder="مثال: 2 ساعة يومياً"
-            required
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="lessonsStartTime" className="block text-xs text-gray-500 mb-1">
+                من
+              </label>
+              <input
+                type="time"
+                id="lessonsStartTime"
+                value={lessonsStartTime}
+                onChange={(e) => {
+                  setLessonsStartTime(e.target.value);
+                  const formattedTime = formatTimeForAPI(e.target.value);
+                  setLessonsTime(`من ${formattedTime} حتى ${formatTimeForAPI(lessonsEndTime)}`);
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="lessonsEndTime" className="block text-xs text-gray-500 mb-1">
+                حتى
+              </label>
+              <input
+                type="time"
+                id="lessonsEndTime"
+                value={lessonsEndTime}
+                onChange={(e) => {
+                  setLessonsEndTime(e.target.value);
+                  const formattedTime = formatTimeForAPI(e.target.value);
+                  setLessonsTime(`من ${formatTimeForAPI(lessonsStartTime)} حتى ${formattedTime}`);
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+            </div>
+          </div>
         </div>
 
         {/* Instructor */}

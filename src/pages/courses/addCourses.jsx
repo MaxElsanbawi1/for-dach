@@ -31,6 +31,10 @@ const AddCourses = () => {
   // State for trainers
   const [trainers, setTrainers] = useState([]);
 
+  // State for lessons time
+  const [lessonsStartTime, setLessonsStartTime] = useState('');
+  const [lessonsEndTime, setLessonsEndTime] = useState('');
+
   // Fetch categories on component mount
   useEffect(() => {
     const fetchCategories = async () => {
@@ -154,6 +158,16 @@ const AddCourses = () => {
       setError('حدث خطأ أثناء إضافة الدورة');
       toast.error('حدث خطأ أثناء إضافة الدورة');
     }
+  };
+
+  // Add this function before the return statement
+  const formatTimeForAPI = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'مساءً' : 'صباحاً';
+    const hour12 = hour % 12 || 12;
+    return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
   };
 
   return (
@@ -360,10 +374,10 @@ const AddCourses = () => {
           {/* Starting Time Field */}
           <div className="mb-4">
             <label htmlFor="startingTime" className="block text-sm font-medium text-primary mb-1">
-              وقت البدء
+              تاريخ البدء
             </label>
             <input
-              type="datetime-local"
+              type="date"
               id="startingTime"
               value={startingTime}
               onChange={(e) => setStartingTime(e.target.value)}
@@ -375,10 +389,10 @@ const AddCourses = () => {
           {/* Ending Time Field */}
           <div className="mb-4">
             <label htmlFor="endingTime" className="block text-sm font-medium text-primary mb-1">
-              وقت الانتهاء
+              تاريخ الانتهاء
             </label>
             <input
-              type="datetime-local"
+              type="date"
               id="endingTime"
               value={endingTime}
               onChange={(e) => setEndingTime(e.target.value)}
@@ -389,18 +403,45 @@ const AddCourses = () => {
 
           {/* Lessons Time Field */}
           <div className="mb-4">
-            <label htmlFor="lessonsTime" className="block text-sm font-medium text-primary mb-1">
+            <label className="block text-sm font-medium text-primary mb-1">
               مدة الدروس
             </label>
-            <input
-              type="text"
-              id="lessonsTime"
-              value={lessonsTime}
-              onChange={(e) => setLessonsTime(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="أدخل مدة الدروس (مثال: 2 ساعة لكل درس)"
-              required
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="lessonsStartTime" className="block text-xs text-gray-500 mb-1">
+                  من
+                </label>
+                <input
+                  type="time"
+                  id="lessonsStartTime"
+                  value={lessonsStartTime}
+                  onChange={(e) => {
+                    setLessonsStartTime(e.target.value);
+                    const formattedTime = formatTimeForAPI(e.target.value);
+                    setLessonsTime(`من ${formattedTime} حتى ${formatTimeForAPI(lessonsEndTime)}`);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="lessonsEndTime" className="block text-xs text-gray-500 mb-1">
+                  حتى
+                </label>
+                <input
+                  type="time"
+                  id="lessonsEndTime"
+                  value={lessonsEndTime}
+                  onChange={(e) => {
+                    setLessonsEndTime(e.target.value);
+                    const formattedTime = formatTimeForAPI(e.target.value);
+                    setLessonsTime(`من ${formatTimeForAPI(lessonsStartTime)} حتى ${formattedTime}`);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                  required
+                />
+              </div>
+            </div>
           </div>
 
           {/* Instructor ID Field */}
