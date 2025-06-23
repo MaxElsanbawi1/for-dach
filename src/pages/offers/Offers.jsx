@@ -159,7 +159,7 @@ export default function OffersImageUpload() {
         <form onSubmit={handleSubmit}>
           {/* Client Name Field */}
           <div className="mb-4">
-            <label htmlFor="name" className="block text-sm font-medium text-primary mb-1">
+            <label htmlFor="name" className="block text-sm t1 font-medium text-primary mb-1">
               رابط العرض
             </label>
             <input
