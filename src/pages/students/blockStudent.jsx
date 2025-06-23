@@ -32,7 +32,7 @@ const BlockUnblockUserPage = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/auth/block-user",
+        "https://backend.camels.center/api/auth/block-user",
         requestOptions
       );
       const result = await response.json();

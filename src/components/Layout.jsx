@@ -52,6 +52,13 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
   const callCenterMenu = [
     { icon: ShoppingBag, text: 'الطلبات', href: '/orders'},
   ];
+  const trainerMenu = [
+    { icon: ShoppingBag, text: 'الطلبات', href: '/allcorcrsestrainer'},
+    { icon: Settings, text: 'الإعدادات', subItems: [
+      { text: 'ملفي الشخصي', href: '/ProfilePage' },
+      { text: 'تسجيل الخروج', onClick: () => handleLogout() },
+    ] },
+  ];
 
   const accountManagerMenu = [
     { icon: ShoppingBag, text: 'الطلبات', href: '/orders'},
@@ -93,6 +100,13 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
       { text: 'أضافة طالب جديد', href: '/students/add' },
       { text: 'الطلاب المحظورين', href: '/students/blocked' },
       { text: 'كل الطلاب المحظورين', href: '/students/Allblocked' },
+
+    ]},
+    { icon: Package, text: 'العروض', href: 'OffersImageUpload'},
+    { icon: Contact, text: 'عملاؤنا و شركاؤنا', subItems: [
+
+      { text: '  شركاؤنا', href: 'OurPartnersImageUpload' },
+      { text: '  عملاؤنا', href: 'ClientImageUpload' },
     ]},
     { icon: Users, text: 'المستخدمين', href: '/users', subItems: [
       { text: 'إضافة مستخدم', href: '/users/add' }
@@ -118,6 +132,7 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
       case 'accountant': return accountantMenu;
       case 'casher': return cashierMenu;
       case 'inventorymanager': return inventorymanagerMenuCamp;
+      case 'trainer': return trainerMenu;
       default: return [];
     }
   };

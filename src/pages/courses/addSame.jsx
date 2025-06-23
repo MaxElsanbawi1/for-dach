@@ -31,6 +31,10 @@ const AddSameCourses = () => {
   const [categories, setCategories] = useState([]);
   const [trainers, setTrainers] = useState([]);
 
+  const [courses, setCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   // Fetch categories and trainers
   useEffect(() => {
     const fetchData = async () => {
@@ -55,12 +59,66 @@ const AddSameCourses = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("https://backend.camels.center/api/courses");
+        if (response.ok) {
+          const data = await response.json();
+          setCourses(data);
+        } else {
+          toast.error('Failed to fetch courses');
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        toast.error('An error occurred while fetching courses.');
+      }
+    };
+    fetchCourses();
+  }, []);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setCourseImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
+  };
+
+  const handleCourseNameChange = (e) => {
+    const searchTerm = e.target.value;
+    setCourseName(searchTerm);
+
+    if (searchTerm) {
+      const filtered = courses.filter(course =>
+        course.CourseName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredCourses(filtered);
+      setIsDropdownOpen(true);
+    } else {
+      setFilteredCourses([]);
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleCourseSelect = (course) => {
+    setCourseName(course.CourseName);
+    setCourseCode(course.CourseCode || '');
+    setDescription(course.Description || '');
+    setPrice(course.Price || '');
+    setCourseType(course.CourseType || 'OnSite');
+    setCourseLink(course.CourseLink || '');
+    setCategoryID(course.CategoryID || '');
+    setInstructorID(course.InstructorID || '');
+    setStartingTime(course.StartingTime ? course.StartingTime.split('T')[0] : '');
+    setEndingTime(course.EndingTime ? course.EndingTime.split('T')[0] : '');
+    setLessonsTime(course.LessonsTime || '');
+    
+    // Clear lessons time inputs as they require manual re-entry
+    setLessonsStartTime('');
+    setLessonsEndTime('');
+
+    setIsDropdownOpen(false);
   };
 
   const handleSubmit = async (e) => {
@@ -145,22 +203,38 @@ const AddSameCourses = () => {
 
       <h2 className="text-2xl font-bold mb-6 text-primary flex items-center">
         <UserPlus size={24} className="ml-2" />
-        إضافة دورة جديدة
+        إضافة دورة جديدة بنفس البيانات
       </h2>
 
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
       <form onSubmit={handleSubmit}>
-        {/* Course Name */}
-        <div className="mb-4">
+        <div className="mb-4 relative">
           <label className="block text-sm font-medium text-primary mb-1">اسم الدورة</label>
           <input
             type="text"
             value={courseName}
-            onChange={(e) => setCourseName(e.target.value)}
+            onChange={handleCourseNameChange}
+            onFocus={() => { if (courseName) setIsDropdownOpen(true); }}
+            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+            placeholder="ابحث عن دورة لنسخ بياناتها"
             required
+            autoComplete="off"
           />
+          {isDropdownOpen && filteredCourses.length > 0 && (
+            <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+              {filteredCourses.map(course => (
+                <div
+                  key={course.CourseID}
+                  onClick={() => handleCourseSelect(course)}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {course.CourseName}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Course Code */}

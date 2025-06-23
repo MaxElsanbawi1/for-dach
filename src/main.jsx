@@ -35,6 +35,12 @@ import AddCoursesSame from './pages/courses/addSame';
 import { CourseProvider } from './pages/context/DashoaedContexr';
 import BlockUnblockUserPage from './pages/students/blockStudent';
 import BlockedUsers from './pages/students/BlockedUsers';
+import AllCoursesTrainer from './pages/users/allcorcrsestrainer';
+import Trainer1 from './pages/users/allcorcrsestrainer';
+import OurPartnersImageUpload from './pages/clients&Our partners/Our partners';
+import ClientsImageUpload from './pages/clients&Our partners/clients';
+import OffersImageUpload from './pages/offers/Offers';
+
 
 export default function App() {
   return (
@@ -54,18 +60,21 @@ export default function App() {
               <Route path="/registrations/approved" element={<ApprovedRegistrations />} />
               <Route path="/registrations/rejected" element={<RejectedRegistrations />} />
               <Route path="/registrations/:registrationId/details" element={<RegistrationsDetails />} />
-
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/add" element={<AddCourses />} />
               <Route path="/courses/addSame" element={<AddCoursesSame />} />
               <Route path="/courses/all" element={<AllCourses />} />
               <Route path="/courses/:courseId/details" element={<CourseDetails />} />
+              <Route path="ClientImageUpload" element={<ClientsImageUpload />} />
+              <Route path="OurPartnersImageUpload" element={<OurPartnersImageUpload />} />
+              <Route path="OffersImageUpload" element={<OffersImageUpload />} />
 
               <Route path="/courses/categories" element={<AllCategories />} />
               <Route path="/courses/categories/add" element={<AddCategories />} />
               <Route path="/courses/categories/:categoryId/details" element={<DetailsCategories />} />
 
               <Route path="/students" element={<Dashboard />} />
+
               <Route path="/students/add" element={<AddStudents />} />
               <Route path="/students/blocked" element={<BlockUnblockUserPage />} />
               <Route path="/students/Allblocked" element={<BlockedUsers />} />
@@ -74,6 +83,7 @@ export default function App() {
 
               <Route path="/users" element={<UsersDashboards />} />
               <Route path="/users/add" element={<AddUsers />} />
+              <Route path="allcorcrsestrainer" element={<Trainer1 />} />
 
               <Route path="/ProfilePage" element={<ProfilePage />} />
               <Route path="/notifications" element={<Notifications />} />

@@ -24,6 +24,7 @@ const AddStudents = () => {
     { value: 'Student', label: 'طالب' },
     { value: 'manager', label: 'مدير' },
     { value: 'Admin', label: 'مسؤل'   },
+    { value: 'trainer', label: 'مدرب'   },
     // Add more roles as needed
   ];
 

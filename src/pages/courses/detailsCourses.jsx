@@ -101,6 +101,13 @@ const CourseDetails = () => {
   }, [courseId]);
   const handleStatusChange = async (registrationId, newStatus) => {
     try {
+      // Find the current registration to get all its data
+      const currentRegistration = registrations.find(reg => reg.RegistrationID === registrationId);
+      
+      if (!currentRegistration) {
+        throw new Error("Registration not found");
+      }
+
       // Optimistic UI update
       setRegistrations(prevRegs =>
         prevRegs.map(reg =>
@@ -113,7 +120,7 @@ const CourseDetails = () => {
       // Update status counts
       setStatusCounts(prev => {
         const updated = { ...prev };
-        const oldStatus = registrations.find(r => r.RegistrationID === registrationId)?.Status?.toLowerCase();
+        const oldStatus = currentRegistration.Status?.toLowerCase();
         
         if (oldStatus && updated[oldStatus] > 0) {
           updated[oldStatus]--;
@@ -122,6 +129,18 @@ const CourseDetails = () => {
         return updated;
       });
   
+      // Prepare the updated registration data with the new structure
+      const updatedRegistrationData = {
+        fullname: currentRegistration.FullName || currentRegistration.fullname,
+        email: currentRegistration.Email || currentRegistration.email,
+        phonenumber: currentRegistration.PhoneNumber || currentRegistration.phonenumber,
+        location: currentRegistration.Location || currentRegistration.location,
+        Language: currentRegistration.Language,
+        Write_an_inquiry: currentRegistration.Write_an_inquiry,
+        status: newStatus, // Updated status
+        CourseID: currentRegistration.CourseID
+      };
+
       // API call
       const response = await fetch(
         `https://backend.camels.center/api/registrations/${registrationId}`,
@@ -130,9 +149,7 @@ const CourseDetails = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            Status: newStatus
-          }),
+          body: JSON.stringify(updatedRegistrationData),
         }
       );
   
