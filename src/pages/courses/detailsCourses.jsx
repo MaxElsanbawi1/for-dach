@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Printer, Search } from "lucide-react";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const CourseDetails = () => {
   const navigate = useNavigate();
@@ -25,6 +27,22 @@ const CourseDetails = () => {
     rejected: 0,
     total: 0,
   });
+
+  // Registration form state
+  const [regForm, setRegForm] = useState({
+    email: "",
+    fullname: "",
+    NationalId: "",
+    phonenumber: "",
+    location: "",
+    Language: "",
+    Write_an_inquiry: "",
+    status: "approved",
+    CourseID: courseId,
+  });
+  const [regFormLoading, setRegFormLoading] = useState(false);
+  const [regFormSuccess, setRegFormSuccess] = useState("");
+  const [regFormError, setRegFormError] = useState("");
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -209,6 +227,89 @@ const CourseDetails = () => {
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const handleRegFormChange = (e) => {
+    const { name, value } = e.target;
+    setRegForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRegFormSubmit = async (e) => {
+    e.preventDefault();
+    setRegFormLoading(true);
+    try {
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      const raw = JSON.stringify({ ...regForm, CourseID: courseId });
+      const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow",
+      };
+      const response = await fetch(
+        "https://backend.camels.center/api/registrations",
+        requestOptions
+      );
+      if (!response.ok) throw new Error("فشل التسجيل. حاول مرة أخرى.");
+      toast.success("تم التسجيل بنجاح!", {
+        position: "top-left",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        rtl: true,
+      });
+      setRegForm({
+        email: "",
+        fullname: "",
+        NationalId: "",
+        phonenumber: "",
+        location: "",
+        Language: "",
+        Write_an_inquiry: "",
+        status: "approved",
+        CourseID: courseId,
+      });
+      // Refresh registrations
+      // Re-fetch course details (only registrations part)
+      const registrationsResponse = await fetch(
+        `https://backend.camels.center/api/registrations/course/${courseId}`,
+        { method: "GET", redirect: "follow" }
+      );
+      let registrationsResult = [];
+      if (registrationsResponse.ok) {
+        registrationsResult = await registrationsResponse.json();
+      }
+      setRegistrations(registrationsResult);
+      // Update status counts
+      const counts = {
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        total: registrationsResult.length,
+      };
+      registrationsResult.forEach((reg) => {
+        const status = reg.Status.toLowerCase();
+        if (counts[status] !== undefined) {
+          counts[status]++;
+        }
+      });
+      setStatusCounts(counts);
+    } catch (err) {
+      toast.error(err.message || "فشل التسجيل. حاول مرة أخرى.", {
+        position: "top-left",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        rtl: true,
+      });
+    } finally {
+      setRegFormLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -247,6 +348,18 @@ const CourseDetails = () => {
 
       {course && (
         <div className="space-y-6 printable-area">
+          {/* Toast Container for notifications */}
+          <ToastContainer
+            position="top-left"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={true}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
           {/* Course Image */}
           <div className="flex justify-center">
             <img
@@ -399,6 +512,79 @@ const CourseDetails = () => {
           <div className="mt-8">
             <h3 className="text-xl font-bold text-primary mb-4">التسجيلات</h3>
 
+            {/* Registration Form */}
+            <form onSubmit={handleRegFormSubmit} className="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="text"
+                name="fullname"
+                placeholder="الاسم الكامل"
+                value={regForm.fullname}
+                onChange={handleRegFormChange}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="البريد الإلكتروني"
+                value={regForm.email}
+                onChange={handleRegFormChange}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+              <input
+                type="text"
+                name="NationalId"
+                placeholder="الرقم الوطني"
+                value={regForm.NationalId}
+                onChange={handleRegFormChange}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              />
+              <input
+                type="text"
+                name="phonenumber"
+                placeholder="رقم الهاتف"
+                value={regForm.phonenumber}
+                onChange={handleRegFormChange}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              />
+              <input
+                type="text"
+                name="location"
+                placeholder="الموقع"
+                value={regForm.location}
+                onChange={handleRegFormChange}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              />
+              <select
+                name="Language"
+                value={regForm.Language}
+                onChange={handleRegFormChange}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              >
+                <option value="">اختر اللغة</option>
+                <option value="English">English</option>
+                <option value="العربية">العربية</option>
+              </select>
+              <input
+                type="text"
+                name="Write_an_inquiry"
+                placeholder="استفسار (اختياري)"
+                value={regForm.Write_an_inquiry}
+                onChange={handleRegFormChange}
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary md:col-span-2"
+              />
+              <button
+                type="submit"
+                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-1"
+                disabled={regFormLoading}
+              >
+                {regFormLoading ? "جاري التسجيل..." : "تسجيل جديد"}
+              </button>
+            </form>
+
             {/* Display a message if there are no registrations */}
 
 
@@ -509,7 +695,7 @@ const CourseDetails = () => {
                           رقم التسجيل
                         </th>
                         <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
-                          اسم المستخدم
+                        رقم الهويه 
                         </th>
                         <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
                           الاسم الكامل
@@ -537,8 +723,8 @@ const CourseDetails = () => {
         {registration.RegistrationID}
       </td>
       <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-        <span className="font-semibold md:hidden">اسم المستخدم: </span>
-        {registration.Username}
+        <span className="font-semibold md:hidden"> رقم الهويه :</span>
+        {registration.NationalId}
       </td>
       <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
         <span className="font-semibold md:hidden">الاسم الكامل: </span>

@@ -11,7 +11,6 @@ const AddCourses = () => {
 
   // State for form fields
   const [courseName, setCourseName] = useState('');
-  const [courseCode, setCourseCode] = useState('');
   const [description, setDescription] = useState('');
   const [courseImage, setCourseImage] = useState(''); // Changed to store the file object
   const [imagePreview, setImagePreview] = useState(''); // For preview
@@ -101,7 +100,6 @@ const AddCourses = () => {
     // Create FormData object for file upload
     const formData = new FormData();
     formData.append('CourseName', courseName);
-    formData.append('CourseCode', courseCode);
     formData.append('Description', description);
     formData.append('Price', price);
     formData.append('CourseType', courseType);
@@ -136,7 +134,7 @@ const AddCourses = () => {
         toast.success('تمت إضافة الدورة بنجاح!');
         // Clear all form inputs
         setCourseName('');
-        setCourseCode('');
+
         setDescription('');
         setCourseImage('');
         setImagePreview('');
@@ -223,24 +221,7 @@ const AddCourses = () => {
           </div>
 
           {/* Course Code Field */}
-          <div className="mb-4">
-            <label htmlFor="courseCode" className="block text-sm font-medium text-primary mb-1">
-              رمز الدورة
-            </label>
 
-            
-            <input
-              id="courseCode"
-              value={courseCode}
-              onChange={(e) => setCourseCode(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              required
-            >
-              
-              
-            </input>
-
-          </div>
 
           {/* Description Field */}
           <div className="mb-4">

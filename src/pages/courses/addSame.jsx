@@ -11,7 +11,6 @@ const AddSameCourses = () => {
 
   // State for form fields
   const [courseName, setCourseName] = useState('');
-  const [courseCode, setCourseCode] = useState('');
   const [description, setDescription] = useState('');
   const [courseImage, setCourseImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -103,7 +102,6 @@ const AddSameCourses = () => {
 
   const handleCourseSelect = (course) => {
     setCourseName(course.CourseName);
-    setCourseCode(course.CourseCode || '');
     setDescription(course.Description || '');
     setPrice(course.Price || '');
     setCourseType(course.CourseType || 'OnSite');
@@ -126,7 +124,6 @@ const AddSameCourses = () => {
 
     const formData = new FormData();
     formData.append('CourseName', courseName);
-    formData.append('CourseCode', courseCode);
     formData.append('Price', price);
     formData.append('CourseType', courseType);
     formData.append('CourseLink', courseLink);
@@ -154,7 +151,6 @@ const AddSameCourses = () => {
         toast.success('تمت إضافة الدورة بنجاح!');
         // Reset form
         setCourseName('');
-        setCourseCode('');
         setDescription('');
         setPrice('');
         setCourseType('OnSite');
@@ -238,16 +234,7 @@ const AddSameCourses = () => {
         </div>
 
         {/* Course Code */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-primary mb-1">رمز الدورة</label>
-          <input
-            type="text"
-            value={courseCode}
-            onChange={(e) => setCourseCode(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-            required
-          />
-        </div>
+
 
         {/* Description */}
 

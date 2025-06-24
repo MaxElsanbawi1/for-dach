@@ -27,6 +27,7 @@ export default function ClientsImageUpload() {
       if (response.ok) {
         const data = await response.json();
         setPartners(data);
+        console.log(data)
       } else {
         throw new Error('Failed to fetch partners');
       }
@@ -271,13 +272,24 @@ export default function ClientsImageUpload() {
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                       <span className="font-semibold md:hidden">الصورة: </span>
-                      {partner.image && (
-                        <img 
-                          src={partner.image} 
-                          alt={partner.name} 
-                          className="h-10 w-10 object-cover rounded-md"
-                        />
-                      )}
+                       <div className="bg-white shadow-lg rounded-xl flex justify-center items-center h-[120px] w-[200px]">
+              {partner.image_url ? (
+                <img 
+                  src={partner.image_url} 
+                  className="w-full h-full  object-contain bg-cover" 
+                  alt={partner.name || 'partner logo'}
+                  onError={(e) => {
+                    e.target.onerror = null; // Prevent infinite loop
+                    e.target.src = ''; // Clear the broken image
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="w-[80px] h-[80px] flex items-center justify-center text-gray-400">
+                  {partner.name || 'No Image'}
+                </div>
+              )}
+            </div>
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                       <button
