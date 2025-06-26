@@ -125,7 +125,7 @@ const ApprovedRegistrations = () => {
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم التسجيل</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم المستخدم</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الهويه</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الدورة</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">اسم الدورة</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">الاسم</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">البريد الإلكتروني</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ التسجيل</th>
@@ -150,7 +150,7 @@ const ApprovedRegistrations = () => {
                           {registration.NationalId}
                         </td>
                       <td className="px-6 py-4 text-right text-sm text-gray-700">
-                        {registration.CourseID}
+                      {registration.CourseName.split(' ').slice(0, 5).join(' ')}
                       </td>
                       <td className="px-6 py-4 text-right text-sm text-gray-700">
                         {registration.FullName || 'غير محدد'}

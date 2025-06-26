@@ -124,7 +124,7 @@ const PendingRegistrations = () => {
                     رقم الهاتف
                   </th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
-                    رقم الدورة
+                    اسم الدورة
                   </th>
                 </tr>
               </thead>
@@ -151,7 +151,7 @@ const PendingRegistrations = () => {
                       {registration.PhoneNumber}
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-gray-700">
-                      {registration.CourseID}
+                    {registration.CourseName.split(' ').slice(0, 5).join(' ')}
                     </td>
                   </tr>
                 ))}

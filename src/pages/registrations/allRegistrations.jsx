@@ -107,8 +107,8 @@ console.log(registrations);
                     {registration.PhoneNumber}
                   </td>
                   <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-                    <span className="font-semibold md:hidden">رقم الدورة: </span>
-                    {registration.CourseID}
+                    <span className="font-semibold md:hidden">اسم الدورة: </span>
+                    {registration.CourseName.split(' ').slice(0, 5).join(' ')}
                   </td>
                   <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                     <span className="font-semibold md:hidden">تاريخ التسجيل: </span>
