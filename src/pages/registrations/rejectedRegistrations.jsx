@@ -104,6 +104,7 @@ const RejectedRegistrations = () => {
               <thead className="hidden md:table-header-group">
                 <tr className="bg-gray-50">
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم التسجيل</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الهويه</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم المستخدم</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الدورة</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ التسجيل</th>
@@ -120,6 +121,10 @@ const RejectedRegistrations = () => {
                     <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                       <span className="font-semibold md:hidden">رقم التسجيل: </span>
                       {registration.RegistrationID}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                      <span className="font-semibold md:hidden">رقم الهويه: </span>
+                      {registration.NationalId}
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                       <span className="font-semibold md:hidden">رقم المستخدم: </span>
