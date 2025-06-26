@@ -54,7 +54,7 @@ const Registrations = () => {
                 <span className="font-semibold md:hidden">رقم التسجيل: </span>{registration.RegistrationID}
               </td>
               <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-                <span className="font-semibold md:hidden">رقم المستخدم: </span>{registration.UserID}
+                <span className="font-semibold md:hidden">الحساب البريدي : </span>{registration.Email}
               </td>
               <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                 <span className="font-semibold md:hidden">رقم الدورة: </span>{registration.CourseID}

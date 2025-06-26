@@ -9,7 +9,7 @@ const AllRegistrations = () => {
 
   // State for registrations data
   const [registrations, setRegistrations] = useState([]);
-
+console.log(registrations);
   // State for search query
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -29,6 +29,7 @@ const AllRegistrations = () => {
         const response = await fetch('https://backend.camels.center/api/registrations', requestOptions);
         const data = await response.json();
         setRegistrations(data);
+
       } catch (error) {
         console.error('Error fetching registrations:', error);
       }
@@ -36,7 +37,6 @@ const AllRegistrations = () => {
 
     fetchRegistrations();
   }, [user.user_id]);
-
   // Filter registrations based on search query
   const filteredRegistrations = registrations.filter(
     (registration) =>
@@ -103,8 +103,8 @@ const AllRegistrations = () => {
                     {registration.RegistrationID}
                   </td>
                   <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-                    <span className="font-semibold md:hidden">رقم المستخدم: </span>
-                    {registration.UserID}
+                    <span className="font-semibold md:hidden">رقم الهاتف: </span>
+                    {registration.PhoneNumber}
                   </td>
                   <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                     <span className="font-semibold md:hidden">رقم الدورة: </span>
