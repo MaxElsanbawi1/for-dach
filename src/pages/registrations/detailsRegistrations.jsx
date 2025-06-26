@@ -95,7 +95,7 @@ const DetailsRegistrations = () => {
               <div>
                 <label className="block text-sm font-medium text-primary mb-1">معرف المستخدم</label>
                 <p className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
-                  {registration.UserID}
+                  {registration.Email}
                 </p>
               </div>
 

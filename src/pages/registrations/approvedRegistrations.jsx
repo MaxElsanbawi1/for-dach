@@ -130,6 +130,7 @@ const ApprovedRegistrations = () => {
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">البريد الإلكتروني</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ التسجيل</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">الحالة</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">الوقت</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,9 +161,13 @@ const ApprovedRegistrations = () => {
                       </td>
                       <td className="px-6 py-4 text-right text-sm text-gray-700">
                         {registration.RegistrationDate ? 
-                          new Date(registration.RegistrationDate).toLocaleDateString('ar-SA') : 
+                          new Date(registration.RegistrationDate).toLocaleDateString('en-GB') : 
                           'غير محدد'}
                       </td>
+                      <td className="px-6 py-4 text-right text-sm text-gray-700">
+                        {new Date(registration.StartingTime).toLocaleDateString('en-GB')}
+                      </td>
+
                       <td className="px-6 py-4 text-right text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           registration.Status === 'Approved' ? 
