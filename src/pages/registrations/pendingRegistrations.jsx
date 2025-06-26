@@ -115,6 +115,9 @@ const PendingRegistrations = () => {
                     الاسم الكامل
                   </th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                    رقم الهويه
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
                     البريد الإلكتروني
                   </th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
@@ -137,6 +140,9 @@ const PendingRegistrations = () => {
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-gray-700">
                       {registration.FullName}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-700">
+                      {registration.NationalId}
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-gray-700">
                       {registration.Email}
