@@ -52,7 +52,10 @@ const PendingRegistrations = () => {
       (
         registration?.RegistrationID?.toString().includes(searchQuery) ||
         registration?.UserID?.toString().includes(searchQuery) ||
-        registration?.CourseID?.toString().includes(searchQuery)
+        registration?.CourseID?.toString().includes(searchQuery) ||
+        registration?.FullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        registration?.Email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        registration?.PhoneNumber?.includes(searchQuery)
       )
   );
 
@@ -103,7 +106,50 @@ const PendingRegistrations = () => {
         ) : (
           <>
             <table className="min-w-full bg-white">
-              {/* ... existing table code ... */}
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                    رقم التسجيل
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                    الاسم الكامل
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                    البريد الإلكتروني
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                    رقم الهاتف
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                    رقم الدورة
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentRegistrations.map((registration) => (
+                  <tr
+                    key={registration.RegistrationID}
+                    onClick={() => handleRowClick(registration.RegistrationID)}
+                    className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-right text-sm text-gray-700">
+                      {registration.RegistrationID}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-700">
+                      {registration.FullName}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-700">
+                      {registration.Email}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-700">
+                      {registration.PhoneNumber}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-700">
+                      {registration.CourseID}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
 
             {/* Pagination */}
