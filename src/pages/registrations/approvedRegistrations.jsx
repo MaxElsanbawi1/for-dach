@@ -124,6 +124,7 @@ const ApprovedRegistrations = () => {
                 <tr>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم التسجيل</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم المستخدم</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الهويه</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الدورة</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">الاسم</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">البريد الإلكتروني</th>
@@ -142,9 +143,12 @@ const ApprovedRegistrations = () => {
                       <td className="px-6 py-4 text-right text-sm text-gray-700">
                         {registration.RegistrationID}
                       </td>
-                      <td className="px-6 py-4 text-right text-sm text-gray-700">
-                        {registration.UserID}
-                      </td>
+                        <td className="px-6 py-4 text-right text-sm text-gray-700">
+                          {registration.PhoneNumber}
+                        </td>
+                        <td className="px-6 py-4 text-right text-sm text-gray-700">
+                          {registration.NationalId}
+                        </td>
                       <td className="px-6 py-4 text-right text-sm text-gray-700">
                         {registration.CourseID}
                       </td>
