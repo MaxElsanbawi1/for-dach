@@ -126,9 +126,12 @@ const PendingRegistrations = () => {
                   <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
                     اسم الدورة
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
-                    الوقت
-                  </th>
+                      <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        الوقت
+                      </th>
+                      <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        تاريخ
+                      </th>
                 </tr>
               </thead>
               <tbody>
@@ -159,6 +162,11 @@ const PendingRegistrations = () => {
                     <td className="px-6 py-4 text-right text-sm text-gray-700">
                     {new Date(registration.StartingTime).toLocaleDateString('en-GB')}
                     </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-700">
+                        {registration.RegistrationDate ? 
+                          new Date(registration.RegistrationDate).toLocaleDateString('en-GB') : 
+                          'غير محدد'}
+                      </td>
                   </tr>
                 ))}
               </tbody>

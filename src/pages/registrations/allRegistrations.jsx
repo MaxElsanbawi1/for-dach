@@ -87,6 +87,7 @@ console.log(registrations);
                 <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم المستخدم</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الدورة</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ التسجيل</th>
+                <th className="px-6 py-3 text-right text-sm font-semibold text-primary">الوقت</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-primary">الحالة</th>
               </tr>
             </thead>
@@ -118,11 +119,14 @@ console.log(registrations);
                     <span className="font-semibold md:hidden">الوقت: </span>
                     {new Date(registration.StartingTime).toLocaleDateString('en-GB')}
                   </td>
+                  
+                 
                   <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                     <span className="font-semibold md:hidden">الحالة: </span>
                     {registration.Status}
                   </td>
                 </tr>
+                
               ))}
             </tbody>
           </table>

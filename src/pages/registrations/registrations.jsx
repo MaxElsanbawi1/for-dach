@@ -68,6 +68,9 @@ const Registrations = () => {
               <td className="px-6 py-4 text-right text-sm text-gray-700">
                 <span className="font-semibold md:hidden">الوقت: </span>{new Date(registration.StartingTime).toLocaleDateString('en-GB')}
               </td>
+              <td className="px-6 py-4 text-right text-sm text-gray-700">
+                <span className="font-semibold md:hidden">تاريخ التسجيل: </span>{new Date(registration.RegistrationDate).toLocaleDateString()}
+              </td>
             </tr>
           ))}
         </tbody>
