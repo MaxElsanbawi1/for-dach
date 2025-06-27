@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Printer, Search } from "lucide-react";
+import { Printer, Search, Download } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import html2canvas from 'html2canvas';
+import { saveAs } from 'file-saver';
 
 const CourseDetails = () => {
   const navigate = useNavigate();
@@ -43,6 +45,20 @@ const CourseDetails = () => {
   const [regFormLoading, setRegFormLoading] = useState(false);
   const [regFormSuccess, setRegFormSuccess] = useState("");
   const [regFormError, setRegFormError] = useState("");
+
+  // PDF management state
+  const [coursePdfs, setCoursePdfs] = useState([]);
+  const [pdfFiles, setPdfFiles] = useState([null]); // Array of files
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfsLoading, setPdfsLoading] = useState(false);
+
+  // New: Course files table state
+  const [courseFiles, setCourseFiles] = useState([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+
+  // Invoice state
+  const [invoiceHtml, setInvoiceHtml] = useState("");
+  const [invoiceData, setInvoiceData] = useState(null);
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -117,6 +133,54 @@ const CourseDetails = () => {
 
     fetchCourseDetails();
   }, [courseId]);
+
+  // Fetch course PDFs
+  useEffect(() => {
+    const fetchCoursePdfs = async () => {
+      try {
+        setPdfsLoading(true);
+        const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, {
+          method: "GET",
+        });
+        if (response.ok) {
+          const result = await response.json();
+          setCoursePdfs(Array.isArray(result) ? result : [result]);
+        } else {
+          setCoursePdfs([]);
+        }
+      } catch (error) {
+        setCoursePdfs([]);
+      } finally {
+        setPdfsLoading(false);
+      }
+    };
+    if (courseId) fetchCoursePdfs();
+  }, [courseId]);
+
+  // Fetch course files for the new table
+  useEffect(() => {
+    const fetchCourseFiles = async () => {
+      try {
+        setFilesLoading(true);
+        const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, {
+          method: "GET",
+          redirect: "follow"
+        });
+        if (response.ok) {
+          const result = await response.json();
+          setCourseFiles(result.files || []);
+        } else {
+          setCourseFiles([]);
+        }
+      } catch (error) {
+        setCourseFiles([]);
+      } finally {
+        setFilesLoading(false);
+      }
+    };
+    if (courseId) fetchCourseFiles();
+  }, [courseId]);
+
   const handleStatusChange = async (registrationId, newStatus) => {
     try {
       // Find the current registration to get all its data
@@ -184,6 +248,147 @@ const CourseDetails = () => {
       setRegistrations(registrations);
     }
   };
+
+  // Generate Invoice PDF
+ const generateInvoice = async (registration) => {
+  try {
+    // Import jsPDF dynamically to avoid SSR issues
+    const { jsPDF } = await import('jspdf');
+    
+    const invoiceDate = new Date().toLocaleDateString('ar-EG');
+    const invoiceNumber = `INV-${registration.RegistrationID}-${Date.now()}`;
+
+    // Create a temporary div for the invoice
+    const invoiceDiv = document.createElement('div');
+    invoiceDiv.style.position = 'absolute';
+    invoiceDiv.style.left = '-9999px';
+    invoiceDiv.style.width = '800px';
+    invoiceDiv.style.padding = '20px';
+    invoiceDiv.style.fontFamily = "'Tajawal', sans-serif";
+    invoiceDiv.dir = 'rtl';
+    
+    invoiceDiv.innerHTML = `
+      <div style="max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+          <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">
+            ${course?.InstructorName || "مركز التدريب"}
+          </div>
+          <div style="text-align: left;">
+            <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #2c3e50;">فاتورة تدريب</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span style="font-weight: bold; width: 150px;">رقم الفاتورة:</span>
+              <span style="flex-grow: 1; text-align: left;">${invoiceNumber}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span style="font-weight: bold; width: 150px;">التاريخ:</span>
+              <span style="flex-grow: 1; text-align: left;">${invoiceDate}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Student Info -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">معلومات المتدرب</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="font-weight: bold; width: 150px;">الاسم:</span>
+            <span style="flex-grow: 1; text-align: left;">${registration.FullName}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="font-weight: bold; width: 150px;">رقم الهوية:</span>
+            <span style="flex-grow: 1; text-align: left;">${registration.NationalId || 'غير متوفر'}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="font-weight: bold; width: 150px;">البريد الإلكتروني:</span>
+            <span style="flex-grow: 1; text-align: left;">${registration.Email}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="font-weight: bold; width: 150px;">رقم الهاتف:</span>
+            <span style="flex-grow: 1; text-align: left;">${registration.PhoneNumber}</span>
+          </div>
+        </div>
+        
+        <!-- Course Details -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">تفاصيل الدورة</div>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr>
+                <th style="background-color: #f5f5f5; padding: 8px; text-align: right; border: 1px solid #ddd;">الوصف</th>
+                <th style="background-color: #f5f5f5; padding: 8px; text-align: right; border: 1px solid #ddd;">المبلغ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${course?.CourseName || 'دورة تدريبية'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${course?.Price || '0'} ر.س</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="font-size: 18px; font-weight: bold; margin-top: 20px; text-align: left;">المبلغ الإجمالي: ${course?.Price || '0'} ر.س</div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #777;">
+          <p>شكراً لاختياركم ${course?.InstructorName || "مركز التدريب"}</p>
+          <p>للاستفسارات: ${course?.InstructorPhoneNumber || "0000000000"} | ${course?.InstructorEmail || "info@example.com"}</p>
+        </div>
+      </div>
+    `;
+
+    // Add to document
+    document.body.appendChild(invoiceDiv);
+
+    // Load Tajawal font
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+
+    // Wait for font to load
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Convert to canvas
+    const canvas = await html2canvas(invoiceDiv, {
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: invoiceDiv.scrollWidth,
+      windowHeight: invoiceDiv.scrollHeight
+    });
+
+    // Create PDF
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Calculate image dimensions to fit A4
+    const imgData = canvas.toDataURL('image/png');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95;
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 10;
+
+    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    pdf.save(`invoice_${invoiceNumber}.pdf`);
+
+    // Clean up
+    document.body.removeChild(invoiceDiv);
+    document.head.removeChild(fontLink);
+
+  } catch (error) {
+    console.error('Error generating invoice:', error);
+    toast.error('حدث خطأ أثناء إنشاء الفاتورة');
+  }
+};
   // Filter registrations based on search query and status filter
   const filteredRegistrations = registrations.filter((registration) => {
     const matchesSearch =
@@ -307,6 +512,98 @@ const CourseDetails = () => {
       });
     } finally {
       setRegFormLoading(false);
+    }
+  };
+
+  // Handle PDF file upload (multiple files)
+  const handlePdfSubmit = async (e) => {
+    e.preventDefault();
+    const validFiles = pdfFiles.filter(f => f);
+    if (validFiles.length === 0) {
+      toast.error("يرجى اختيار ملف PDF واحد على الأقل");
+      return;
+    }
+    setPdfLoading(true);
+    try {
+      const formdata = new FormData();
+      validFiles.forEach((file) => {
+        formdata.append("pdfs", file);
+      });
+      const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, {
+        method: "POST",
+        body: formdata,
+        redirect: "follow"
+      });
+      if (!response.ok) throw new Error("فشل في رفع PDF");
+      toast.success("تم رفع PDF بنجاح!");
+      setPdfFiles([null]);
+      e.target.reset();
+      // Refresh list
+      const refresh = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, { method: "GET" });
+      if (refresh.ok) {
+        const result = await refresh.json();
+        setCoursePdfs(Array.isArray(result) ? result : [result]);
+      }
+    } catch (error) {
+      toast.error(error.message || "حدث خطأ أثناء رفع PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  // Handle file input change for a specific index
+  const handlePdfFileChange = (idx, file) => {
+    setPdfFiles(prev => {
+      const updated = [...prev];
+      updated[idx] = file;
+      return updated;
+    });
+  };
+
+  // Add more file input fields
+  const handleAddMorePdfInput = () => {
+    setPdfFiles(prev => [...prev, null]);
+  };
+
+  // Download PDF utility
+  const handleDownloadPdf = async (fileUrl, fileName) => {
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('فشل تحميل الملف');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName.endsWith('.pdf') ? fileName : fileName + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(error.message || 'حدث خطأ أثناء تحميل الملف');
+    }
+  };
+
+  // Handle PDF file deletion
+  const handleDeletePdf = async (fileName) => {
+    if (!window.confirm('هل أنت متأكد أنك تريد حذف هذا الملف؟')) return;
+    try {
+      const requestOptions = {
+        method: "DELETE",
+        redirect: "follow"
+      };
+      const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs/${encodeURIComponent(fileName)}`, requestOptions);
+      if (!response.ok) throw new Error('فشل حذف الملف');
+      toast.success('تم حذف الملف بنجاح');
+      // Refresh list
+      const refresh = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, { method: "GET" });
+      if (refresh.ok) {
+        const result = await refresh.json();
+        setCourseFiles(result.files || []);
+        setCoursePdfs(Array.isArray(result) ? result : [result]);
+      }
+    } catch (error) {
+      toast.error(error.message || 'حدث خطأ أثناء حذف الملف');
     }
   };
 
@@ -709,60 +1006,72 @@ const CourseDetails = () => {
                         <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
                           الحالة
                         </th>
+                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                          فاتورة
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-  {currentRegistrations.map((registration) => (
-    <tr
-      key={registration.RegistrationID}
-      className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
-      
-    >
-      <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-        <span className="font-semibold md:hidden">رقم التسجيل: </span>
-        {registration.RegistrationID}
-      </td>
-      <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-        <span className="font-semibold md:hidden"> رقم الهويه :</span>
-        {registration.NationalId}
-      </td>
-      <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-        <span className="font-semibold md:hidden">الاسم الكامل: </span>
-        {registration.FullName}
-      </td>
-      <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-        <span className="font-semibold md:hidden">البريد الإلكتروني: </span>
-        {registration.Email}
-      </td>
-      <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-        <span className="font-semibold md:hidden">رقم الهاتف: </span>
-        {registration.PhoneNumber}
-      </td>
-      <td className="px-6 py-4 text-right text-sm block md:table-cell">
-  <span className="font-semibold md:hidden">الحالة: </span>
-  <div 
-    className="inline-block" 
-    onClick={(e) => e.stopPropagation()}
-  >
-    <select
-      value={registration.Status.toLowerCase()}
-      onChange={(e) => handleStatusChange(registration.RegistrationID, e.target.value)}
-      className={`px-2 py-1 rounded-md text-xs font-medium ${
-        statusConfig[registration.Status.toLowerCase()]?.bg || "bg-gray-100"
-      } ${
-        statusConfig[registration.Status.toLowerCase()]?.textColor || "text-gray-800"
-      }`}
-    >
-      <option value="pending">قيد الانتظار</option>
-      <option value="approved">معتمد</option>
-      <option value="rejected">مرفوض</option>
-    </select>
-  </div>
-</td>
-    </tr>
-  ))}
+                      {currentRegistrations.map((registration) => (
+                        <tr
+                          key={registration.RegistrationID}
+                          className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
+                          
+                        >
+                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                            <span className="font-semibold md:hidden">رقم التسجيل: </span>
+                            {registration.RegistrationID}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                            <span className="font-semibold md:hidden"> رقم الهويه :</span>
+                            {registration.NationalId}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                            <span className="font-semibold md:hidden">الاسم الكامل: </span>
+                            {registration.FullName}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                            <span className="font-semibold md:hidden">البريد الإلكتروني: </span>
+                            {registration.Email}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                            <span className="font-semibold md:hidden">رقم الهاتف: </span>
+                            {registration.PhoneNumber}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm block md:table-cell">
+                            <span className="font-semibold md:hidden">الحالة: </span>
+                            <div 
+                              className="inline-block" 
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <select
+                                value={registration.Status.toLowerCase()}
+                                onChange={(e) => handleStatusChange(registration.RegistrationID, e.target.value)}
+                                className={`px-2 py-1 rounded-md text-xs font-medium ${
+                                  statusConfig[registration.Status.toLowerCase()]?.bg || "bg-gray-100"
+                                } ${
+                                  statusConfig[registration.Status.toLowerCase()]?.textColor || "text-gray-800"
+                                }`}
+                              >
+                                <option value="pending">قيد الانتظار</option>
+                                <option value="approved">معتمد</option>
+                                <option value="rejected">مرفوض</option>
+                              </select>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm block md:table-cell">
+                            <button
+                              onClick={() => generateInvoice(registration)}
+                              className="flex items-center justify-center bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 focus:outline-none"
+                            >
+                              <Download size={16} className="ml-1" />
+                              <span>فاتورة</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
 
-</tbody>
+                    </tbody>
                   </table>
                 </div>
 
@@ -793,6 +1102,94 @@ const CourseDetails = () => {
                 )}
               </>
             )}
+          </div>
+
+          {/* Course PDFs Section */}
+          <div className="mt-8">
+            <h3 className="text-xl font-bold text-primary mb-4">ملفات PDF للدورة</h3>
+            {/* Add PDF Form */}
+            <form onSubmit={handlePdfSubmit} className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex flex-col gap-4">
+                {pdfFiles.map((file, idx) => (
+                  <input
+                    key={idx}
+                    type="file"
+                    accept="application/pdf"
+                    onChange={e => handlePdfFileChange(idx, e.target.files[0])}
+                    className="flex-grow w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100"
+                    required={idx === 0}
+                  />
+                ))}
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleAddMorePdfInput}
+                    className="bg-gray-200 text-primary px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    إضافة المزيد
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-primary text-white px-6 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={pdfLoading}
+                  >
+                    {pdfLoading ? "جاري الرفع..." : "رفع PDF"}
+                  </button>
+                </div>
+              </div>
+            </form>
+
+
+            {/* New: Course Files Table */}
+            <div className="mt-8">
+              <h3 className="text-xl font-bold text-primary mb-4">جميع ملفات الدورة</h3>
+              <div className="overflow-x-auto">
+                {filesLoading ? (
+                  <p className="text-center py-4">جاري تحميل الملفات...</p>
+                ) : courseFiles.length === 0 ? (
+                  <p className="text-center py-4">لا توجد ملفات لهذه الدورة</p>
+                ) : (
+                  <table className="min-w-full bg-white">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">اسم الملف</th>
+                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رابط الملف</th>
+                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ الرفع</th>
+                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">حذف</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {courseFiles.map((file, idx) => (
+                        <tr key={idx} className="border-b hover:bg-gray-50">
+                          <td className="px-6 py-4 text-right text-sm text-gray-700">{file.FileName}</td>
+                          <td className="px-6 py-4 text-right text-sm text-blue-700">
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadPdf(file.FilePath, file.FileName)}
+                              className="underline hover:text-blue-900 text-blue-700 bg-transparent border-none cursor-pointer"
+                            >
+                              تحميل PDF
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm text-gray-700">
+                            {new Date(file.UploadDate).toLocaleDateString('en-GB')}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm">
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePdf(file.FileName)}
+                              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 focus:outline-none"
+                            >
+                              حذف
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

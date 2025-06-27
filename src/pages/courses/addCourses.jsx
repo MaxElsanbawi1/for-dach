@@ -38,7 +38,7 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/categories", {
+        const response = await fetch("http://localhost:3000/api/categories", {
           method: "GET",
           redirect: "follow",
         });
@@ -62,7 +62,7 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/users", {
+        const response = await fetch("http://localhost:3000/api/users", {
           method: "GET",
           redirect: "follow",
           
@@ -125,7 +125,7 @@ const AddCourses = () => {
     };
     
     try {
-      const response = await fetch("https://backend.camels.center/api/courses", requestOptions);
+      const response = await fetch("http://localhost:3000/api/courses", requestOptions);
       const result = await response.json();
       console.log(response)
       console.log(result);
