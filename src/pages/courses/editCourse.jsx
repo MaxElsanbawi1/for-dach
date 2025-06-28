@@ -267,16 +267,16 @@ const AddCourses = () => {
       const result = await response.json();
       
       if (response.ok) {
-        toast.success('تمت إضافة الدورة بنجاح!');
+        toast.success('تمت تعديل الدورة بنجاح!');
         resetForm();
       } else {
-        setError(result.message || 'فشل في إضافة الدورة');
-        toast.error(result.message || 'فشل في إضافة الدورة');
+        setError(result.message || 'فشل في تعديل الدورة');
+        toast.error(result.message || 'فشل في تعديل الدورة');
       }
     } catch (error) {
       console.error('Error:', error);
-      setError('حدث خطأ أثناء إضافة الدورة');
-      toast.error('حدث خطأ أثناء إضافة الدورة');
+      setError('حدث خطأ أثناء تعديل الدورة');
+      toast.error('حدث خطأ أثناء تعديل الدورة');
     }
   };
 
@@ -320,7 +320,7 @@ const AddCourses = () => {
         {/* Page Title */}
         <h2 className="text-2xl font-bold mb-6 text-primary flex items-center">
           <UserPlus size={24} className="ml-2" />
-          إضافة دورة جديدة
+          تعديل دورة جديدة
         </h2>
 
         {/* Error Message */}
@@ -453,7 +453,7 @@ const AddCourses = () => {
                 onClick={handleAddMorePdfInput}
                 className="bg-gray-200 text-primary px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                إضافة ملف PDF آخر
+                تعديل ملف PDF آخر
               </button>
             </div>
           </div>
@@ -621,7 +621,7 @@ const AddCourses = () => {
             type="submit"
             className="w-full bg-secondary text-white py-2 px-4 rounded-md hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            إضافة دورة
+            تعديل دورة
           </button>
         </form>
       </div>
