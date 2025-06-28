@@ -668,19 +668,20 @@ const CourseDetails = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg shadow p-3 md:p-6">
       {/* Page Title and Buttons */}
-      <div className="flex flex-wrap items-center justify-between mb-6 gap-4">
-        <h2 className="text-2xl font-bold text-primary flex items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <h2 className="text-xl md:text-2xl font-bold text-primary flex items-center">
           تفاصيل الدورة
         </h2>
         <div className="flex gap-2">
           <button
             onClick={() => navigate(`/courses/${courseId}/print`)}
-            className="flex items-center bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex items-center bg-blue-500 text-white py-2 px-3 md:px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
           >
-            <Printer size={18} className="ml-2" />
-            طباعة تفاصيل الدورة
+            <Printer size={16} className="ml-1 md:ml-2" />
+            <span className="hidden sm:inline">طباعة تفاصيل الدورة</span>
+            <span className="sm:hidden">طباعة</span>
           </button>
         </div>
       </div>
@@ -704,13 +705,12 @@ const CourseDetails = () => {
             <img
               src={course.courseImgUrl}
               alt={course.CourseName}
-              className="w-48 h-48 object-cover rounded-lg"
-              
+              className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-lg"
             />
           </div>
 
           {/* Course Information Section */}
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div>
               <label className="block text-sm font-medium text-primary mb-1">
                 رقم الدورة
@@ -851,16 +851,16 @@ const CourseDetails = () => {
           {(() => {
             const pdfUrls = getCoursePdfUrls();
             return pdfUrls.length > 0 ? (
-              <div className="mt-8">
-                <h3 className="text-xl font-bold text-primary mb-4">ملفات PDF للدورة</h3>
+              <div className="mt-6 md:mt-8">
+                <h3 className="text-lg md:text-xl font-bold text-primary mb-4">ملفات PDF للدورة</h3>
                 <div className="overflow-x-auto">
                   <table className="min-w-full bg-white">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رقم الملف</th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">اسم الملف</th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رابط الملف</th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تحميل</th>
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">رقم</th>
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">اسم الملف</th>
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">رابط</th>
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">تحميل</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -868,29 +868,29 @@ const CourseDetails = () => {
                         const fileName = pdfUrl.split('/').pop() || `course-${course.CourseID}-${index + 1}.pdf`;
                         return (
                           <tr key={index} className="border-b hover:bg-gray-50">
-                            <td className="px-6 py-4 text-right text-sm text-gray-700">
+                            <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700">
                               {index + 1}
                             </td>
-                            <td className="px-6 py-4 text-right text-sm text-gray-700">
-                              {fileName}
+                            <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700">
+                              <span className="truncate block max-w-20 md:max-w-none">{fileName}</span>
                             </td>
-                            <td className="px-6 py-4 text-right text-sm text-blue-700">
+                            <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-blue-700">
                               <a 
                                 href={pdfUrl} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="underline hover:text-blue-900"
                               >
-                                عرض الملف
+                                عرض
                               </a>
                             </td>
-                            <td className="px-6 py-4 text-right text-sm">
+                            <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm">
                               <button
                                 type="button"
                                 onClick={() => handleDownloadCoursePdf(pdfUrl, fileName)}
-                                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-700 focus:outline-none"
+                                className="bg-blue-500 text-white px-2 md:px-3 py-1 rounded hover:bg-blue-700 focus:outline-none text-xs md:text-sm"
                               >
-                                تحميل PDF
+                                تحميل
                               </button>
                             </td>
                           </tr>
@@ -904,11 +904,11 @@ const CourseDetails = () => {
           })()}
 
           {/* Registrations Section */}
-          <div className="mt-8">
-            <h3 className="text-xl font-bold text-primary mb-4">التسجيلات</h3>
+          <div className="mt-6 md:mt-8">
+            <h3 className="text-lg md:text-xl font-bold text-primary mb-4">التسجيلات</h3>
 
             {/* Registration Form */}
-            <form onSubmit={handleRegFormSubmit} className="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form onSubmit={handleRegFormSubmit} className="mb-6 md:mb-8 bg-gray-50 p-3 md:p-4 rounded-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               <input
                 type="text"
                 name="fullname"
@@ -969,11 +969,11 @@ const CourseDetails = () => {
                 placeholder="استفسار (اختياري)"
                 value={regForm.Write_an_inquiry}
                 onChange={handleRegFormChange}
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary md:col-span-2"
+                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary sm:col-span-2 md:col-span-2"
               />
               <button
                 type="submit"
-                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-1"
+                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:col-span-2 md:col-span-1"
                 disabled={regFormLoading}
               >
                 {regFormLoading ? "جاري التسجيل..." : "تسجيل جديد"}
@@ -986,7 +986,7 @@ const CourseDetails = () => {
             {/* Status Statistics */}
             {!noRegistrations && (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
                   <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                     <h4 className="text-base md:text-lg font-semibold text-blue-700">
                       الكل
@@ -1022,7 +1022,7 @@ const CourseDetails = () => {
                 </div>
 
                 {/* Search and Filter */}
-                <div className="flex flex-col space-y-4 mb-6">
+                <div className="flex flex-col space-y-3 md:space-y-4 mb-4 md:mb-6">
                   <div className="relative w-full">
                     <input
                       type="text"
@@ -1037,7 +1037,7 @@ const CourseDetails = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 md:gap-2">
                     <button
                       onClick={() => setStatusFilter("all")}
                       className={`px-3 py-2 text-xs md:text-sm rounded-md ${
@@ -1086,25 +1086,25 @@ const CourseDetails = () => {
                   <table className="min-w-full bg-white">
                     <thead className="hidden md:table-header-group">
                       <tr className="bg-gray-50">
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                           رقم التسجيل
                         </th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                         رقم الهويه 
                         </th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                           الاسم الكامل
                         </th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                           البريد الإلكتروني
                         </th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                           رقم الهاتف
                         </th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                           الحالة
                         </th>
-                        <th className="px-6 py-3 text-right text-sm font-semibold text-primary">
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                           فاتورة
                         </th>
                       </tr>
@@ -1114,13 +1114,12 @@ const CourseDetails = () => {
                         <tr
                           key={registration.RegistrationID}
                           className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
-                          
                         >
-                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700 block md:table-cell">
                             <span className="font-semibold md:hidden">رقم التسجيل: </span>
                             {registration.RegistrationID}
                           </td>
-                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700 block md:table-cell">
                             <span className="font-semibold md:hidden"> رقم الهويه :</span>
                             {registration.NationalId}
                           </td>
@@ -1128,15 +1127,15 @@ const CourseDetails = () => {
                             <span className="font-semibold md:hidden">الاسم الكامل: </span>
                             {registration.FullName}
                           </td>
-                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700 block md:table-cell">
                             <span className="font-semibold md:hidden">البريد الإلكتروني: </span>
                             {registration.Email}
                           </td>
-                          <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700 block md:table-cell">
                             <span className="font-semibold md:hidden">رقم الهاتف: </span>
                             {registration.PhoneNumber}
                           </td>
-                          <td className="px-6 py-4 text-right text-sm block md:table-cell">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm block md:table-cell">
                             <span className="font-semibold md:hidden">الحالة: </span>
                             <div 
                               className="inline-block" 
@@ -1157,45 +1156,123 @@ const CourseDetails = () => {
                               </select>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right text-sm block md:table-cell">
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm block md:table-cell">
                             <button
                               onClick={() => generateInvoice(registration)}
-                              className="flex items-center justify-center bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 focus:outline-none"
+                              className="flex items-center justify-center bg-green-500 text-white px-2 md:px-3 py-1 rounded hover:bg-green-600 focus:outline-none text-xs md:text-sm"
                             >
-                              <Download size={16} className="ml-1" />
-                              <span>فاتورة</span>
+                              <Download size={14} className="ml-1" />
+                              <span className="hidden sm:inline">فاتورة</span>
+                              <span className="sm:hidden">فاتورة</span>
                             </button>
                           </td>
                         </tr>
                       ))}
-
                     </tbody>
                   </table>
                 </div>
 
                 {/* Pagination */}
                 {filteredRegistrations.length > 0 && (
-                  <div className="flex justify-center mt-6 flex-wrap gap-2">
-                    {Array.from(
-                      {
-                        length: Math.ceil(
-                          filteredRegistrations.length / regsPerPage
-                        ),
-                      },
-                      (_, i) => (
-                        <button
-                          key={i + 1}
-                          onClick={() => paginate(i + 1)}
-                          className={`px-3 py-1 md:px-4 md:py-2 rounded-md ${
-                            currentPage === i + 1
-                              ? "bg-primary text-white"
-                              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      )
-                    )}
+                  <div className="flex justify-center mt-4 md:mt-6">
+                    <div className="flex items-center space-x-1 md:space-x-2">
+                      {/* Previous button */}
+                      <button
+                        onClick={() => paginate(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className={`px-2 py-1 md:px-3 md:py-2 rounded-md text-xs md:text-sm ${
+                          currentPage === 1
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        ←
+                      </button>
+                      
+                      {/* Page numbers - show fewer on mobile */}
+                      {(() => {
+                        const totalPages = Math.ceil(filteredRegistrations.length / regsPerPage);
+                        const maxVisiblePages = window.innerWidth < 768 ? 3 : 7;
+                        
+                        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                        
+                        if (endPage - startPage < maxVisiblePages - 1) {
+                          startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                        }
+                        
+                        const pages = [];
+                        
+                        if (startPage > 1) {
+                          pages.push(
+                            <button
+                              key={1}
+                              onClick={() => paginate(1)}
+                              className="px-2 py-1 md:px-3 md:py-2 rounded-md text-xs md:text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            >
+                              1
+                            </button>
+                          );
+                          if (startPage > 2) {
+                            pages.push(
+                              <span key="ellipsis1" className="px-1 md:px-2 py-1 md:py-2 text-gray-500 text-xs md:text-sm">
+                                ...
+                              </span>
+                            );
+                          }
+                        }
+                        
+                        for (let i = startPage; i <= endPage; i++) {
+                          pages.push(
+                            <button
+                              key={i}
+                              onClick={() => paginate(i)}
+                              className={`px-2 py-1 md:px-3 md:py-2 rounded-md text-xs md:text-sm ${
+                                currentPage === i
+                                  ? 'bg-primary text-white'
+                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                              }`}
+                            >
+                              {i}
+                            </button>
+                          );
+                        }
+                        
+                        if (endPage < totalPages) {
+                          if (endPage < totalPages - 1) {
+                            pages.push(
+                              <span key="ellipsis2" className="px-1 md:px-2 py-1 md:py-2 text-gray-500 text-xs md:text-sm">
+                                ...
+                              </span>
+                            );
+                          }
+                          pages.push(
+                            <button
+                              key={totalPages}
+                              onClick={() => paginate(totalPages)}
+                              className="px-2 py-1 md:px-3 md:py-2 rounded-md text-xs md:text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            >
+                              {totalPages}
+                            </button>
+                          );
+                        }
+                        
+                        return pages;
+                      })()}
+                      
+                      {/* Next button */}
+                      <button
+                        onClick={() => paginate(Math.min(Math.ceil(filteredRegistrations.length / regsPerPage), currentPage + 1))}
+                        disabled={currentPage === Math.ceil(filteredRegistrations.length / regsPerPage)}
+                        className={`px-2 py-1 md:px-3 md:py-2 rounded-md text-xs md:text-sm ${
+                          currentPage === Math.ceil(filteredRegistrations.length / regsPerPage)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        →
+                      </button>
+                    </div>
                   </div>
                 )}
               </>
