@@ -29,6 +29,7 @@ import AddUsers from './pages/students/addStudents';
 import AddStudents from './pages/students/addStudents';
 import AddCategories from './pages/courses/categories/addCategories';
 import AddCourses from './pages/courses/addCourses';
+import EditCourse from './pages/courses/editCourse';
 import CourseDetails from './pages/courses/detailsCourses';
 import ProfilePage from './pages/sitings/profile';
 import AddCoursesSame from './pages/courses/addSame';
@@ -65,6 +66,7 @@ export default function App() {
               <Route path="/courses/addSame" element={<AddCoursesSame />} />
               <Route path="/courses/all" element={<AllCourses />} />
               <Route path="/courses/:courseId/details" element={<CourseDetails />} />
+              <Route path="/courses/:courseId/edit" element={<EditCourse />} />
               <Route path="ClientImageUpload" element={<ClientsImageUpload />} />
               <Route path="OurPartnersImageUpload" element={<OurPartnersImageUpload />} />
               <Route path="OffersImageUpload" element={<OffersImageUpload />} />

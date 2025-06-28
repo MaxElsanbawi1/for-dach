@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Printer, Search, Download } from "lucide-react";
+import { Printer, Search, Download, Edit } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import html2canvas from 'html2canvas';
@@ -675,6 +675,14 @@ const CourseDetails = () => {
           تفاصيل الدورة
         </h2>
         <div className="flex gap-2">
+          <button
+            onClick={() => navigate(`/courses/${courseId}/edit`)}
+            className="flex items-center bg-green-500 text-white py-2 px-3 md:px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm md:text-base"
+          >
+            <Edit size={16} className="ml-1 md:ml-2" />
+            <span className="hidden sm:inline">تعديل الدورة</span>
+            <span className="sm:hidden">تعديل</span>
+          </button>
           <button
             onClick={() => navigate(`/courses/${courseId}/print`)}
             className="flex items-center bg-blue-500 text-white py-2 px-3 md:px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"

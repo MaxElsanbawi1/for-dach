@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2 } from 'lucide-react';
+import { Search, Trash2, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 
@@ -168,16 +168,28 @@ const AllCourses = () => {
                   {new Date(course.EndingTime).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteCourse(course.CourseID);
-                    }}
-                    className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
-                    title="حذف الدورة"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/courses/${course.CourseID}/edit`);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50"
+                      title="تعديل الدورة"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCourse(course.CourseID);
+                      }}
+                      className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
+                      title="حذف الدورة"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
