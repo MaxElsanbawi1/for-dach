@@ -188,19 +188,108 @@ const AllCourses = () => {
       {/* Pagination */}
       {filteredCourses.length > 0 && (
         <div className="flex justify-center mt-6">
-          {Array.from({ length: Math.ceil(filteredCourses.length / coursesPerPage) }, (_, i) => (
+          <div className="flex items-center space-x-1 md:space-x-2">
+            {/* Previous button */}
             <button
-              key={i + 1}
-              onClick={() => paginate(i + 1)}
-              className={`mx-1 px-4 py-2 rounded-md ${
-                currentPage === i + 1
-                  ? 'bg-primary text-white'
+              onClick={() => paginate(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className={`px-2 py-2 md:px-3 md:py-2 rounded-md text-sm ${
+                currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              {i + 1}
+              ←
             </button>
-          ))}
+            
+            {/* Page numbers - show fewer on mobile */}
+            {(() => {
+              const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+              const maxVisiblePages = window.innerWidth < 768 ? 3 : 7; // 3 on mobile, 7 on desktop
+              
+              let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+              let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+              
+              // Adjust start page if we're near the end
+              if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+              }
+              
+              const pages = [];
+              
+              // Add first page and ellipsis if needed
+              if (startPage > 1) {
+                pages.push(
+                  <button
+                    key={1}
+                    onClick={() => paginate(1)}
+                    className="px-2 py-2 md:px-3 md:py-2 rounded-md text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  >
+                    1
+                  </button>
+                );
+                if (startPage > 2) {
+                  pages.push(
+                    <span key="ellipsis1" className="px-2 py-2 text-gray-500">
+                      ...
+                    </span>
+                  );
+                }
+              }
+              
+              // Add visible page numbers
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <button
+                    key={i}
+                    onClick={() => paginate(i)}
+                    className={`px-2 py-2 md:px-3 md:py-2 rounded-md text-sm ${
+                      currentPage === i
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+              
+              // Add last page and ellipsis if needed
+              if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                  pages.push(
+                    <span key="ellipsis2" className="px-2 py-2 text-gray-500">
+                      ...
+                    </span>
+                  );
+                }
+                pages.push(
+                  <button
+                    key={totalPages}
+                    onClick={() => paginate(totalPages)}
+                    className="px-2 py-2 md:px-3 md:py-2 rounded-md text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  >
+                    {totalPages}
+                  </button>
+                );
+              }
+              
+              return pages;
+            })()}
+            
+            {/* Next button */}
+            <button
+              onClick={() => paginate(Math.min(Math.ceil(filteredCourses.length / coursesPerPage), currentPage + 1))}
+              disabled={currentPage === Math.ceil(filteredCourses.length / coursesPerPage)}
+              className={`px-2 py-2 md:px-3 md:py-2 rounded-md text-sm ${
+                currentPage === Math.ceil(filteredCourses.length / coursesPerPage)
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              →
+            </button>
+          </div>
         </div>
       )}
     </div>

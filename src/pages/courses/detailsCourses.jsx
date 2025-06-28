@@ -614,17 +614,30 @@ const CourseDetails = () => {
   const getCoursePdfUrls = () => {
     if (!course.coursePdfUrl) return [];
     
-    // If it's a string, try to parse it as JSON or split by comma
+    // If it's a string, try to parse it as JSON
     if (typeof course.coursePdfUrl === 'string') {
       try {
-        // Try to parse as JSON first
-        const parsed = JSON.parse(course.coursePdfUrl);
-        return Array.isArray(parsed) ? parsed : [course.coursePdfUrl];
-      } catch {
-        // If not JSON, split by comma or treat as single URL
-        return course.coursePdfUrl.includes(',') 
-          ? course.coursePdfUrl.split(',').map(url => url.trim())
-          : [course.coursePdfUrl];
+        // Handle the JSON string format with escaped quotes
+        let cleanString = course.coursePdfUrl;
+        
+        // Remove outer quotes if they exist
+        if (cleanString.startsWith('"') && cleanString.endsWith('"')) {
+          cleanString = cleanString.slice(1, -1);
+        }
+        
+        // Parse the JSON array
+        const parsed = JSON.parse(cleanString);
+        
+        // Return the array of URLs
+        if (Array.isArray(parsed)) {
+          return parsed;
+        } else {
+          return [course.coursePdfUrl];
+        }
+      } catch (error) {
+        console.log('Error parsing PDF URLs:', error);
+        // If parsing fails, treat as single URL
+        return [course.coursePdfUrl];
       }
     }
     
