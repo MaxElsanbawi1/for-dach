@@ -9,6 +9,7 @@ import Layout from './components/Layout';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import NotFound from './notFound';
 import Login from './login';
+import Unauthorized from './unauthorized';
 import Registrations from './pages/registrations/registrations';
 import Dashboard from './pages/dashoard';
 import Notifications from './pages/notifications/notifications';
@@ -41,6 +42,10 @@ import Trainer1 from './pages/users/allcorcrsestrainer';
 import OurPartnersImageUpload from './pages/clients&Our partners/Our partners';
 import ClientsImageUpload from './pages/clients&Our partners/clients';
 import OffersImageUpload from './pages/offers/Offers';
+import CoursesPartner from './pages/courses/courcesPartner';
+import CourseDetailsPartner from './pages/courses/detailsCoursesPartner';
+import EditCourses from './pages/courses/editCourse';
+import EditCoursesPartner from './pages/courses/editCoursesPartner';
 
 
 export default function App() {
@@ -49,6 +54,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="login" element={<Login />} />
+          <Route path="unauthorized" element={<Unauthorized />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
             <Route index element={<RoleBasedRedirect />} />
@@ -66,7 +72,9 @@ export default function App() {
               <Route path="/courses/addSame" element={<AddCoursesSame />} />
               <Route path="/courses/all" element={<AllCourses />} />
               <Route path="/courses/:courseId/details" element={<CourseDetails />} />
-              <Route path="/courses/:courseId/edit" element={<EditCourse />} />
+              <Route path="/courses/:courseId/detailsPartner" element={<CourseDetailsPartner />} />
+              <Route path="/courses/:courseId/edit" element={<EditCourses />} />
+              <Route path="/courses/:courseId/editPartner" element={<EditCoursesPartner />} />
               <Route path="ClientImageUpload" element={<ClientsImageUpload />} />
               <Route path="OurPartnersImageUpload" element={<OurPartnersImageUpload />} />
               <Route path="OffersImageUpload" element={<OffersImageUpload />} />
@@ -74,7 +82,8 @@ export default function App() {
               <Route path="/courses/categories" element={<AllCategories />} />
               <Route path="/courses/categories/add" element={<AddCategories />} />
               <Route path="/courses/categories/:categoryId/details" element={<DetailsCategories />} />
-
+              <Route path="CoursesPartner" element={<CoursesPartner />} />
+              
               <Route path="/students" element={<Dashboard />} />
 
               <Route path="/students/add" element={<AddStudents />} />

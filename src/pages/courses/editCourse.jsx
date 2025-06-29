@@ -5,7 +5,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../AuthContext';
 
-const AddCourses = () => {
+const EditCourses = () => {
   const navigate = useNavigate();
   const { courseId } = useParams();
   const { user } = useAuth();
@@ -629,4 +629,4 @@ const AddCourses = () => {
   );
 };
 
-export default AddCourses;
+export default EditCourses;

@@ -8,7 +8,6 @@ import { useAuth } from '../../AuthContext';
 const AddCourses = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-
   // State for form fields
   const [courseName, setCourseName] = useState('');
   const [description, setDescription] = useState('');
@@ -23,6 +22,8 @@ const AddCourses = () => {
   const [lessonsTime, setLessonsTime] = useState('');
   const [instructorID, setInstructorID] = useState('');
   const [instructorName, setInstructorName] = useState('');
+  const [CoursePartner, setCoursePartner] = useState('');
+  const [isPartnerCourse, setIsPartnerCourse] = useState(false);
   const [error, setError] = useState('');
   const [pdfFiles, setPdfFiles] = useState([null]); // Array of PDF files
 
@@ -40,7 +41,7 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/categories", {
+        const response = await fetch("http://localhost:3000/api/categories", {
           method: "GET",
           redirect: "follow",
         });
@@ -64,7 +65,7 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/users", {
+        const response = await fetch("http://localhost:3000/api/users", {
           method: "GET",
           redirect: "follow",
         });
@@ -137,6 +138,8 @@ const AddCourses = () => {
     setPrice('');
     setCourseType('OnSite');
     setCourseLink('');
+    setCoursePartner('');
+    setIsPartnerCourse(false);
     setCategoryID('');
     setStartingTime('');
     setEndingTime('');
@@ -181,6 +184,7 @@ const AddCourses = () => {
     formData.append("LessonsTime", formattedLessonsTime);
     formData.append("InstructorID", instructorID);
     formData.append("InstructorName", instructorName);
+    formData.append("CoursePartner", CoursePartner);
     
     if (courseLink) {
       formData.append("CourseLink", courseLink);
@@ -196,7 +200,7 @@ const AddCourses = () => {
     };
     
     try {
-      const response = await fetch("https://backend.camels.center/api/courses", requestOptions);
+      const response = await fetch("http://localhost:3000/api/courses", requestOptions);
       const result = await response.json();
       
       if (response.ok) {
@@ -548,6 +552,40 @@ const AddCourses = () => {
               ))}
             </select>
           </div>
+
+          {/* Partner Course Option */}
+          <div className="mb-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isPartnerCourse"
+                checked={isPartnerCourse}
+                onChange={(e) => setIsPartnerCourse(e.target.checked)}
+                className="h-4 w-4 text-secondary focus:ring-secondary border-gray-300 rounded"
+              />
+              <label htmlFor="isPartnerCourse" className="mr-2 block text-sm font-medium text-primary">
+                هل هذه دورة شريك؟
+              </label>
+            </div>
+          </div>
+
+          {/* Course Partner Field - Only show when isPartnerCourse is true */}
+          {isPartnerCourse && (
+            <div className="mb-4">
+              <label htmlFor="coursePartner" className="block text-sm font-medium text-primary mb-1">
+                اسم الشريك
+              </label>
+              <input
+                type="text"
+                id="coursePartner"
+                value={CoursePartner}
+                onChange={(e) => setCoursePartner(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                placeholder="أدخل اسم الشريك"
+                required={isPartnerCourse}
+              />
+            </div>
+          )}
 
           {/* Submit Button */}
           <button

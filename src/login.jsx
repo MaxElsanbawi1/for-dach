@@ -42,11 +42,12 @@ const Login = () => {
     };
 
     try {
-      const response = await fetch("https://backend.camels.center/api/auth/login", requestOptions);
+      const response = await fetch("http://localhost:3000/api/auth/login", requestOptions);
       const result = await response.json();
-
+      console.log(result)
       if (response.ok) {
-        login(result.token, result.role, result.user_id, result.name, result.branch_id);
+        login(result.token, result.role, result.user_id, result.name, result.branch_id, result.companyName);
+        window.localStorage.setItem("companyName", result.companyName)
         toast.success('تم تسجيل الدخول بنجاح!', {
           position: 'top-left',
           autoClose: 3000,
@@ -55,7 +56,11 @@ const Login = () => {
           pauseOnHover: true,
           draggable: true,
         });
-        if (result.role === 'admin') {
+        
+        // Redirect based on user role
+        if (result.role === 'partner') {
+          navigate('/CoursesPartner');
+        } else if (result.role === 'admin') {
           navigate('/');
         } else {
           navigate('/');

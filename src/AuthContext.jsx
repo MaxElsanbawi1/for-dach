@@ -42,19 +42,22 @@ export const AuthProvider = ({ children }) => {
     const role = getLocalStorageItem("role");
     const user_id = getLocalStorageItem("user_id");
     const name = getLocalStorageItem("name");
+    const companyName = getLocalStorageItem("companyName");
+
 
     if (token && role && user_id) {
-      setUser({ token, role, user_id, name });
+      setUser({ token, role, user_id, name,companyName });
     }
     setLoading(false);
   }, []);
 
-  const login = (token, role, user_id, name) => {
+  const login = (token, role, user_id, name, companyName) => {
     setLocalStorageItem("token", token);
     setLocalStorageItem("role", role);
     setLocalStorageItem("user_id", user_id);
     setLocalStorageItem("name", name);
-    setUser({ token, role, user_id, name });
+    setLocalStorageItem("companyName", companyName);
+    setUser({ token, role, user_id, name,companyName });
   };
 
   const logout = () => {
@@ -62,6 +65,7 @@ export const AuthProvider = ({ children }) => {
     removeLocalStorageItem("role");
     removeLocalStorageItem("user_id");
     removeLocalStorageItem("name");
+    removeLocalStorageItem("companyName");
     setUser(null);
   };
 

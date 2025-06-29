@@ -79,6 +79,11 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
     { icon: Map, text: 'فرع سيدي بشر', href: '/sidibishr'},
     { icon: Settings, text: 'الإعدادات', subItems: [{ text: 'تسجيل الخروج', onClick: () => handleLogout() }] },
   ];
+  const partnerMenu = [
+    { icon: Home, text: ' الدورات', href: 'CoursesPartner' },
+
+    { icon: Settings, text: 'الإعدادات', subItems: [{ text: 'تسجيل الخروج', onClick: () => handleLogout() }] },
+  ];
 
   const adminMenu = [
     { icon: Home, text: 'لوحة التحكم', href: '/' },
@@ -133,6 +138,7 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
       case 'casher': return cashierMenu;
       case 'inventorymanager': return inventorymanagerMenuCamp;
       case 'trainer': return trainerMenu;
+      case 'partner': return partnerMenu;
       default: return [];
     }
   };
@@ -199,7 +205,8 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
     localStorage.setItem('lastSeenNotifications', totalPending.toString());
     navigate("/notifications");
   };
-  return (
+
+return (
     <div className="flex h-screen bg-gray-100 overflow-hidden" dir="rtl">
       {/* Sidebar */}
       <aside
@@ -223,7 +230,6 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
             {isSidebarMinimized ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
           </button>
         </div>
-
         {/* Sidebar Menu */}
         <nav className="flex-1 overflow-y-auto">
           {getMenu().map((item, index) => (
@@ -303,7 +309,8 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
             <h2 className="mr-5">مرحبا {user.name} - {user.role}</h2>
           </div>
           <div className="flex items-center space-x-4">
-          <button 
+          {user.role !== 'partner' && (
+            <button 
               className="p-2 rounded-md hover:bg-gray-100 relative"
               onClick={handleNotificationClick}
             >
@@ -314,6 +321,7 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
                 </span>
               )}
             </button>
+          )}
             <div className="relative">
               <button onClick={toggleUserDropdown} className="flex items-center p-2 rounded-md hover:bg-gray-100">
                 <User size={24} />
@@ -348,17 +356,19 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <img src="/abad-icon.png" alt="Radwa Icon" className="w-10" />
-            <button 
-              className="p-2 rounded-md hover:bg-gray-100 relative"
-              onClick={handleNotificationClick}
-            >
-              <Bell size={24} />
-              {unseenCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {unseenCount}
-                </span>
-              )}
-            </button>
+            {user.role !== 'partner' && (
+              <button 
+                className="p-2 rounded-md hover:bg-gray-100 relative"
+                onClick={handleNotificationClick}
+              >
+                <Bell size={24} />
+                {unseenCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unseenCount}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </header>
 
@@ -369,6 +379,7 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
       </div>
     </div>
   );
+
 };
 
 export default Layout;

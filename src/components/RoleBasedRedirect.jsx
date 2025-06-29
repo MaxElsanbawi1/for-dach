@@ -6,6 +6,7 @@ const roleFirstPages = {
   inventorymanager: '/',
   cashier: '/',
   admin: '/dashboard',
+  partner: '/CoursesPartner',
 };
 
 const RoleBasedRedirect = () => {

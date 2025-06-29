@@ -17,14 +17,15 @@ const AddStudents = () => {
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [role, setRole] = useState(''); // Default role is Student
+  const [companyName ,setCompanyName] = useState('');
   const [error, setError] = useState('');
-
   // Role options
   const roleOptions = [
     { value: 'Student', label: 'طالب' },
     { value: 'manager', label: 'مدير' },
     { value: 'Admin', label: 'مسؤل'   },
     { value: 'trainer', label: 'مدرب'   },
+    { value: 'partner', label: 'شريك'   },
     // Add more roles as needed
   ];
 
@@ -46,6 +47,7 @@ const AddStudents = () => {
       Email: email,
       PhoneNumber: phoneNumber,
       Role: role,
+      CompanyName:companyName,
     });
 
     const requestOptions = {
@@ -56,7 +58,7 @@ const AddStudents = () => {
     };
 
     try {
-      const response = await fetch("https://backend.camels.center/api/users", requestOptions);
+      const response = await fetch("http://localhost:3000/api/users", requestOptions);
       const result = await response.json();
 
       if (response.ok) {
@@ -70,6 +72,7 @@ const AddStudents = () => {
         setEmail('');
         setPhoneNumber('');
         setRole('Student'); // Reset to default role
+        setCompanyName('');
         setError('');
       } else {
         setError(result.message || 'فشل في إضافة المستخدم');
@@ -81,7 +84,6 @@ const AddStudents = () => {
       toast.error('حدث خطأ أثناء إضافة المستخدم');
     }
   };
-
   return (
     <>
       <div className="bg-white rounded-lg shadow p-6">
@@ -214,6 +216,7 @@ const AddStudents = () => {
             />
           </div>
 
+
           {/* Role Field */}
           <div className="mb-4">
             <label htmlFor="role" className="block text-sm font-medium text-primary mb-1">
@@ -234,6 +237,23 @@ const AddStudents = () => {
             </select>
           </div>
 
+          {/* Company Name Field - Only show when role is partner */}
+          {role === 'partner' && (
+            <div className="mb-4">
+              <label htmlFor="companyName" className="block text-sm font-medium text-primary mb-1">
+                اسم الشركة
+              </label>
+              <input
+                type="text"
+                id="companyName"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                placeholder="أدخل اسم الشركة"
+                required
+              />
+            </div>
+          )}
           {/* Submit Button */}
           <button
             type="submit"
