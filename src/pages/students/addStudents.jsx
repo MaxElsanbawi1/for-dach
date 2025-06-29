@@ -47,7 +47,7 @@ const AddStudents = () => {
       Email: email,
       PhoneNumber: phoneNumber,
       Role: role,
-      CompanyName:companyName,
+      companyName:companyName,
     });
 
     const requestOptions = {
@@ -244,6 +244,7 @@ const AddStudents = () => {
                 اسم الشركة
               </label>
               <input
+              name='companyName'
                 type="text"
                 id="companyName"
                 value={companyName}
