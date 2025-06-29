@@ -81,7 +81,6 @@ const CourseDetails = () => {
 
         const courseResult = await courseResponse.json();
         setCourse(courseResult);
-
         // Fetch registrations - this won't throw an error if response is not OK
         const registrationsResponse = await fetch(
           `https://backend.camels.center/api/registrations/course/${courseId}`,
