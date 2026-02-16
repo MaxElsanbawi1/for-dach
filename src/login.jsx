@@ -42,7 +42,7 @@ const Login = () => {
     };
 
     try {
-      const response = await fetch("https://backend.camels.center/api/auth/login", requestOptions);
+      const response = await fetch("https://back.businessonuae.com/api/auth/login", requestOptions);
       const result = await response.json();
       console.log(result)
       if (response.ok) {
