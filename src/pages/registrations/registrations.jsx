@@ -18,7 +18,7 @@ const Registrations = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/registrations");
+        const response = await fetch("https://back.businessonuae.com/api/registrations");
         const result = await response.json();
         setRegistrations(result);
 

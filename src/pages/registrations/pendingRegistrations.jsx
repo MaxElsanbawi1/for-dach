@@ -26,7 +26,7 @@ const PendingRegistrations = () => {
         if (!user) return;
         
         setLoading(true);
-        const response = await fetch('https://backend.camels.center/api/registrations');
+        const response = await fetch('https://back.businessonuae.com/api/registrations');
         
         if (!response.ok) {
           throw new Error('Failed to fetch registrations');

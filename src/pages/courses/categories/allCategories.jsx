@@ -26,7 +26,7 @@ const AllCategories = () => {
           redirect: 'follow',
         };
 
-        const response = await fetch('https://backend.camels.center/api/categories', requestOptions);
+        const response = await fetch('https://back.businessonuae.com/api/categories', requestOptions);
         const data = await response.json();
         setCategories(data);
       } catch (error) {

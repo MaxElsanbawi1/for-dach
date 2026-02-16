@@ -50,7 +50,7 @@ const AddCategories = () => {
     };
   
     try {
-      const response = await fetch("https://backend.camels.center/api/categories", requestOptions);
+      const response = await fetch("https://back.businessonuae.com/api/categories", requestOptions);
       const result = await response.json();
   
       if (response.ok) {

@@ -58,7 +58,7 @@ const AddStudents = () => {
     };
 
     try {
-      const response = await fetch("https://backend.camels.center/api/users", requestOptions);
+      const response = await fetch("https://back.businessonuae.com/api/users", requestOptions);
       const result = await response.json();
 
       if (response.ok) {

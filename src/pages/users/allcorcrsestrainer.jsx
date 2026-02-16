@@ -31,7 +31,7 @@ const Trainer1 = () => {
 
       try {
         const response = await fetch(
-          "https://backend.camels.center/api/profile",
+          "https://back.businessonuae.com/api/profile",
           requestOptions
         );
 

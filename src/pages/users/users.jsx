@@ -26,7 +26,7 @@ const UsersDashboards = () => {
           redirect: 'follow',
         };
 
-        const response = await fetch('https://backend.camels.center/api/users', requestOptions);
+        const response = await fetch('https://back.businessonuae.com/api/users', requestOptions);
         const data = await response.json();
         // Filter users to include only students
         const students = data.filter((user) => user.Role != 'student');

@@ -19,7 +19,7 @@ const DetailsRegistrations = () => {
 
       try {
         const response = await fetch(
-          `https://backend.camels.center/api/registrations/${registrationId}`,
+          `https://back.businessonuae.com/api/registrations/${registrationId}`,
           requestOptions
         );
 

@@ -176,7 +176,7 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
 
     const fetchNotifications = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/registrations");
+        const response = await fetch("https://back.businessonuae.com/api/registrations");
         if (!response.ok) throw new Error('Network error');
         const data = await response.json();
         

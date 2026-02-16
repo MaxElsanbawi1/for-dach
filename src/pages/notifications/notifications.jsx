@@ -23,7 +23,7 @@ const RegistrationsPage = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch("https://backend.camels.center/api/registrations", {
+      const response = await fetch("https://back.businessonuae.com/api/registrations", {
         method: "GET",
         redirect: "follow"
       });

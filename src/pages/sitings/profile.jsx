@@ -30,7 +30,7 @@ const ProfilePage = () => {
 
       try {
         const response = await fetch(
-          "https://backend.camels.center/api/auth/profile",
+          "https://back.businessonuae.com/api/auth/profile",
           requestOptions
         );
 

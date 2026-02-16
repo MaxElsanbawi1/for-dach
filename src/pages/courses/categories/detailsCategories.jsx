@@ -13,7 +13,7 @@ const DetailsCategories = () => {
   useEffect(() => {
     const fetchCategoryDetails = async () => {
       try {
-        const response = await fetch(`https://backend.camels.center/api/categories/${categoryId}`, {
+        const response = await fetch(`https://back.businessonuae.com/api/categories/${categoryId}`, {
           method: 'GET',
           redirect: 'follow',
         });
