@@ -31,7 +31,7 @@ const Login = () => {
 
     const raw = JSON.stringify({
       "Username": username,
-      "Password": password
+      Password: password
     });
 
     const requestOptions = {
