@@ -18,6 +18,8 @@ const AddSameCourses = () => {
   const [courseType, setCourseType] = useState('OnSite');
   const [courseLink, setCourseLink] = useState('');
   const [categoryID, setCategoryID] = useState('');
+  const [courseDays, setCourseDays] = useState('weekdays');
+  const [coursesRoom, setcoursesRoom] = useState('');
   const [startingTime, setStartingTime] = useState('');
   const [endingTime, setEndingTime] = useState('');
   const [lessonsStartTime, setLessonsStartTime] = useState('');
@@ -39,13 +41,13 @@ const AddSameCourses = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await fetch("https://backend.camels.center/api/categories");
+        const categoriesResponse = await fetch("http://localhost:3000/api/categories");
         if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
         const categoriesData = await categoriesResponse.json();
         setCategories(categoriesData);
 
         // Fetch trainers
-        const trainersResponse = await fetch("https://backend.camels.center/api/users");
+        const trainersResponse = await fetch("http://localhost:3000/api/users");
         if (!trainersResponse.ok) throw new Error('Failed to fetch trainers');
         const trainersData = await trainersResponse.json();
         setTrainers(trainersData.filter(user => user.Role === 'trainer'));
@@ -61,7 +63,7 @@ const AddSameCourses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/courses");
+        const response = await fetch("http://localhost:3000/api/courses");
         if (response.ok) {
           const data = await response.json();
           setCourses(data);
@@ -131,13 +133,15 @@ const AddSameCourses = () => {
     formData.append('StartingTime', startingTime);
     formData.append('EndingTime', endingTime);
     formData.append('LessonsTime', lessonsTime);
+    formData.append("CourseDays", courseDays);
     formData.append('InstructorID', instructorID);
+    formData.append('coursesRoom', coursesRoom);
     if (courseImage) {
       formData.append('CourseImage', courseImage);
     }
 
     try {
-      const response = await fetch("https://backend.camels.center/api/courses/by-name", {
+      const response = await fetch("http://localhost:3000/api/courses/by-name", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${user.token}`
@@ -156,7 +160,9 @@ const AddSameCourses = () => {
         setCourseType('OnSite');
         setCourseLink('');
         setCategoryID('');
+        setcoursesRoom('');
         setStartingTime('');
+        setCourseDays('weekdays');
         setEndingTime('');
         setLessonsStartTime('');
         setLessonsEndTime('');
@@ -362,7 +368,21 @@ const AddSameCourses = () => {
             </div>
           </div>
         </div>
-
+        <div className="mb-4">
+            <label htmlFor="CourseDays" className="block text-sm font-medium text-primary mb-1">
+              نوع الدورة
+            </label>
+            <select
+              id="CourseDays"
+              value={courseDays}
+              onChange={(e) => setCourseDays(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              required
+            >
+              <option value="weekdays">weekdays</option>
+              <option value="weekends">weekends </option>
+            </select>
+          </div>
         {/* Instructor */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-primary mb-1">المدرب</label>
@@ -382,6 +402,19 @@ const AddSameCourses = () => {
         </div>
 
 
+        <div className="mb-4">
+            <label htmlFor="coursesRoom" className="block text-sm font-medium text-primary mb-1">
+            رقم الفصل 
+            </label>
+            <textarea
+              id="coursesRoom"
+              value={coursesRoom}
+              onChange={(e) => setcoursesRoom(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              placeholder=" رقم الفصل   "
+              required
+            />
+          </div>
 
         {/* Submit Button */}
         <button

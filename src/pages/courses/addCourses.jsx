@@ -15,8 +15,10 @@ const AddCourses = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [price, setPrice] = useState('');
   const [courseType, setCourseType] = useState('OnSite');
+  const [courseDays, setCourseDays] = useState('weekdays');
   const [courseLink, setCourseLink] = useState('');
   const [categoryID, setCategoryID] = useState('');
+  const [coursesRoom, setcoursesRoom] = useState('');
   const [startingTime, setStartingTime] = useState('');
   const [endingTime, setEndingTime] = useState('');
   const [lessonsTime, setLessonsTime] = useState('');
@@ -26,6 +28,7 @@ const AddCourses = () => {
   const [isPartnerCourse, setIsPartnerCourse] = useState(false);
   const [error, setError] = useState('');
   const [pdfFiles, setPdfFiles] = useState([null]); // Array of PDF files
+  const [specialPdf, setSpecialPdfs] = useState([null]); // Array of PDF files
 
   // State for categories
   const [categories, setCategories] = useState([]);
@@ -41,7 +44,7 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/categories", {
+        const response = await fetch("http://localhost:3000/api/categories", {
           method: "GET",
           redirect: "follow",
         });
@@ -65,7 +68,7 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("https://backend.camels.center/api/users", {
+        const response = await fetch("http://localhost:3000/api/users", {
           method: "GET",
           redirect: "follow",
         });
@@ -103,6 +106,13 @@ const AddCourses = () => {
       return updated;
     });
   };
+  const handlePdfFileChanges = (idx1, file) => {
+    setSpecialPdfs(prev => {
+      const updated = [...prev];
+      updated[idx1] = file;
+      return updated;
+    });
+  };
 
   // Add more PDF file input fields
   const handleAddMorePdfInput = () => {
@@ -135,12 +145,15 @@ const AddCourses = () => {
     setCourseImage(null);
     setImagePreview('');
     setPdfFiles([null]);
+    setSpecialPdfs([null]);
     setPrice('');
     setCourseType('OnSite');
+    setCourseDays('weekdays');
     setCourseLink('');
     setCoursePartner('');
     setIsPartnerCourse(false);
     setCategoryID('');
+    setcoursesRoom('');
     setStartingTime('');
     setEndingTime('');
     setLessonsTime('');
@@ -172,13 +185,19 @@ const AddCourses = () => {
     validPdfFiles.forEach((file, idx) => {
       formData.append("pdfFile", file);
     });
+    const validPdfFilesspecialPdf = pdfFiles.filter(f => f);
+    validPdfFilesspecialPdf.forEach((file, idx) => {
+      formData.append("specialPdf", file);
+    });
     
     // Append other form data
     formData.append("CourseName", courseName);
     formData.append("Description", description);
     formData.append("Price", price);
     formData.append("CourseType", courseType);
+    formData.append("CourseDays", courseDays);
     formData.append("CategoryID", categoryID);
+    formData.append("coursesRoom", coursesRoom);
     formData.append("StartingTime", new Date(startingTime).toISOString());
     formData.append("EndingTime", new Date(endingTime).toISOString());
     formData.append("LessonsTime", formattedLessonsTime);
@@ -200,7 +219,7 @@ const AddCourses = () => {
     };
     
     try {
-      const response = await fetch("https://backend.camels.center/api/courses", requestOptions);
+      const response = await fetch("http://localhost:3000/api/courses", requestOptions);
       const result = await response.json();
       
       if (response.ok) {
@@ -395,6 +414,49 @@ const AddCourses = () => {
             </div>
           </div>
 
+          {/* PDF خاص  Files Field */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-primary mb-1">
+              ملفات PDF all للدورة (اختياري)
+            </label>
+            <div className="space-y-4">
+              {specialPdf.map((file, idx1) => (
+                <div key={idx1} className="relative mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  {/* X button to remove this input */}
+
+                  <div className="space-y-1 text-center">
+                    <UploadCloud
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      stroke="currentColor"
+                    />
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor={`specialPdf-${idx1}`}
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-secondary hover:text-primary focus-within:outline-none"
+                      >
+                        <span>اختر ملف PDF</span>
+                        <input
+                          id={`specialPdf-${idx1}`}
+                          name={`specialPdf-${idx1}`}
+                          type="file"
+                          className="sr-only"
+                          accept="application/pdf"
+                          onChange={e => handlePdfFileChanges(idx1, e.target.files[0])}
+                        />
+                      </label>
+                      <p className="pr-1">أو قم بسحب وإفلات</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PDF حتى 10MB</p>
+                    {file && (
+                      <p className="text-xs text-green-600">تم اختيار: {file.name}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+            </div>
+          </div>
+
           {/* Price Field */}
           <div className="mb-4">
             <label htmlFor="price" className="block text-sm font-medium text-primary mb-1">
@@ -428,6 +490,7 @@ const AddCourses = () => {
             </select>
           </div>
 
+
           {/* Course Link Field (only shown for online courses) */}
           {courseType === 'Online' && (
             <div className="mb-4">
@@ -445,7 +508,21 @@ const AddCourses = () => {
               />
             </div>
           )}
-
+          <div className="mb-4">
+            <label htmlFor="CourseDays" className="block text-sm font-medium text-primary mb-1">
+              نوع الدورة
+            </label>
+            <select
+              id="CourseDays"
+              value={courseDays}
+              onChange={(e) => setCourseDays(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              required
+            >
+              <option value="weekdays">weekdays</option>
+              <option value="weekends">weekends </option>
+            </select>
+          </div>
           {/* Category ID Field */}
           <div className="mb-4">
             <label htmlFor="categoryID" className="block text-sm font-medium text-primary mb-1">
@@ -551,6 +628,22 @@ const AddCourses = () => {
                 </option>
               ))}
             </select>
+          </div>
+           
+
+
+          <div className="mb-4">
+            <label htmlFor="coursesRoom" className="block text-sm font-medium text-primary mb-1">
+            رقم الفصل 
+            </label>
+            <textarea
+              id="coursesRoom"
+              value={coursesRoom}
+              onChange={(e) => setcoursesRoom(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              placeholder=" رقم الفصل   "
+              required
+            />
           </div>
 
           {/* Partner Course Option */}

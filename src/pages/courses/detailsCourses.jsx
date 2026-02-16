@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Printer, Search, Download, Edit } from "lucide-react";
+import { Printer, Search, Download, Edit, CalendarCheck  } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import html2canvas from 'html2canvas';
@@ -68,7 +68,7 @@ const CourseDetails = () => {
 
         // Fetch course details
         const courseResponse = await fetch(
-          `https://backend.camels.center/api/courses/${courseId}`,
+          `http://localhost:3000/api/courses/${courseId}`,
           {
             method: "GET",
             redirect: "follow",
@@ -83,7 +83,7 @@ const CourseDetails = () => {
         setCourse(courseResult);
         // Fetch registrations - this won't throw an error if response is not OK
         const registrationsResponse = await fetch(
-          `https://backend.camels.center/api/registrations/course/${courseId}`,
+          `http://localhost:3000/api/registrations/course/${courseId}`,
           {
             method: "GET",
             redirect: "follow",
@@ -138,7 +138,7 @@ const CourseDetails = () => {
   //   const fetchCoursePdfs = async () => {
   //     try {
   //       setPdfsLoading(true);
-  //       const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, {
+  //       const response = await fetch(`http://localhost:3000/api/courses/${courseId}/pdfs`, {
   //         method: "GET",
   //       });
   //       if (response.ok) {
@@ -161,7 +161,7 @@ const CourseDetails = () => {
   //   const fetchCourseFiles = async () => {
   //     try {
   //       setFilesLoading(true);
-  //       const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, {
+  //       const response = await fetch(`http://localhost:3000/api/courses/${courseId}/pdfs`, {
   //         method: "GET",
   //         redirect: "follow"
   //       });
@@ -224,7 +224,7 @@ const CourseDetails = () => {
 
       // API call
       const response = await fetch(
-        `https://backend.camels.center/api/registrations/${registrationId}`,
+        `http://localhost:3000/api/registrations/${registrationId}`,
         {
           method: "PUT",
           headers: {
@@ -249,144 +249,22 @@ const CourseDetails = () => {
   };
 
   // Generate Invoice PDF
- const generateInvoice = async (registration) => {
-  try {
-    // Import jsPDF dynamically to avoid SSR issues
-    const { jsPDF } = await import('jspdf');
-    
-    const invoiceDate = new Date().toLocaleDateString('ar-EG');
-    const invoiceNumber = `INV-${registration.RegistrationID}-${Date.now()}`;
+ const generateInvoice = (registration) => {
+  // Collect all the data you want to send
+  const invoiceData = {
+    // Example fields, add all you need
+    courseName: course.CourseName,
+    coursesdays:course.StartingTime,
+    coursePrice: course.Price,
+    studentName: registration.FullName,
+    email: registration.Email,
+    phone: registration.PhoneNumber,
+    registrationId :registration.RegistrationID,
+    registrationNationalId :registration.NationalId,
+    // ...add more fields as needed
+  };
 
-    // Create a temporary div for the invoice
-    const invoiceDiv = document.createElement('div');
-    invoiceDiv.style.position = 'absolute';
-    invoiceDiv.style.left = '-9999px';
-    invoiceDiv.style.width = '800px';
-    invoiceDiv.style.padding = '20px';
-    invoiceDiv.style.fontFamily = "'Tajawal', sans-serif";
-    invoiceDiv.dir = 'rtl';
-    
-    invoiceDiv.innerHTML = `
-      <div style="max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);">
-        <!-- Header -->
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
-          <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">
-            ${course?.InstructorName || "مركز التدريب"}
-          </div>
-          <div style="text-align: left;">
-            <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #2c3e50;">فاتورة تدريب</div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <span style="font-weight: bold; width: 150px;">رقم الفاتورة:</span>
-              <span style="flex-grow: 1; text-align: left;">${invoiceNumber}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <span style="font-weight: bold; width: 150px;">التاريخ:</span>
-              <span style="flex-grow: 1; text-align: left;">${invoiceDate}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Student Info -->
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">معلومات المتدرب</div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span style="font-weight: bold; width: 150px;">الاسم:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.FullName}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span style="font-weight: bold; width: 150px;">رقم الهوية:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.NationalId || 'غير متوفر'}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span style="font-weight: bold; width: 150px;">البريد الإلكتروني:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.Email}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span style="font-weight: bold; width: 150px;">رقم الهاتف:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.PhoneNumber}</span>
-          </div>
-        </div>
-        
-        <!-- Course Details -->
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">تفاصيل الدورة</div>
-          <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-            <thead>
-              <tr>
-                <th style="background-color: #f5f5f5; padding: 8px; text-align: right; border: 1px solid #ddd;">الوصف</th>
-                <th style="background-color: #f5f5f5; padding: 8px; text-align: right; border: 1px solid #ddd;">المبلغ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${course?.CourseName || 'دورة تدريبية'}</td>
-                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${course?.Price || '0'} ر.س</td>
-              </tr>
-            </tbody>
-          </table>
-          <div style="font-size: 18px; font-weight: bold; margin-top: 20px; text-align: left;">المبلغ الإجمالي: ${course?.Price || '0'} ر.س</div>
-        </div>
-        
-        <!-- Footer -->
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #777;">
-          <p>شكراً لاختياركم ${course?.InstructorName || "مركز التدريب"}</p>
-          <p>للاستفسارات: ${course?.InstructorPhoneNumber || "0000000000"} | ${course?.InstructorEmail || "info@example.com"}</p>
-        </div>
-      </div>
-    `;
-
-    // Add to document
-    document.body.appendChild(invoiceDiv);
-
-    // Load Tajawal font
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
-
-    // Wait for font to load
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Convert to canvas
-    const canvas = await html2canvas(invoiceDiv, {
-      scale: 2,
-      logging: false,
-      useCORS: true,
-      allowTaint: true,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: invoiceDiv.scrollWidth,
-      windowHeight: invoiceDiv.scrollHeight
-    });
-
-    // Create PDF
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    // Calculate image dimensions to fit A4
-    const imgData = canvas.toDataURL('image/png');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95;
-    const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = 10;
-
-    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-    pdf.save(`invoice_${invoiceNumber}.pdf`);
-
-    // Clean up
-    document.body.removeChild(invoiceDiv);
-    document.head.removeChild(fontLink);
-
-  } catch (error) {
-    console.error('Error generating invoice:', error);
-    toast.error('حدث خطأ أثناء إنشاء الفاتورة');
-  }
+  navigate('/students/invoice', { state: invoiceData });
 };
   // Filter registrations based on search query and status filter
   const filteredRegistrations = registrations.filter((registration) => {
@@ -450,9 +328,9 @@ const CourseDetails = () => {
         redirect: "follow",
       };
       const response = await fetch(
-        "https://backend.camels.center/api/registrations",
+        "http://localhost:3000/api/registrations",
         requestOptions
-      );
+      );      console.log(response);
       if (!response.ok) throw new Error("فشل التسجيل. حاول مرة أخرى.");
       toast.success("تم التسجيل بنجاح!", {
         position: "top-left",
@@ -477,7 +355,7 @@ const CourseDetails = () => {
       // Refresh registrations
       // Re-fetch course details (only registrations part)
       const registrationsResponse = await fetch(
-        `https://backend.camels.center/api/registrations/course/${courseId}`,
+        `http://localhost:3000/api/registrations/course/${courseId}`,
         { method: "GET", redirect: "follow" }
       );
       let registrationsResult = [];
@@ -530,7 +408,7 @@ const CourseDetails = () => {
   //       const filename = idx === 0 ? "postman-cloud:///1f05320b-5981-4ff0-9308-421f384716d4" : file.name;
   //       formdata.append("pdfFile", file, filename);
   //     });
-  //     const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, {
+  //     const response = await fetch(`http://localhost:3000/api/courses/${courseId}/pdfs`, {
   //       method: "POST",
   //       body: formdata,
   //       redirect: "follow"
@@ -540,7 +418,7 @@ const CourseDetails = () => {
   //     setPdfFiles([null]);
   //     e.target.reset();
   //     // Refresh list
-  //     const refresh = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, { method: "GET" });
+  //     const refresh = await fetch(`http://localhost:3000/api/courses/${courseId}/pdfs`, { method: "GET" });
   //     if (refresh.ok) {
   //       const result = await refresh.json();
   //       setCoursePdfs(Array.isArray(result) ? result : [result]);
@@ -594,11 +472,11 @@ const CourseDetails = () => {
   //       method: "DELETE",
   //       redirect: "follow"
   //     };
-  //     const response = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs/${encodeURIComponent(fileName)}`, requestOptions);
+  //     const response = await fetch(`http://localhost:3000/api/courses/${courseId}/pdfs/${encodeURIComponent(fileName)}`, requestOptions);
   //     if (!response.ok) throw new Error('فشل حذف الملف');
   //     toast.success('تم حذف الملف بنجاح');
   //     // Refresh list
-  //     const refresh = await fetch(`https://backend.camels.center/api/courses/${courseId}/pdfs`, { method: "GET" });
+  //     const refresh = await fetch(`http://localhost:3000/api/courses/${courseId}/pdfs`, { method: "GET" });
   //     if (refresh.ok) {
   //       const result = await refresh.json();
   //       setCourseFiles(result.files || []);
@@ -648,6 +526,32 @@ const CourseDetails = () => {
     return [];
   };
 
+  // Generate Course Schedule
+  const handleGenerateSchedule = async () => {
+    try {
+      // Default to Sunday-Thursday: [0,1,2,3,4]
+      const daysOfWeek = [0, 1, 2, 3, 4];
+      const response = await fetch(`http://localhost:3000/api/atendance/courses/${courseId}/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ daysOfWeek }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "فشل توليد الجدول");
+      toast.success("تم توليد الجدول بنجاح!\nعدد الأيام: " + result.totalDays, {
+        position: "top-left",
+        autoClose: 3000,
+        rtl: true,
+      });
+    } catch (error) {
+      toast.error(error.message || "حدث خطأ أثناء توليد الجدول", {
+        position: "top-left",
+        autoClose: 3000,
+        rtl: true,
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -674,6 +578,21 @@ const CourseDetails = () => {
           تفاصيل الدورة
         </h2>
         <div className="flex gap-2">
+          {/* Add the new Attendance button here */}
+          <button
+            onClick={() => {
+              navigate(`/courses/${courseId}/attendance`);
+              handleGenerateSchedule();
+            }}
+            className="flex items-center bg-purple-500 text-white py-2 px-3 md:px-4 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm md:text-base"
+          >
+            <CalendarCheck size={16} className="ml-1 md:ml-2" />
+            <span className="hidden sm:inline">سجل الحضور</span>
+            <span className="sm:hidden">الحضور</span>
+          </button>
+          {/* Generate Schedule Button */}
+
+          
           <button
             onClick={() => navigate(`/courses/${courseId}/edit`)}
             className="flex items-center bg-green-500 text-white py-2 px-3 md:px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm md:text-base"
@@ -682,6 +601,7 @@ const CourseDetails = () => {
             <span className="hidden sm:inline">تعديل الدورة</span>
             <span className="sm:hidden">تعديل</span>
           </button>
+          
           <button
             onClick={() => navigate(`/courses/${courseId}/print`)}
             className="flex items-center bg-blue-500 text-white py-2 px-3 md:px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
@@ -909,6 +829,8 @@ const CourseDetails = () => {
               </div>
             ) : null;
           })()}
+
+
 
           {/* Registrations Section */}
           <div className="mt-6 md:mt-8">

@@ -16,6 +16,7 @@
     "axios": "^1.7.9",
     "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.10.3",
     "jsbarcode": "^3.11.6",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",

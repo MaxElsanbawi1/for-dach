@@ -46,6 +46,8 @@ import CoursesPartner from './pages/courses/courcesPartner';
 import CourseDetailsPartner from './pages/courses/detailsCoursesPartner';
 import EditCourses from './pages/courses/editCourse';
 import EditCoursesPartner from './pages/courses/editCoursesPartner';
+import StudentInvoice from './pages/students/StudentInvoice';
+import CourseAttendance from './pages/courses/CourseAttendance';
 
 
 export default function App() {
@@ -78,6 +80,7 @@ export default function App() {
               <Route path="ClientImageUpload" element={<ClientsImageUpload />} />
               <Route path="OurPartnersImageUpload" element={<OurPartnersImageUpload />} />
               <Route path="OffersImageUpload" element={<OffersImageUpload />} />
+              <Route path="/courses/:courseId/attendance" element={<CourseAttendance />} />
 
               <Route path="/courses/categories" element={<AllCategories />} />
               <Route path="/courses/categories/add" element={<AddCategories />} />
@@ -91,6 +94,7 @@ export default function App() {
               <Route path="/students/Allblocked" element={<BlockedUsers />} />
               <Route path="/students/all" element={<AllStudents />} />
               <Route path="/students/:userId/details" element={<StudentsDetails />} />
+              <Route path="/students/invoice" element={<StudentInvoice />} />
 
               <Route path="/users" element={<UsersDashboards />} />
               <Route path="/users/add" element={<AddUsers />} />
