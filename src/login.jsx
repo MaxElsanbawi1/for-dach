@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 
 const Login = () => {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState();
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -31,7 +31,7 @@ const Login = () => {
 
     const raw = JSON.stringify({
       "Username": username,
-      Password: password
+      "Password": password
     });
 
     const requestOptions = {
