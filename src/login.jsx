@@ -5,8 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from './AuthContext';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -30,8 +30,8 @@ const Login = () => {
     myHeaders.append("Content-Type", "application/json");
 
     const raw = JSON.stringify({
-    Username: username,
-    Password: password,
+      Username: username.trim(),
+      Password: Number(password),
     });
 
     const requestOptions = {
@@ -43,8 +43,13 @@ const Login = () => {
 
     try {
       const response = await fetch("https://back.businessonuae.com/api/auth/login", requestOptions);
-      const result = await response.json();
-      console.log(result)
+      const text = await response.text();
+      let result;
+      try {
+        result = text ? JSON.parse(text) : {};
+      } catch {
+        result = { message: text || "خطأ في الخادم" };
+      }
       if (response.ok) {
         login(result.token, result.role, result.user_id, result.name, result.branch_id, result.companyName);
         window.localStorage.setItem("companyName", result.companyName)
@@ -66,7 +71,16 @@ const Login = () => {
           navigate('/');
         }
       } else {
-        toast.error('فشل تسجيل الدخول. يرجى التحقق من البيانات المدخلة.', {
+        const message =
+          result.message ||
+          result.error ||
+          result.error_description ||
+          (response.status === 401
+            ? 'اسم المستخدم أو كلمة المرور غير صحيحة.'
+            : response.status >= 500
+              ? 'خطأ في الخادم. يرجى المحاولة لاحقاً.'
+              : 'فشل تسجيل الدخول. يرجى التحقق من البيانات المدخلة.');
+        toast.error(message, {
           position: 'top-left',
           autoClose: 3000,
           hideProgressBar: false,
