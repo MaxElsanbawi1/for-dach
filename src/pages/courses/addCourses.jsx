@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserPlus, ArrowRight, UploadCloud } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -39,6 +39,12 @@ const AddCourses = () => {
   // State for lessons time
   const [lessonsStartTime, setLessonsStartTime] = useState('');
   const [lessonsEndTime, setLessonsEndTime] = useState('');
+
+  // ========== STATE FOR PREVIEW MODE ==========
+  const [previewMode, setPreviewMode] = useState(false); // false = edit, true = preview
+
+  // ========== REF FOR TEXTAREA ==========
+  const descriptionRef = useRef(null);
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -162,6 +168,7 @@ const AddCourses = () => {
     setInstructorID('');
     setInstructorName('');
     setError('');
+    setPreviewMode(false); // reset preview mode
   };
 
   // Handle form submission
@@ -248,6 +255,53 @@ const AddCourses = () => {
     }
   }, [instructorID, trainers]);
 
+  // ========== FUNCTIONS TO INSERT HTML TAGS ==========
+  const insertAtCursor = (text) => {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newDescription = description.substring(0, start) + text + description.substring(end);
+    setDescription(newDescription);
+
+    // Set cursor position after the inserted text
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + text.length, start + text.length);
+    }, 0);
+  };
+
+  const insertTag = (openTag, closeTag = '') => {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = description.substring(start, end);
+
+    let newText;
+    if (selectedText) {
+      // Wrap selected text with tags
+      newText = openTag + selectedText + closeTag;
+    } else {
+      // No selection, insert open and close tags with cursor in between
+      newText = openTag + closeTag;
+      setDescription(description.substring(0, start) + newText + description.substring(end));
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + openTag.length, start + openTag.length);
+      }, 0);
+      return;
+    }
+
+    setDescription(description.substring(0, start) + newText + description.substring(end));
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length);
+    }, 0);
+  };
+
   return (
     <>
       <div className="bg-white rounded-lg shadow p-6">
@@ -300,20 +354,87 @@ const AddCourses = () => {
             />
           </div>
 
-          {/* Description Field */}
+          {/* ========== MODIFIED DESCRIPTION FIELD WITH PREVIEW TOGGLE AND TOOLBAR ========== */}
           <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-primary mb-1">
-              وصف الدورة
-            </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="أدخل وصف الدورة"
-              required
-            />
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-primary">
+                وصف الدورة
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode(false)}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    !previewMode
+                      ? 'bg-secondary text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  تحرير
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode(true)}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    previewMode
+                      ? 'bg-secondary text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  معاينة
+                </button>
+              </div>
+            </div>
+
+            {!previewMode ? (
+              <>
+                {/* Toolbar for HTML tags */}
+                <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-100 rounded-md">
+                  <button
+                    type="button"
+                    onClick={() => insertAtCursor('<br />')}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+                  >
+                    &lt;br /&gt;
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertTag('<span class="text-primary">', '</span>')}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm text-[#140342] hover:bg-gray-50"
+                  >
+                    &lt;span class="text-primary"&gt;
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertTag('<span class="font-bold">', '</span>')}
+                    className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+                  >
+                    &lt;span class="font-bold"&gt;
+                  </button>
+                </div>
+                <textarea
+                  ref={descriptionRef}
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                  placeholder="أدخل وصف الدورة (يمكنك استخدام وسوم HTML)"
+                  rows={6}
+                  required
+                />
+              </>
+            ) : (
+              <div className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 min-h-[120px] prose prose-sm max-w-none">
+                {description ? (
+                  <div dangerouslySetInnerHTML={{ __html: description }} />
+                ) : (
+                  <p className="text-gray-400">لا يوجد محتوى للمعاينة</p>
+                )}
+              </div>
+            )}
+            <p className="text-xs text-gray-500 mt-1">يمكنك استخدام الأزرار أعلاه لإدراج وسوم HTML.</p>
           </div>
+          {/* ========== END OF MODIFIED DESCRIPTION FIELD ========== */}
 
           {/* Course Image Field */}
           <div className="mb-4">
@@ -490,7 +611,6 @@ const AddCourses = () => {
             </select>
           </div>
 
-
           {/* Course Link Field (only shown for online courses) */}
           {courseType === 'Online' && (
             <div className="mb-4">
@@ -630,7 +750,6 @@ const AddCourses = () => {
             </select>
           </div>
            
-
 
           <div className="mb-4">
             <label htmlFor="coursesRoom" className="block text-sm font-medium text-primary mb-1">
