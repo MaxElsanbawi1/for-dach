@@ -42,7 +42,11 @@ const Login = () => {
     };
 
     try {
-      const response = await fetch("/api/auth/login", requestOptions);
+      // Use relative path locally (to trigger Vite Proxy) and absolute path in production
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const apiUrl = isLocal ? "/api/auth/login" : "https://back.businessonuae.com/api/auth/login";
+
+      const response = await fetch(apiUrl, requestOptions);
       const text = await response.text();
       let result;
       try {
