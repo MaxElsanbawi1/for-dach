@@ -31,7 +31,7 @@ const Login = () => {
 
     const raw = JSON.stringify({
       Username: username.trim(),
-      Password: Number(password),
+      Password: password,
     });
 
     const requestOptions = {
@@ -42,13 +42,15 @@ const Login = () => {
     };
 
     try {
-      const response = await fetch("https://back.businessonuae.com/api/auth/login", requestOptions);
+      const response = await fetch("/api/auth/login", requestOptions);
       const text = await response.text();
       let result;
       try {
         result = text ? JSON.parse(text) : {};
+        console.log("API Response:", result); // Added for debugging
       } catch {
         result = { message: text || "خطأ في الخادم" };
+        console.log("API Error Response:", result); // Added for debugging
       }
       if (response.ok) {
         login(result.token, result.role, result.user_id, result.name, result.branch_id, result.companyName);
