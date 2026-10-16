@@ -31,7 +31,7 @@ const Trainer1 = () => {
 
       try {
         const response = await fetch(
-          "https://back.businessonuae.com/api/profile",
+          " https://back.acit-net.com/api/profile",
           requestOptions
         );
 

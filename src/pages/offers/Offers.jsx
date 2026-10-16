@@ -23,7 +23,7 @@ export default function OffersImageUpload() {
 
   const fetchPartners = async () => {
     try {
-      const response = await fetch("https://back.businessonuae.com/api/Offers");
+      const response = await fetch(" https://back.acit-net.com/api/Offers");
       if (response.ok) {
         const data = await response.json();
         setPartners(data);
@@ -64,7 +64,7 @@ export default function OffersImageUpload() {
         formData.append("image", selectedFile);
       }
 
-      const response = await fetch("https://back.businessonuae.com/api/Offers", {
+      const response = await fetch(" https://back.acit-net.com/api/Offers", {
         method: "POST",
         body: formData,
       });
@@ -94,7 +94,7 @@ export default function OffersImageUpload() {
   const handleDeletePartner = async (id) => {
     if (window.confirm('هل أنت متأكد من حذف هذا العرض؟')) {
       try {
-        const response = await fetch(`https://back.businessonuae.com/api/Offers/${id}`, {
+        const response = await fetch(` https://back.acit-net.com/api/Offers/${id}`, {
           method: "DELETE",
         });
 

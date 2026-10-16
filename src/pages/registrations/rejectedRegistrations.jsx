@@ -24,7 +24,7 @@ const RejectedRegistrations = () => {
     const fetchRegistrations = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://back.businessonuae.com/api/registrations');
+        const response = await fetch(' https://back.acit-net.com/api/registrations');
         
         if (!response.ok) {
           throw new Error('Failed to fetch registrations');

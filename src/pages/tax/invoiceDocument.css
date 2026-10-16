@@ -1,0 +1,703 @@
+/* ==========================================================================
+   The printed tax invoice.
+   Plain CSS rather than Tailwind classes because these rules also have to
+   survive html2canvas (which rasterises computed styles) and the print
+   stylesheet, where utility-class ordering is harder to reason about.
+
+   Units are mm so the sheet is A4 in print and on screen alike.
+   ========================================================================== */
+
+.inv-sheet {
+  --ink: #1c1c1c;
+  --ink-soft: #55606b;
+  --rule: #2a2a2a;
+  --hair: #b9c3cc;
+  --field: #f1f4f7;
+  --head: #dfe5eb;
+  --alt: #f8fafb;
+  --navy: #074d84;
+
+  /* On screen this is a preview of the printable area — 190mm is A4 less the
+     10mm @page margins, expressed in mm rather than px so the browser maps it
+     onto the page itself when printing (the @media print block overrides the
+     width to 100% and lets @page own the margins).
+
+     Do NOT reintroduce a fixed px width here. That was the clipping bug: a
+     794px sheet drawn into a 718px canvas, cropped from the left origin, which
+     in RTL removes the leading edge of every label. Native print has no canvas
+     and no crop, so the safe form is relative units. */
+  direction: rtl;
+  width: 190mm;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  background: #fff;
+  color: var(--ink);
+  border: 1.5pt solid var(--rule);
+  padding: 5mm;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+/* Requirement A: no descendant may compute its width without its own padding
+   and border, or it can outgrow the 718px container. */
+.inv-sheet,
+.inv-sheet *,
+.inv-sheet *::before,
+.inv-sheet *::after {
+  box-sizing: border-box;
+}
+
+/* The document is paper. It does not follow the dashboard's dark mode. */
+.inv-scroll {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.inv-en {
+  font-size: 0.82em;
+  color: var(--ink-soft);
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}
+.inv-cur {
+  font-size: 8.5px;
+  color: var(--ink-soft);
+  margin-right: 2px;
+}
+.inv-ltr {
+  direction: ltr;
+  justify-content: flex-end;
+}
+
+/* ---- header ---- */
+.inv-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6mm;
+}
+.inv-logo {
+  width: 22mm;
+  height: 22mm;
+  flex: 0 0 auto;
+  border: 1px solid var(--hair);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #fff;
+}
+.inv-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.inv-logo-empty {
+  font-size: 9px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.inv-org {
+  text-align: left;
+  padding-top: 1mm;
+}
+.inv-org-ar {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+.inv-org-en {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 2px 0 6px;
+  letter-spacing: 0.3px;
+}
+.inv-meta {
+  font-size: 9.5px;
+  color: var(--ink-soft);
+  margin: 1px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.inv-band {
+  margin: 2.5mm 0;
+  border-top: 0.75pt solid var(--rule);
+  border-bottom: 0.75pt solid var(--rule);
+  padding: 1.2mm 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
+  user-select: none;
+}
+.inv-band span {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--navy);
+  opacity: 0.13;
+  padding: 0 9px;
+}
+
+/* ---- title ---- */
+.inv-title {
+  text-align: center;
+  margin-bottom: 2.5mm;
+}
+.inv-title h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.inv-title p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* ---- two-column info ---- */
+.inv-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5mm;
+  align-items: start;
+}
+.inv-panel {
+  border: 0.75pt solid var(--rule);
+  background: var(--field);
+  padding: 2mm;
+}
+.inv-panel > h3 {
+  margin: 0 0 1.6mm;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--navy);
+  padding-bottom: 1.5mm;
+  border-bottom: 0.5pt solid var(--hair);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2mm;
+}
+/* Fields that come from settings/taxService and can never be typed into. */
+.inv-lock {
+  font-size: 8.5px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  background: #fff;
+  border: 0.5pt solid var(--hair);
+  border-radius: 2px;
+  padding: 0.5mm 1.5mm;
+}
+.inv-locked .inv-val {
+  background: #fbfcfd;
+  color: var(--ink-soft);
+}
+
+.inv-field {
+  display: grid;
+  grid-template-columns: 29mm 1fr;
+  gap: 1.5mm;
+  margin-bottom: 1.1mm;
+}
+.inv-field:last-child {
+  margin-bottom: 0;
+}
+.inv-lbl {
+  font-size: 8.5px;
+  font-weight: 600;
+  align-self: center;
+  line-height: 1.35;
+}
+.inv-val {
+  background: #fff;
+  border: 0.5pt solid var(--hair);
+  padding: 0.8mm 1.4mm;
+  min-height: 4.4mm;
+  display: flex;
+  align-items: center;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+/* ---- inline editing ---- */
+.inv-input {
+  font: inherit;
+  font-size: 10px;
+  color: var(--ink);
+  background: #fffdf5;
+  border: 0.5pt solid var(--navy);
+  border-radius: 1px;
+  padding: 1.2mm 1.6mm;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 6mm;
+}
+.inv-input:focus {
+  outline: 2px solid var(--navy);
+  outline-offset: -1px;
+  background: #fff;
+}
+.inv-textarea {
+  min-height: auto;
+  line-height: 1.6;
+  resize: vertical;
+}
+.inv-iconbtn {
+  border: none;
+  background: none;
+  color: #b91c1c;
+  cursor: pointer;
+  padding: 1mm;
+  display: inline-flex;
+}
+.inv-iconbtn:hover {
+  color: #7f1d1d;
+}
+.inv-addline {
+  margin-top: 2mm;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--navy);
+  background: #fff;
+  border: 0.5pt dashed var(--navy);
+  border-radius: 2px;
+  padding: 1.6mm 3mm;
+  cursor: pointer;
+}
+.inv-addline:hover {
+  background: var(--field);
+}
+
+/* ---- line items ---- */
+.inv-items {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 3mm;
+  font-size: 9px;
+  table-layout: fixed;
+}
+.inv-items th,
+.inv-items td {
+  border: 0.5pt solid var(--rule);
+  padding: 1mm 1.1mm;
+  text-align: right;
+  vertical-align: middle;
+  word-break: break-word;
+}
+.inv-items thead th {
+  background: var(--head);
+  font-weight: 700;
+  font-size: 8.5px;
+  line-height: 1.3;
+}
+.inv-items tbody tr:nth-child(even) {
+  background: var(--alt);
+}
+.inv-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Computed cells read as output, not input — even in edit mode. */
+.inv-computed {
+  color: var(--ink-soft);
+}
+.inv-items tbody .inv-computed strong {
+  color: var(--ink);
+}
+.inv-idx {
+  text-align: center;
+  width: 4%;
+  color: var(--ink-soft);
+}
+.inv-w-qty { width: 7%; }
+.inv-w-cat { width: 12%; }
+.inv-w-num { width: 12%; }
+.inv-w-rate { width: 7%; }
+.inv-w-act { width: 5%; }
+
+/* ---- totals, stacked on the left ---- */
+.inv-totals {
+  margin-top: 2.5mm;
+  margin-right: auto; /* physical form of inline-start in RTL: pushes the block left */
+  width: 92mm;
+}
+.inv-discount-editor {
+  display: grid;
+  grid-template-columns: 1fr 26mm 26mm;
+  gap: 2mm;
+  align-items: center;
+  margin-bottom: 3mm;
+  padding-bottom: 3mm;
+  border-bottom: 0.5pt dashed var(--hair);
+}
+.inv-discount-editor .inv-lbl {
+  text-align: left;
+}
+.inv-trow {
+  display: grid;
+  grid-template-columns: 1fr 34mm;
+  gap: 2mm;
+  align-items: center;
+  margin-bottom: 1.4mm;
+}
+.inv-tlbl {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: left;
+  padding-left: 2mm;
+}
+.inv-tbox {
+  border: 0.5pt solid var(--rule);
+  background: #fff;
+  padding: 1.5mm 2mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 3mm;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.inv-trow-grand {
+  margin-top: 2.4mm;
+}
+.inv-trow-grand .inv-tlbl {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.inv-trow-grand .inv-tbox {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2.2mm 2mm;
+}
+.inv-trow-grand .inv-cur {
+  color: rgba(255, 255, 255, 0.78);
+}
+.inv-trow-balance .inv-tbox {
+  background: var(--head);
+  font-weight: 700;
+}
+
+/* ---- payment / QR / stamp ---- */
+.inv-settle {
+  margin-top: 3mm;
+  border: 0.75pt solid var(--rule);
+}
+.inv-settle-grid {
+  display: grid;
+  grid-template-columns: 52mm 1fr 56mm;
+}
+.inv-settle-cell {
+  padding: 2mm;
+}
+.inv-settle-cell + .inv-settle-cell {
+  border-right: 0.5pt solid var(--hair);
+}
+.inv-settle-cell h4 {
+  margin: 0 0 2mm;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.inv-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5mm;
+}
+.inv-stamp {
+  max-width: 34mm;
+  max-height: 34mm;
+  object-fit: contain;
+}
+.inv-stamp-empty,
+.inv-qr-empty {
+  width: 85px;
+  height: 85px;
+  border: 0.5pt dashed var(--hair);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 8.5px;
+  color: var(--ink-soft);
+  padding: 2mm;
+  box-sizing: border-box;
+}
+.inv-cap {
+  font-size: 9px;
+  color: var(--ink-soft);
+  text-align: center;
+  margin: 0;
+}
+.inv-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+  font-size: 9.5px;
+  padding: 0.9mm 0;
+  border-bottom: 0.5pt dotted var(--hair);
+}
+.inv-kv span:last-child {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.inv-paytable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2mm;
+  font-size: 8.5px;
+}
+.inv-paytable th,
+.inv-paytable td {
+  border: 0.5pt solid var(--hair);
+  padding: 1.2mm 1.5mm;
+  text-align: right;
+}
+.inv-paytable th {
+  background: var(--field);
+  font-weight: 700;
+}
+.inv-paytable td {
+  font-variant-numeric: tabular-nums;
+}
+.inv-vatstrip {
+  border-top: 0.5pt solid var(--hair);
+  padding: 2mm 3mm;
+  text-align: center;
+  font-size: 9.5px;
+  font-weight: 600;
+  background: var(--field);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- notes + terms ---- */
+.inv-terms {
+  margin-top: 3mm;
+  border: 0.75pt solid var(--rule);
+  padding: 2mm;
+}
+.inv-terms h4 {
+  margin: 0 0 1.4mm;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--navy);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2mm;
+}
+.inv-terms ol {
+  margin: 0;
+  padding-right: 4mm;
+  padding-left: 0;
+  direction: rtl;
+  text-align: right;
+  list-style-position: inside;
+  list-style-type: arabic-indic;
+  font-size: 8.5px;
+  line-height: 1.5;
+}
+.inv-terms li {
+  margin-bottom: 0.4mm;
+  text-align: right;
+}
+.inv-note {
+  margin: 0;
+  font-size: 8.5px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+/* ==========================================================================
+   PDF export.
+
+   html2canvas rasterises the live DOM and does NOT apply @media print, so any
+   rule that must also hold for the generated PDF has to live outside the media
+   query. Duplicating them below keeps the printed page and the exported file
+   in agreement.
+   ========================================================================== */
+
+/* Keep a block whole rather than slicing it across a page boundary. */
+.inv-items tr,
+.inv-panel,
+.inv-totals,
+.inv-settle,
+.inv-terms {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Repeat the column headings on continuation pages. */
+.inv-items thead {
+  display: table-header-group;
+}
+
+/* (The .inv-exporting escape hatch is gone with html2canvas — native print
+   overrides .inv-scroll's overflow directly in the @media print block.) */
+
+/* ==========================================================================
+   PRINT — the primary export path.
+
+   The browser lays the document out onto A4 itself: no rasterisation, so no
+   crop, Arabic is shaped by the text engine rather than a canvas, and the text
+   in the resulting PDF stays selectable.
+
+   Rule for this whole block: widths in % or mm, never fixed px. A px width is
+   what forced the sheet wider than the page under html2canvas; here it would
+   simply refuse to map onto A4.
+   ========================================================================== */
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  /* Only the document prints. index.css has its own .printable-area mechanism
+     which cannot be reused: it forces filter:brightness(0) onto images, which
+     would render the uploaded logo and stamp as solid black rectangles. */
+  body * {
+    visibility: hidden;
+  }
+  .inv-sheet,
+  .inv-sheet * {
+    visibility: visible !important;
+  }
+  .inv-sheet img {
+    filter: none !important;
+  }
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* The scroll wrapper is a screen affordance; in print it must not clip or
+     offset the sheet. */
+  .inv-scroll {
+    visibility: visible !important;
+    position: static;
+    overflow: visible;
+    padding: 0;
+    margin: 0;
+  }
+
+  .inv-sheet {
+    /* left/top rather than `inset: 0`: setting `bottom: 0` as well would pin an
+       auto-height absolute box to the containing block's height, which either
+       clips a long invoice or forces a spurious break. Height must stay
+       content-driven so pagination is the print engine's decision. */
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: auto;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    direction: rtl;
+    /* Step 3: print-only compression. Everything below is relative to this. */
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  /* ---- compression: header ---- */
+  .inv-head { gap: 5mm; }
+  .inv-logo { width: 18mm; height: 18mm; }
+  .inv-org-ar { font-size: 14px; }
+  .inv-org-en { font-size: 10px; margin: 1px 0 3px; }
+  .inv-meta { font-size: 8px; }
+
+  .inv-band { margin: 2mm 0; padding: 0.8mm 0; }
+  .inv-band span { font-size: 9px; letter-spacing: 2px; }
+
+  .inv-title { margin-bottom: 2mm; }
+  .inv-title h2 { font-size: 14px; }
+  .inv-title p { font-size: 8px; letter-spacing: 1.2px; }
+
+  /* ---- compression: the two info columns ---- */
+  .inv-cols { gap: 3mm; }
+  .inv-panel { padding: 1.6mm; }
+  .inv-panel > h3 { font-size: 9px; margin: 0 0 1.2mm; padding-bottom: 1mm; }
+  .inv-field { grid-template-columns: 27mm 1fr; gap: 1.2mm; margin-bottom: 0.9mm; }
+  .inv-lbl { font-size: 8px; }
+  .inv-val { font-size: 8.5px; padding: 0.6mm 1.2mm; min-height: 4mm; }
+  .inv-en { font-size: 8px; }
+
+  /* ---- compression: line items ---- */
+  .inv-items { margin-top: 2.5mm; font-size: 8.5px; }
+  .inv-items th,
+  .inv-items td { padding: 0.8mm 1mm; }
+  .inv-items thead th { font-size: 8px; }
+
+  /* ---- compression: totals, settle row, terms ---- */
+  .inv-totals { margin-top: 2mm; }
+  .inv-trow { margin-bottom: 1mm; }
+  .inv-tlbl { font-size: 8.5px; }
+  .inv-settle { margin-top: 2.5mm; }
+  .inv-settle-cell { padding: 1.6mm; }
+  .inv-settle-cell h4 { font-size: 8.5px; margin: 0 0 1.2mm; }
+  .inv-terms { margin-top: 2.5mm; padding: 1.6mm; }
+  .inv-terms h4 { font-size: 8.5px; margin: 0 0 1mm; }
+  .inv-terms ol { font-size: 8px; line-height: 1.4; }
+  .inv-note { font-size: 8px; line-height: 1.4; }
+  /* index.css's print block sets a global `th, td { padding: 8px }`. Both
+     invoice tables out-specify it (class + element), but the payments table
+     needs its own compressed value rather than inheriting the screen one. */
+  .inv-paytable { font-size: 8px; margin-top: 1.5mm; }
+  .inv-paytable th,
+  .inv-paytable td { padding: 0.7mm 1mm; }
+  .inv-vatstrip { padding: 1.4mm 2mm; font-size: 8.5px; }
+
+  /* The QR must stay scannable: ~85px is the floor for the ZATCA payload. */
+  .inv-qr-empty {
+    width: 85px !important;
+    height: 85px !important;
+  }
+  .inv-cap { font-size: 7.5px; }
+
+  /* Editing affordances are screen-only. */
+  .inv-lock,
+  .inv-addline,
+  .inv-discount-editor,
+  .inv-w-act {
+    display: none !important;
+  }
+  .inv-input {
+    background: #fff !important;
+    border: 0.5pt solid var(--hair) !important;
+    outline: none !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Headings repeat if a long invoice ever spills to a second page. */
+  .inv-items thead {
+    display: table-header-group;
+  }
+  .inv-items tr,
+  .inv-panel,
+  .inv-cols,
+  .inv-totals,
+  .inv-settle,
+  .inv-terms {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

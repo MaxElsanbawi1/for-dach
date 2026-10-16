@@ -1,17 +1,35 @@
 import React, { useState, useEffect } from "react";
+import RegistrationInvoiceButton, { useRegistrationInvoices } from "../../components/RegistrationInvoiceButton";
 import { useNavigate, useParams } from "react-router-dom";
 import { Printer, Search, Download, Edit } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import html2canvas from 'html2canvas';
 import { saveAs } from 'file-saver';
+import QuizPdfManager from "./QuizPdfManager";
+import StudentQuizResults from "./StudentQuizResults";
+import ExpandableHtml from "./ExpandableHtml";
 
+import { mediaSrc } from '../../mediaSrc';
+
+// Registration fields come from the public website form, so anything put into
+// the invoice HTML is escaped - otherwise a "name" carrying <img onerror=...>
+// runs in the dashboard when staff print the invoice.
+const escapeHtml = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 const CourseDetailsPartner = () => {
   const navigate = useNavigate();
   const { courseId } = useParams();
 
   const [course, setCourse] = useState(null);
   const [registrations, setRegistrations] = useState([]);
+  // Which enrolments already have a real tax invoice.
+  const { invoices: registrationInvoices, refresh: refreshInvoices } =
+    useRegistrationInvoices(registrations.map((r) => r.RegistrationID));
+  const [students, setStudents] = useState([]);
+  const [showStudentLookup, setShowStudentLookup] = useState(false);
+  const [studentLookup, setStudentLookup] = useState("");
+  const [studentLookupMessage, setStudentLookupMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [noRegistrations, setNoRegistrations] = useState(false);
@@ -49,6 +67,7 @@ const CourseDetailsPartner = () => {
   // PDF management state
   const [coursePdfs, setCoursePdfs] = useState([]);
   const [pdfFiles, setPdfFiles] = useState([null]); // Array of files
+  const [pdfTitles, setPdfTitles] = useState([""]);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfsLoading, setPdfsLoading] = useState(false);
 
@@ -60,6 +79,11 @@ const CourseDetailsPartner = () => {
   const [invoiceHtml, setInvoiceHtml] = useState("");
   const [invoiceData, setInvoiceData] = useState(null);
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   useEffect(() => {
     const fetchCourseDetails = async () => {
       try {
@@ -68,7 +92,7 @@ const CourseDetailsPartner = () => {
 
         // Fetch course details
         const courseResponse = await fetch(
-          `https://back.businessonuae.com/api/courses/${courseId}`,
+          ` https://back.acit-net.com/api/courses/${courseId}`,
           {
             method: "GET",
             redirect: "follow",
@@ -84,7 +108,7 @@ const CourseDetailsPartner = () => {
 
         // Fetch registrations - this won't throw an error if response is not OK
         const registrationsResponse = await fetch(
-          `https://back.businessonuae.com/api/registrations/course/${courseId}`,
+          ` https://back.acit-net.com/api/registrations/course/${courseId}`,
           {
             method: "GET",
             redirect: "follow",
@@ -134,12 +158,33 @@ const CourseDetailsPartner = () => {
     fetchCourseDetails();
   }, [courseId]);
 
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
+          method: "GET",
+          redirect: "follow",
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const studentsList = Array.isArray(data)
+          ? data.filter((item) => item.Role?.toLowerCase() === "student")
+          : [];
+        setStudents(studentsList);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
   // // Fetch course PDFs
   // useEffect(() => {
   //   const fetchCoursePdfs = async () => {
   //     try {
   //       setPdfsLoading(true);
-  //       const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}/pdfs`, {
+  //       const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, {
   //         method: "GET",
   //       });
   //       if (response.ok) {
@@ -162,7 +207,7 @@ const CourseDetailsPartner = () => {
   //   const fetchCourseFiles = async () => {
   //     try {
   //       setFilesLoading(true);
-  //       const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}/pdfs`, {
+  //       const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, {
   //         method: "GET",
   //         redirect: "follow"
   //       });
@@ -225,7 +270,7 @@ const CourseDetailsPartner = () => {
 
       // API call
       const response = await fetch(
-        `https://back.businessonuae.com/api/registrations/${registrationId}`,
+        ` https://back.acit-net.com/api/registrations/${registrationId}`,
         {
           method: "PUT",
           headers: {
@@ -272,17 +317,17 @@ const CourseDetailsPartner = () => {
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
           <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">
-            ${course?.InstructorName || "مركز التدريب"}
+            ${escapeHtml(course?.InstructorName || "مركز التدريب")}
           </div>
           <div style="text-align: left;">
             <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #2c3e50;">فاتورة تدريب</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
               <span style="font-weight: bold; width: 150px;">رقم الفاتورة:</span>
-              <span style="flex-grow: 1; text-align: left;">${invoiceNumber}</span>
+              <span style="flex-grow: 1; text-align: left;">${escapeHtml(invoiceNumber)}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
               <span style="font-weight: bold; width: 150px;">التاريخ:</span>
-              <span style="flex-grow: 1; text-align: left;">${invoiceDate}</span>
+              <span style="flex-grow: 1; text-align: left;">${escapeHtml(invoiceDate)}</span>
             </div>
           </div>
         </div>
@@ -292,19 +337,19 @@ const CourseDetailsPartner = () => {
           <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">معلومات المتدرب</div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span style="font-weight: bold; width: 150px;">الاسم:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.FullName}</span>
+            <span style="flex-grow: 1; text-align: left;">${escapeHtml(registration.FullName)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span style="font-weight: bold; width: 150px;">رقم الهوية:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.NationalId || 'غير متوفر'}</span>
+            <span style="flex-grow: 1; text-align: left;">${escapeHtml(registration.NationalId || 'غير متوفر')}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span style="font-weight: bold; width: 150px;">البريد الإلكتروني:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.Email}</span>
+            <span style="flex-grow: 1; text-align: left;">${escapeHtml(registration.Email)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span style="font-weight: bold; width: 150px;">رقم الهاتف:</span>
-            <span style="flex-grow: 1; text-align: left;">${registration.PhoneNumber}</span>
+            <span style="flex-grow: 1; text-align: left;">${escapeHtml(registration.PhoneNumber)}</span>
           </div>
         </div>
         
@@ -320,18 +365,18 @@ const CourseDetailsPartner = () => {
             </thead>
             <tbody>
               <tr>
-                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${course?.CourseName || 'دورة تدريبية'}</td>
-                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${course?.Price || '0'} ر.س</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${escapeHtml(course?.CourseName || 'دورة تدريبية')}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${escapeHtml(course?.Price || '0')} ⃁</td>
               </tr>
             </tbody>
           </table>
-          <div style="font-size: 18px; font-weight: bold; margin-top: 20px; text-align: left;">المبلغ الإجمالي: ${course?.Price || '0'} ر.س</div>
+          <div style="font-size: 18px; font-weight: bold; margin-top: 20px; text-align: left;">المبلغ الإجمالي: ${escapeHtml(course?.Price || '0')} ⃁</div>
         </div>
         
         <!-- Footer -->
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #777;">
-          <p>شكراً لاختياركم ${course?.InstructorName || "مركز التدريب"}</p>
-          <p>للاستفسارات: ${course?.InstructorPhoneNumber || "0000000000"} | ${course?.InstructorEmail || "info@example.com"}</p>
+          <p>شكراً لاختياركم ${escapeHtml(course?.InstructorName || "مركز التدريب")}</p>
+          <p>للاستفسارات: ${escapeHtml(course?.InstructorPhoneNumber || "0000000000")} | ${escapeHtml(course?.InstructorEmail || "info@example.com")}</p>
         </div>
       </div>
     `;
@@ -437,6 +482,40 @@ const CourseDetailsPartner = () => {
     setRegForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const fillRegistrationFromStudent = (student) => {
+    setRegForm((prev) => ({
+      ...prev,
+      fullname: student.FullName || "",
+      email: student.Email || "",
+      NationalId: student.NationalId || student.NationalID || "",
+      phonenumber: student.PhoneNumber || "",
+      location: student.Location || prev.location,
+    }));
+    setStudentLookupMessage(`تم تحميل بيانات الطالب: ${student.FullName}`);
+  };
+
+  const handleStudentLookup = () => {
+    const lookup = studentLookup.trim().toLowerCase();
+    if (!lookup) {
+      setStudentLookupMessage("اكتب رقم الطالب أو الإيميل أو رقم الهوية الأول");
+      return;
+    }
+
+    const selectedStudent = students.find((student) => {
+      const userId = String(student.UserID || "").toLowerCase();
+      const email = String(student.Email || "").toLowerCase();
+      const nationalId = String(student.NationalId || student.NationalID || "").toLowerCase();
+      return userId === lookup || email === lookup || nationalId === lookup;
+    });
+
+    if (!selectedStudent) {
+      setStudentLookupMessage("مفيش طالب مطابق للبيانات اللي دخلتها");
+      return;
+    }
+
+    fillRegistrationFromStudent(selectedStudent);
+  };
+
   const handleRegFormSubmit = async (e) => {
     e.preventDefault();
     setRegFormLoading(true);
@@ -451,7 +530,7 @@ const CourseDetailsPartner = () => {
         redirect: "follow",
       };
       const response = await fetch(
-        "https://back.businessonuae.com/api/registrations",
+        " https://back.acit-net.com/api/registrations",
         requestOptions
       );
       if (!response.ok) throw new Error("فشل التسجيل. حاول مرة أخرى.");
@@ -475,10 +554,13 @@ const CourseDetailsPartner = () => {
         status: "approved",
         CourseID: courseId,
       });
+      setStudentLookup("");
+      setStudentLookupMessage("");
+      setShowStudentLookup(false);
       // Refresh registrations
       // Re-fetch course details (only registrations part)
       const registrationsResponse = await fetch(
-        `https://back.businessonuae.com/api/registrations/course/${courseId}`,
+        ` https://back.acit-net.com/api/registrations/course/${courseId}`,
         { method: "GET", redirect: "follow" }
       );
       let registrationsResult = [];
@@ -531,7 +613,7 @@ const CourseDetailsPartner = () => {
   //       const filename = idx === 0 ? "postman-cloud:///1f05320b-5981-4ff0-9308-421f384716d4" : file.name;
   //       formdata.append("pdfFile", file, filename);
   //     });
-  //     const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}/pdfs`, {
+  //     const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, {
   //       method: "POST",
   //       body: formdata,
   //       redirect: "follow"
@@ -541,7 +623,7 @@ const CourseDetailsPartner = () => {
   //     setPdfFiles([null]);
   //     e.target.reset();
   //     // Refresh list
-  //     const refresh = await fetch(`https://back.businessonuae.com/api/courses/${courseId}/pdfs`, { method: "GET" });
+  //     const refresh = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, { method: "GET" });
   //     if (refresh.ok) {
   //       const result = await refresh.json();
   //       setCoursePdfs(Array.isArray(result) ? result : [result]);
@@ -566,6 +648,135 @@ const CourseDetailsPartner = () => {
   // const handleAddMorePdfInput = () => {
   //   setPdfFiles(prev => [...prev, null]);
   // };
+
+  const refreshCourseDetails = async () => {
+    const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+      redirect: "follow",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to refresh course details");
+    }
+
+    const result = await response.json();
+    setCourse(result);
+  };
+
+  const handlePdfSubmit = async (e) => {
+    e.preventDefault();
+    const validFiles = pdfFiles.filter(Boolean);
+
+    if (validFiles.length === 0) {
+      toast.error("يرجى اختيار ملف PDF واحد على الأقل");
+      return;
+    }
+
+    setPdfLoading(true);
+    try {
+      const formData = new FormData();
+      validFiles.forEach((file) => {
+        formData.append("pdfFile", file);
+      });
+      formData.append(
+        "pdfTitles",
+        JSON.stringify(pdfFiles.reduce((titles, file, idx) => {
+          if (file) titles.push(pdfTitles[idx] || file.name.replace(/\.pdf$/i, ""));
+          return titles;
+        }, []))
+      );
+
+      const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: formData,
+        redirect: "follow",
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.message || "فشل رفع ملفات PDF");
+      }
+
+      toast.success("تم رفع ملفات PDF بنجاح");
+      setPdfFiles([null]);
+      setPdfTitles([""]);
+      await refreshCourseDetails();
+    } catch (error) {
+      toast.error(error.message || "حدث خطأ أثناء رفع ملفات PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handlePdfFileChange = (idx, files) => {
+    const selectedFiles = Array.from(files || []);
+    setPdfFiles((prev) => {
+      const updated = [...prev];
+      updated[idx] = selectedFiles[0] || null;
+      if (selectedFiles.length > 1) {
+        updated.splice(idx + 1, 0, ...selectedFiles.slice(1));
+      }
+      return updated;
+    });
+    setPdfTitles((prev) => {
+      const updated = [...prev];
+      updated[idx] = updated[idx] || selectedFiles[0]?.name?.replace(/\.pdf$/i, "") || "";
+      if (selectedFiles.length > 1) {
+        updated.splice(
+          idx + 1,
+          0,
+          ...selectedFiles.slice(1).map((file) => file.name.replace(/\.pdf$/i, ""))
+        );
+      }
+      return updated;
+    });
+  };
+
+  const handleAddMorePdfInput = () => {
+    setPdfFiles((prev) => [...prev, null]);
+    setPdfTitles((prev) => [...prev, ""]);
+  };
+
+  const handleRemovePdfInput = (idx) => {
+    setPdfFiles((prev) => {
+      const updated = prev.filter((_, fileIdx) => fileIdx !== idx);
+      return updated.length === 0 ? [null] : updated;
+    });
+    setPdfTitles((prev) => {
+      const updated = prev.filter((_, fileIdx) => fileIdx !== idx);
+      return updated.length === 0 ? [""] : updated;
+    });
+  };
+
+  const getCoursePdfUrl = (pdfItem) => typeof pdfItem === "string" ? pdfItem : pdfItem?.url || "";
+
+  const getCoursePdfTitle = (pdfItem, index) => {
+    if (typeof pdfItem === "object" && pdfItem?.title) return pdfItem.title;
+    const pdfUrl = getCoursePdfUrl(pdfItem);
+    return decodeURIComponent(pdfUrl.split('/').pop() || `course-${course.CourseID}-${index + 1}.pdf`);
+  };
+
+  const getCoursePdfDownloadUrl = (pdfItem) => {
+    const fileName = getCoursePdfUrl(pdfItem).split('/').pop();
+    return ` https://back.acit-net.com/api/courses/pdf/download/${encodeURIComponent(fileName)}`;
+  };
+
+  const handleDownloadAllCoursePdfs = (pdfUrls) => {
+    pdfUrls.forEach((pdfItem, index) => {
+      const fileName = getCoursePdfUrl(pdfItem).split('/').pop() || `course-${course.CourseID}-${index + 1}.pdf`;
+      setTimeout(() => {
+        const link = document.createElement("a");
+        link.href = getCoursePdfDownloadUrl(pdfItem);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }, index * 350);
+    });
+  };
 
   // Download PDF utility
   const handleDownloadCoursePdf = async (pdfUrl, fileName) => {
@@ -595,11 +806,11 @@ const CourseDetailsPartner = () => {
   //       method: "DELETE",
   //       redirect: "follow"
   //     };
-  //     const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}/pdfs/${encodeURIComponent(fileName)}`, requestOptions);
+  //     const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs/${encodeURIComponent(fileName)}`, requestOptions);
   //     if (!response.ok) throw new Error('فشل حذف الملف');
   //     toast.success('تم حذف الملف بنجاح');
   //     // Refresh list
-  //     const refresh = await fetch(`https://back.businessonuae.com/api/courses/${courseId}/pdfs`, { method: "GET" });
+  //     const refresh = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, { method: "GET" });
   //     if (refresh.ok) {
   //       const result = await refresh.json();
   //       setCourseFiles(result.files || []);
@@ -694,6 +905,8 @@ const CourseDetailsPartner = () => {
         </div>
       </div>
 
+      <QuizPdfManager courseId={courseId} />
+
       {course && (
         <div className="space-y-6 printable-area">
           {/* Toast Container for notifications */}
@@ -711,7 +924,7 @@ const CourseDetailsPartner = () => {
           {/* Course Image */}
           <div className="flex justify-center">
             <img
-              src={course.courseImgUrl}
+              src={mediaSrc(course.courseImgUrl)}
               alt={course.CourseName}
               className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-lg"
             />
@@ -750,9 +963,10 @@ const CourseDetailsPartner = () => {
               <label className="block text-sm font-medium text-primary mb-1">
                 الوصف
               </label>
-              <p className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
-                {course.Description || "N/A"}
-              </p>
+              <ExpandableHtml
+                html={course.Description}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 whitespace-pre-wrap break-words"
+              />
             </div>
 
             <div>
@@ -760,7 +974,7 @@ const CourseDetailsPartner = () => {
                 السعر
               </label>
               <p className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
-                {course.Price}
+                {course.Price} ⃁
               </p>
             </div>
 
@@ -770,15 +984,6 @@ const CourseDetailsPartner = () => {
               </label>
               <p className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
                 {course.CourseType}
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-primary mb-1">
-                رابط الدورة
-              </label>
-              <p className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
-                {course.CourseLink || "N/A"}
               </p>
             </div>
 
@@ -855,12 +1060,82 @@ const CourseDetailsPartner = () => {
             </div>
           </div>
 
+          <form
+            onSubmit={handlePdfSubmit}
+            className="mt-6 md:mt-8 rounded-lg border border-gray-200 bg-gray-50 p-3 md:p-4"
+          >
+            <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-lg md:text-xl font-bold text-primary">رفع ملفات PDF للكورس</h3>
+                <p className="text-sm text-gray-500">اختار ملف أو أكتر، وبعد الرفع هيظهروا في جدول ملفات الكورس.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddMorePdfInput}
+                className="rounded-md bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300"
+              >
+                إضافة ملف آخر
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {pdfFiles.map((file, idx) => (
+                <div key={idx} className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <input
+                    type="text"
+                    value={pdfTitles[idx] || ""}
+                    onChange={(e) => setPdfTitles((prev) => {
+                      const updated = [...prev];
+                      updated[idx] = e.target.value;
+                      return updated;
+                    })}
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-secondary"
+                    placeholder="PDF title"
+                  />
+                  <input
+                    type="file"
+                    multiple
+                    accept="application/pdf,.pdf"
+                    onChange={(e) => handlePdfFileChange(idx, e.target.files)}
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
+                  />
+                  {pdfFiles.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePdfInput(idx)}
+                      className="rounded-md bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+                    >
+                      حذف
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="submit"
+              disabled={pdfLoading}
+              className="mt-4 rounded-md bg-primary px-6 py-2 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pdfLoading ? "جاري الرفع..." : "رفع ملفات PDF"}
+            </button>
+          </form>
+
           {/* Course PDFs Section */}
           {(() => {
             const pdfUrls = getCoursePdfUrls();
             return pdfUrls.length > 0 ? (
               <div className="mt-6 md:mt-8">
-                <h3 className="text-lg md:text-xl font-bold text-primary mb-4">ملفات PDF للدورة</h3>
+                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <h3 className="text-lg md:text-xl font-bold text-primary">ملفات PDF للدورة</h3>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadAllCoursePdfs(pdfUrls)}
+                    className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    Download all files
+                  </button>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full bg-white">
                     <thead className="bg-gray-50">
@@ -873,18 +1148,19 @@ const CourseDetailsPartner = () => {
                     </thead>
                     <tbody>
                       {pdfUrls.map((pdfUrl, index) => {
-                        const fileName = pdfUrl.split('/').pop() || `course-${course.CourseID}-${index + 1}.pdf`;
+                        const fileName = getCoursePdfUrl(pdfUrl).split('/').pop() || `course-${course.CourseID}-${index + 1}.pdf`;
+                        const fileTitle = getCoursePdfTitle(pdfUrl, index);
                         return (
                           <tr key={index} className="border-b hover:bg-gray-50">
                             <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700">
                               {index + 1}
                             </td>
                             <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-gray-700">
-                              <span className="truncate block max-w-20 md:max-w-none">{fileName}</span>
+                              <span className="truncate block max-w-20 md:max-w-none">{fileTitle}</span>
                             </td>
                             <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm text-blue-700">
                               <a 
-                                href={pdfUrl} 
+                                href={getCoursePdfDownloadUrl(pdfUrl)}
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="underline hover:text-blue-900"
@@ -893,13 +1169,13 @@ const CourseDetailsPartner = () => {
                               </a>
                             </td>
                             <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm">
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadCoursePdf(pdfUrl, fileName)}
-                                className="bg-blue-500 text-white px-2 md:px-3 py-1 rounded hover:bg-blue-700 focus:outline-none text-xs md:text-sm"
+                              <a
+                                href={getCoursePdfDownloadUrl(pdfUrl)}
+                                download={fileName}
+                                className="inline-block bg-blue-500 text-white px-2 md:px-3 py-1 rounded hover:bg-blue-700 focus:outline-none text-xs md:text-sm"
                               >
                                 تحميل
-                              </button>
+                              </a>
                             </td>
                           </tr>
                         );
@@ -917,6 +1193,62 @@ const CourseDetailsPartner = () => {
 
             {/* Registration Form */}
             <form onSubmit={handleRegFormSubmit} className="mb-6 md:mb-8 bg-gray-50 p-3 md:p-4 rounded-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+              <label className="flex items-center gap-2 sm:col-span-2 md:col-span-3 text-sm font-semibold text-primary">
+                <input
+                  type="checkbox"
+                  checked={showStudentLookup}
+                  onChange={(e) => {
+                    setShowStudentLookup(e.target.checked);
+                    setStudentLookup("");
+                    setStudentLookupMessage("");
+                  }}
+                  className="h-4 w-4"
+                />
+                طالب مسجل قبل كده
+              </label>
+
+              {showStudentLookup && (
+                <div className="sm:col-span-2 md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-3 rounded-md border border-blue-200 bg-blue-50 p-3">
+                  <div className="md:col-span-3 text-sm text-blue-800">
+                    اكتب رقم الطالب أو الإيميل أو رقم الهوية، واضغط بحث عشان البيانات تتملي تلقائي.
+                  </div>
+                  <input
+                    type="text"
+                    value={studentLookup}
+                    onChange={(e) => setStudentLookup(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleStudentLookup();
+                      }
+                    }}
+                    list="partner-course-students-lookup"
+                    placeholder="رقم الطالب أو الإيميل أو رقم الهوية"
+                    className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary md:col-span-2"
+                  />
+                  <datalist id="partner-course-students-lookup">
+                    {students.map((student) => (
+                      <option
+                        key={student.UserID}
+                        value={student.Email || student.UserID}
+                        label={`${student.FullName || ""} - ${student.UserID || ""} - ${student.NationalId || student.NationalID || ""}`}
+                      />
+                    ))}
+                  </datalist>
+                  <button
+                    type="button"
+                    onClick={handleStudentLookup}
+                    className="bg-secondary text-white px-4 py-2 rounded-md hover:bg-[#9A661C] focus:outline-none focus:ring-2 focus:ring-secondary"
+                  >
+                    بحث
+                  </button>
+                  {studentLookupMessage && (
+                    <div className="md:col-span-3 text-sm text-gray-700">
+                      {studentLookupMessage}
+                    </div>
+                  )}
+                </div>
+              )}
               <input
                 type="text"
                 name="fullname"
@@ -1115,6 +1447,9 @@ const CourseDetailsPartner = () => {
                         <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
                           فاتورة
                         </th>
+                        <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-primary">
+                          الاختبارات
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1165,14 +1500,20 @@ const CourseDetailsPartner = () => {
                             </div>
                           </td>
                           <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm block md:table-cell">
-                            <button
-                              onClick={() => generateInvoice(registration)}
-                              className="flex items-center justify-center bg-green-500 text-white px-2 md:px-3 py-1 rounded hover:bg-green-600 focus:outline-none text-xs md:text-sm"
-                            >
-                              <Download size={14} className="ml-1" />
-                              <span className="hidden sm:inline">فاتورة</span>
-                              <span className="sm:hidden">فاتورة</span>
-                            </button>
+                            <RegistrationInvoiceButton
+                              registration={registration}
+                              invoice={registrationInvoices[registration.RegistrationID]}
+                              onChanged={refreshInvoices}
+                              compact
+                            />
+                          </td>
+                          <td className="px-3 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm block md:table-cell">
+                            <StudentQuizResults
+                              courseId={courseId}
+                              userId={registration.UserID}
+                              email={registration.Email}
+                              studentName={registration.FullName}
+                            />
                           </td>
                         </tr>
                       ))}

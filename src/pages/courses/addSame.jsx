@@ -3,11 +3,11 @@ import { UserPlus, ArrowRight, UploadCloud } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useAuth } from '../../AuthContext';
+import { appendEncoded } from '../../encodeField';
+import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo } from './CourseSeoFields';
 
 const AddSameCourses = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   // State for form fields
   const [courseName, setCourseName] = useState('');
@@ -16,17 +16,22 @@ const AddSameCourses = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [price, setPrice] = useState('');
   const [courseType, setCourseType] = useState('OnSite');
-  const [courseLink, setCourseLink] = useState('');
   const [categoryID, setCategoryID] = useState('');
   const [courseDays, setCourseDays] = useState('weekdays');
-  const [coursesRoom, setcoursesRoom] = useState('');
   const [startingTime, setStartingTime] = useState('');
   const [endingTime, setEndingTime] = useState('');
   const [lessonsStartTime, setLessonsStartTime] = useState('');
   const [lessonsEndTime, setLessonsEndTime] = useState('');
   const [lessonsTime, setLessonsTime] = useState('');
+  const [durationNote, setDurationNote] = useState('');
   const [instructorID, setInstructorID] = useState('');
   const [error, setError] = useState('');
+  const [CoursePartner, setCoursePartner] = useState('');
+  const [isPartnerCourse, setIsPartnerCourse] = useState(false);
+  const [seo, setSeo] = useState(EMPTY_SEO);
+  // The API copies the chosen course's SEO to the new date on its own; it is
+  // only sent when edited here, so an untouched form never clears it.
+  const [seoTouched, setSeoTouched] = useState(false);
 
   // State for categories and trainers
   const [categories, setCategories] = useState([]);
@@ -41,16 +46,23 @@ const AddSameCourses = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await fetch("https://back.businessonuae.com/api/categories");
+        const categoriesResponse = await fetch(" https://back.acit-net.com/api/categories");
         if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
         const categoriesData = await categoriesResponse.json();
         setCategories(categoriesData);
 
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
         // Fetch trainers
-        const trainersResponse = await fetch("https://back.businessonuae.com/api/users");
+        const trainersResponse = await fetch("https://back.acit-net.com/api/courses/trainers", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (!trainersResponse.ok) throw new Error('Failed to fetch trainers');
         const trainersData = await trainersResponse.json();
-        setTrainers(trainersData.filter(user => user.Role === 'trainer'));
+        setTrainers(Array.isArray(trainersData) ? trainersData : []);
       } catch (error) {
         console.error('Error:', error);
         toast.error('حدث خطأ أثناء جلب البيانات');
@@ -63,7 +75,7 @@ const AddSameCourses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/courses");
+        const response = await fetch(" https://back.acit-net.com/api/courses");
         if (response.ok) {
           const data = await response.json();
           setCourses(data);
@@ -107,12 +119,18 @@ const AddSameCourses = () => {
     setDescription(course.Description || '');
     setPrice(course.Price || '');
     setCourseType(course.CourseType || 'OnSite');
-    setCourseLink(course.CourseLink || '');
     setCategoryID(course.CategoryID || '');
     setInstructorID(course.InstructorID || '');
     setStartingTime(course.StartingTime ? course.StartingTime.split('T')[0] : '');
     setEndingTime(course.EndingTime ? course.EndingTime.split('T')[0] : '');
     setLessonsTime(course.LessonsTime || '');
+    // Starts from the chosen course's notice; can be changed for this date.
+    setDurationNote(course.DurationNote || '');
+    const partner = String(course.CoursePartner ?? '').trim();
+    setIsPartnerCourse(partner !== '');
+    setCoursePartner(partner);
+    setSeo(seoFromCourse(course));
+    setSeoTouched(false);
     
     // Clear lessons time inputs as they require manual re-entry
     setLessonsStartTime('');
@@ -128,23 +146,25 @@ const AddSameCourses = () => {
     formData.append('CourseName', courseName);
     formData.append('Price', price);
     formData.append('CourseType', courseType);
-    formData.append('CourseLink', courseLink);
     formData.append('CategoryID', categoryID);
     formData.append('StartingTime', startingTime);
     formData.append('EndingTime', endingTime);
     formData.append('LessonsTime', lessonsTime);
+    appendEncoded(formData, 'DurationNote', durationNote.trim());
     formData.append("CourseDays", courseDays);
     formData.append('InstructorID', instructorID);
-    formData.append('coursesRoom', coursesRoom);
+    formData.append('CoursePartner', isPartnerCourse ? CoursePartner.trim() : '');
+    if (seoTouched) appendSeo(formData, seo, appendEncoded);
     if (courseImage) {
       formData.append('CourseImage', courseImage);
     }
 
     try {
-      const response = await fetch("https://back.businessonuae.com/api/courses/by-name", {
+      const token = localStorage.getItem("token");
+      const response = await fetch(" https://back.acit-net.com/api/courses/by-name", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${user.token}`
+          "Authorization": `Bearer ${token}`
         },
         body: formData,
       });
@@ -158,18 +178,21 @@ const AddSameCourses = () => {
         setDescription('');
         setPrice('');
         setCourseType('OnSite');
-        setCourseLink('');
         setCategoryID('');
-        setcoursesRoom('');
         setStartingTime('');
         setCourseDays('weekdays');
         setEndingTime('');
         setLessonsStartTime('');
         setLessonsEndTime('');
         setLessonsTime('');
+        setDurationNote('');
         setInstructorID('');
         setCourseImage(null);
         setImagePreview('');
+        setIsPartnerCourse(false);
+        setCoursePartner('');
+        setSeo(EMPTY_SEO);
+        setSeoTouched(false);
         setError('');
       } else {
         setError(result.message || 'فشل في إضافة الدورة');
@@ -271,21 +294,6 @@ const AddSameCourses = () => {
           </select>
         </div>
 
-        {/* Course Link (shown only for online courses) */}
-        {courseType === 'Online' && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-primary mb-1">رابط الدورة</label>
-            <input
-              type="url"
-              value={courseLink}
-              onChange={(e) => setCourseLink(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="https://example.com"
-              required={courseType === 'Online'}
-            />
-          </div>
-        )}
-
         {/* Category */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-primary mb-1">الفئة</label>
@@ -379,10 +387,25 @@ const AddSameCourses = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             >
-              <option value="weekdays">weekdays</option>
-              <option value="weekends">weekends </option>
+              <option value="weekdays">أيام الأسبوع (من الأحد إلى الأربعاء)</option>
+              <option value="weekends">نهاية الأسبوع (الجمعة والسبت)</option>
             </select>
           </div>
+        {/* Notice shown under "المدة" on the course page */}
+        <div className="mb-4">
+          <label htmlFor="durationNote" className="block text-sm font-medium text-primary mb-1">
+            تنبيه في تبويب المدة (اختياري)
+          </label>
+          <textarea
+            id="durationNote"
+            rows={2}
+            value={durationNote}
+            onChange={(e) => setDurationNote(e.target.value)}
+            placeholder="مثال: الدورة تُعقد أيام السبت والأحد فقط، أو قد يتغير موعد المحاضرة الأولى"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+          />
+          <p className="mt-1 text-xs text-gray-500">يظهر للزائر تحت مدة الدورة في صفحة الدورة. اتركه فارغًا لإخفائه.</p>
+        </div>
         {/* Instructor */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-primary mb-1">المدرب</label>
@@ -401,22 +424,49 @@ const AddSameCourses = () => {
           </select>
         </div>
 
-
         <div className="mb-4">
-            <label htmlFor="coursesRoom" className="block text-sm font-medium text-primary mb-1">
-            رقم الفصل 
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isPartnerCourse"
+              checked={isPartnerCourse}
+              onChange={(e) => setIsPartnerCourse(e.target.checked)}
+              className="h-4 w-4 text-secondary focus:ring-secondary border-gray-300 rounded"
+            />
+            <label htmlFor="isPartnerCourse" className="mr-2 block text-sm font-medium text-primary">
+              هل هذه دورة شريك؟
             </label>
-            <textarea
-              id="coursesRoom"
-              value={coursesRoom}
-              onChange={(e) => setcoursesRoom(e.target.value)}
+          </div>
+        </div>
+
+        {isPartnerCourse && (
+          <div className="mb-4">
+            <label htmlFor="coursePartner" className="block text-sm font-medium text-primary mb-1">
+              اسم الشريك
+            </label>
+            <input
+              type="text"
+              id="coursePartner"
+              value={CoursePartner}
+              onChange={(e) => setCoursePartner(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder=" رقم الفصل   "
+              placeholder="أدخل اسم الشريك"
               required
             />
           </div>
+        )}
 
-        {/* Submit Button */}
+        <div className="mb-4">
+          <CourseSeoFields
+            value={seo}
+            onChange={(next) => {
+              setSeo(next);
+              setSeoTouched(true);
+            }}
+          />
+        </div>
+
+{/* Submit Button */}
         <button
           type="submit"
           className="w-full bg-secondary text-white py-2 px-4 rounded-md hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"

@@ -26,7 +26,7 @@ console.log(registrations);
           redirect: 'follow',
         };
 
-        const response = await fetch('https://back.businessonuae.com/api/registrations', requestOptions);
+        const response = await fetch(' https://back.acit-net.com/api/registrations', requestOptions);
         const data = await response.json();
         setRegistrations(data);
 

@@ -1,47 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-const RegistrationsPage = () => {
-  const [registrations, setRegistrations] = useState([]);
+const API = " https://back.acit-net.com/api";
+
+const NotificationsPage = () => {
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [newRegistrationsCount, setNewRegistrationsCount] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [respondingId, setRespondingId] = useState(null);
 
-  // Memoized resize handler to prevent unnecessary re-renders
-  const handleResize = useCallback(() => {
-    setIsMobile(window.innerWidth < 768);
-  }, []);
+  const authHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  });
 
-  useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [handleResize]);
-
-  // Memoized fetch function
   const fetchData = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
-      
-      const response = await fetch("https://back.businessonuae.com/api/registrations", {
-        method: "GET",
-        redirect: "follow"
+      const response = await fetch(`${API}/notifications/me`, {
+        headers: authHeaders(),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      setRegistrations(data);
-      console.log(data)
-      // Count pending registrations
-      const pendingCount = data.filter(reg => reg.Status === 'Pending').length;
-      setNewRegistrationsCount(pendingCount);
+      setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Fetch error:', err);
       setError(err.message);
-      // You might want to implement retry logic here
     } finally {
       setLoading(false);
     }
@@ -49,169 +31,165 @@ const RegistrationsPage = () => {
 
   useEffect(() => {
     fetchData();
-    
-    // Set up polling for new registrations
-    const interval = setInterval(fetchData, 30000);
+    // Poll frequently so new registrations show up "live" without a manual refresh.
+    const interval = setInterval(fetchData, 8000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return 'text-green-700 font-bold';
-      case 'pending':
-        return 'text-yellow-600 font-bold';
-      case 'rejected':
-        return 'text-red-600 font-bold';
-      default:
-        return '';
+  const respond = async (notification, status) => {
+    setRespondingId(notification.NotificationID);
+    try {
+      const response = await fetch(`${API}/notifications/${notification.NotificationID}/respond`, {
+        method: "POST",
+        headers: {
+          ...authHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "تعذر تنفيذ العملية");
+
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.NotificationID === notification.NotificationID
+            ? { ...n, IsRead: 1, RegistrationStatus: status }
+            : n
+        )
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRespondingId(null);
     }
   };
 
-  const formatDate = (isoString) => {
-    return new Date(isoString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  const markRead = async (notification) => {
+    if (notification.IsRead) return;
+    try {
+      await fetch(`${API}/notifications/${notification.NotificationID}/read`, {
+        method: "PUT",
+        headers: authHeaders(),
+      });
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.NotificationID === notification.NotificationID ? { ...n, IsRead: 1 } : n
+        )
+      );
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+    }
   };
 
-  const formatDateTime = (isoString) => {
-    return new Date(isoString).toLocaleString("en-US", {
+  const formatDateTime = (isoString) =>
+    new Date(isoString).toLocaleString("ar-EG", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
-  };
 
-  // Create a reversed copy of the registrations array
-  const reversedRegistrations = [...registrations].reverse();
+  const unreadCount = notifications.filter((n) => !n.IsRead).length;
 
-  if (loading && registrations.length === 0) {
+  if (loading && notifications.length === 0) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-xl">Loading registrations...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-xl text-red-600">
-          Error loading registrations: {error}
-          <button 
-            onClick={fetchData}
-            className="ml-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-xl">جاري التحميل...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl">
-      <div className="flex justify-between items-center mb-4 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-          Course Registrations
-        </h1>
-        {newRegistrationsCount > 0 && (
-          <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
-            {newRegistrationsCount} new
+    <div dir="rtl" className="container mx-auto max-w-4xl px-2 py-4 sm:px-4 sm:py-8">
+      <div className="mb-4 flex items-center justify-between sm:mb-8">
+        <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">الإشعارات</h1>
+        {unreadCount > 0 && (
+          <span className="rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white">
+            {unreadCount} جديد
           </span>
         )}
       </div>
-      
-      {isMobile ? (
-        // Mobile view - card layout
-        <div className="space-y-4">
-          {reversedRegistrations.map((reg) => (
-            <div key={reg.RegistrationID} className="bg-white p-4 rounded-lg shadow">
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <div>
-                  <p className="text-xs text-gray-500">User</p>
-                  <p className="text-sm font-medium">{reg.Username}</p>
-                  <p className="text-xs text-black"> {reg.FullName}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Course</p>
-                  <p className="text-sm font-medium">
-                    {reg.CourseName.split(' ').slice(0, 3).join(' ')}
-                    {reg.CourseName.split(' ').length > 3 && '...'}
-                  </p>
-                  <p className="text-xs text-gray-400">ID: {reg.CourseID}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-xs text-gray-500">Registered</p>
-                  <p className="text-sm">{formatDate(reg.RegistrationDate)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Starts</p>
-                  <p className="text-sm">{formatDate(reg.StartingTime)}</p>
-                </div>
-              </div>
-              <div className="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center">
-                <p className="text-xs text-gray-500">Reg ID: {reg.RegistrationID}</p>
-                <p className={`text-sm ${getStatusColor(reg.Status)}`}>
-                  {reg.Status}
-                </p>
-              </div>
-            </div>
-          ))}
+
+      {error && (
+        <div className="mb-4 rounded bg-red-50 p-3 text-red-700">
+          {error}
+          <button
+            onClick={fetchData}
+            className="mr-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          >
+            إعادة المحاولة
+          </button>
         </div>
+      )}
+
+      {notifications.length === 0 && !error ? (
+        <p className="text-center text-gray-500">لا توجد إشعارات</p>
       ) : (
-        // Desktop view - table layout
-        <div className="overflow-x-auto shadow-md rounded-lg">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Starts</th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reg ID</th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {reversedRegistrations.map((reg) => (
-                <tr key={reg.RegistrationID} className="hover:bg-gray-50">
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{reg.Username}</div>
-                    <div className="text-xs text-gray-500">ID: {reg.UserID}</div>
-                  </td>
-                  <td className="px-3 sm:px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {reg.CourseName.split(' ').slice(0, 5).join(' ')}
-                      {reg.CourseName.split(' ').length > 5 && '...'}
+        <div className="space-y-3">
+          {notifications.map((n) => {
+            const isRegistration = n.Type === "registration" && n.RegistrationID;
+            const status = (n.RegistrationStatus || "").toLowerCase();
+            return (
+              <div
+                key={n.NotificationID}
+                onClick={() => markRead(n)}
+                className={`cursor-pointer rounded-lg border p-4 shadow-sm transition ${
+                  n.IsRead ? "bg-white" : "border-primary bg-blue-50"
+                }`}
+              >
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                  <div>
+                    <p className="font-medium text-gray-800">{n.Message}</p>
+                    {isRegistration && (
+                      <p className="mt-1 text-sm text-gray-500">
+                        {n.FullName && <>الاسم: {n.FullName} - </>}
+                        {n.Email && <>{n.Email} - </>}
+                        {n.CourseName && <>الدورة: {n.CourseName}</>}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-400">{formatDateTime(n.CreatedAt)}</p>
+                  </div>
+
+                  {isRegistration && (
+                    <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      {status === "approved" ? (
+                        <span className="rounded bg-green-100 px-3 py-1 text-sm font-bold text-green-800">
+                          معتمد
+                        </span>
+                      ) : status === "rejected" ? (
+                        <span className="rounded bg-red-100 px-3 py-1 text-sm font-bold text-red-800">
+                          مرفوض
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            disabled={respondingId === n.NotificationID}
+                            onClick={() => respond(n, "approved")}
+                            className="rounded bg-green-500 px-3 py-1 text-sm font-bold text-white hover:bg-green-600 disabled:opacity-60"
+                          >
+                            قبول
+                          </button>
+                          <button
+                            type="button"
+                            disabled={respondingId === n.NotificationID}
+                            onClick={() => respond(n, "rejected")}
+                            className="rounded bg-red-500 px-3 py-1 text-sm font-bold text-white hover:bg-red-600 disabled:opacity-60"
+                          >
+                            رفض
+                          </button>
+                        </>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-500">ID: {reg.CourseID}</div>
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDateTime(reg.RegistrationDate)}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(reg.StartingTime)}
-                  </td>
-                  <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {reg.RegistrationID}
-                  </td>
-                  <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${getStatusColor(reg.Status)}`}>
-                    {reg.Status}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 };
 
-export default RegistrationsPage;
+export default NotificationsPage;

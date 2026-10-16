@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu, X, Home, Users, Settings, BarChart, Dot, Bell, ChevronDown, ChevronUp, Search, User, LogOut, Contact, Package, Map, FileText, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, X, Home, Users, Settings, BarChart, Dot, Bell, ChevronDown, ChevronUp, Search, User, LogOut, Contact, Package, Map, FileText, ShoppingBag, ChevronLeft, ChevronRight, Receipt, CreditCard, MessageSquare, UserPlus, Percent } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext'; // Import useAuth from your AuthContext
+import { API as TAX_API } from '../pages/tax/taxApi';
+import { visibleMenu } from '../access';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // State for mobile sidebar
@@ -11,137 +13,47 @@ const Layout = ({ children }) => {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false); // Track if sidebar is minimized
   const navigate = useNavigate(); // Initialize useNavigate for navigation
   const location = useLocation(); // Get the current route location
-  const { logout, user } = useAuth(); // Use the logout function and user from AuthContext
+  const { logout, user, access, can } = useAuth(); // Use the logout function and user from AuthContext
 
 const [totalPending, setTotalPending] = useState(0);
-const [lastSeenCount, setLastSeenCount] = useState(() => {
-  // Initialize from localStorage if available
-  return parseInt(localStorage.getItem('lastSeenNotifications') || 0);
-});
-// Calculate unseen notifications
-const unseenCount = Math.max(0, totalPending - lastSeenCount);
+// The backend tracks read/unread per notification, so totalPending IS the unseen count.
+const unseenCount = totalPending;
 
-  const inventorymanagerMenuCamp = [
-    { icon: Home, text: 'الكاشير', href: '/' },
-    { icon: ShoppingBag, text: 'الطلبات', href: '/orders', 
-      subItems: [
-        { text: 'طلبات الفرع اليوم', href: '/orders/today' },
-        { text: 'طباعة الطلبات', href: '/orders/print' },
-      ]},
-    { icon: Package, text: 'المخزن', href: '/stock', subItems: [
-      { text: 'إضافة منتجات للفرع', href: '/stock/add' },
-      { text: 'كل المنتجات', href: '/products' },
-      { text: 'أضافة منتج', href: '/products/add' },
-    ]},
-    { icon: FileText, text: 'المرتجعات', href: '/refunds'},
-    { icon: Map, text: 'فرع سيدي بشر', href: '/sidibishr'}
-  ]
-
-  const cashierMenu = [
-    { icon: Home, text: 'الكاشير', href: '/' },
-    { icon: ShoppingBag, text: 'الطلبات', href: '/orders', 
-      subItems: [
-        { text: 'طلبات الفرع اليوم', href: '/orders/today' },
-        { text: 'طباعة الطلبات', href: '/orders/print' },
-      ]},
-    { icon: Package, text: 'المخزن', href: '/stock'},
-    { icon: FileText, text: 'المرتجعات', href: '/refunds'},
-    { icon: Map, text: 'فرع سيدي بشر', href: '/sidibishr'}
-  ]
-
-  const callCenterMenu = [
-    { icon: ShoppingBag, text: 'الطلبات', href: '/orders'},
-  ];
-  const trainerMenu = [
-    { icon: ShoppingBag, text: 'الطلبات', href: '/allcorcrsestrainer'},
-    { icon: Settings, text: 'الإعدادات', subItems: [
-      { text: 'ملفي الشخصي', href: '/ProfilePage' },
-      { text: 'تسجيل الخروج', onClick: () => handleLogout() },
-    ] },
-  ];
-
-  const accountManagerMenu = [
-    { icon: ShoppingBag, text: 'الطلبات', href: '/orders'},
-    { icon: Settings, text: 'الإعدادات', subItems: [{ text: 'تسجيل الخروج', onClick: () => handleLogout() }] },
-  ];
-
-  const accountantMenu = [
-    { icon: ShoppingBag, text: 'الطلبات', href: '/orders', subItems: [
-      { text: 'تحصيل من شركة الشحن', href: '/orders/unpaid' },
-      { text: 'طلبات مكتملة و محصلة', href: '/orders/paid' },
-    ]},    
-    { icon: Settings, text: 'الإعدادات', subItems: [{ text: 'تسجيل الخروج', onClick: () => handleLogout() }] },
-  ];
-
-  const moderatorMenu = [
-    { icon: Home, text: 'لوحة التحكم', href: '/' },
-    { icon: ShoppingBag, text: 'الطلبات', href: '/orders'},
-    { icon: Map, text: 'فرع سيدي بشر', href: '/sidibishr'},
-    { icon: Settings, text: 'الإعدادات', subItems: [{ text: 'تسجيل الخروج', onClick: () => handleLogout() }] },
-  ];
-  const partnerMenu = [
-    { icon: Home, text: ' الدورات', href: 'CoursesPartner' },
-
-    { icon: Settings, text: 'الإعدادات', subItems: [{ text: 'تسجيل الخروج', onClick: () => handleLogout() }] },
-  ];
-
-  const adminMenu = [
-    { icon: Home, text: 'لوحة التحكم', href: '/' },
-    { icon: FileText, text: 'التسجيلات', href: '/registrations', subItems: [
-      { text: 'كل الطلبات', href: '/registrations/all' },
-      { text: 'الطلبات الجديدة', href: '/registrations/pending' },
-      { text: 'التسجيلات التامة', href: '/registrations/approved' },
-      { text: 'التسجيل المرفوضة', href: '/registrations/rejected' },
-    ]},
-    { icon: Package, text: 'الدورات', href: '/courses', subItems: [
-      { text: 'كل الدورات', href: '/courses/all' },
-      { text: 'أضافة دورة ', href: '/courses/addSame' },
-      { text: 'أضافة دورة جديدة', href: '/courses/add' },
-      { text: 'أقسام الدورات', href: '/courses/categories' },
-      { text: 'أضافة قسم جديد', href: '/courses/categories/add' },
-    ]},
-    { icon: Contact, text: 'الطلاب', href: '/students', subItems: [
-      { text: 'كل الطلاب', href: '/students/all' },
-      { text: 'أضافة طالب جديد', href: '/students/add' },
-      { text: 'الطلاب المحظورين', href: '/students/blocked' },
-      { text: 'كل الطلاب المحظورين', href: '/students/Allblocked' },
-
-    ]},
-    { icon: Package, text: 'العروض', href: 'OffersImageUpload'},
-    { icon: Contact, text: 'عملاؤنا و شركاؤنا', subItems: [
-
-      { text: '  شركاؤنا', href: 'OurPartnersImageUpload' },
-      { text: '  عملاؤنا', href: 'ClientImageUpload' },
-    ]},
-    { icon: Users, text: 'المستخدمين', href: '/users', subItems: [
-      { text: 'إضافة مستخدم', href: '/users/add' }
-    ]},
-    { icon: BarChart, text: 'الحسابات', href: '/accounts' , subItems: [
-      { text: 'التقارير' },
-      { text: 'الرسوم البيانية' },
-      { text: 'الإحصائيات' },
-    ]},
-    { icon: Settings, text: 'الإعدادات', subItems: [
-      { text: 'ملفي الشخصي', href: '/ProfilePage' },
-      { text: 'تسجيل الخروج', onClick: () => handleLogout() },
-    ] },
-  ];
-
-  // Get menu based on user role
-  const getMenu = () => {
-    switch (user.role) {
-      case 'admin': return adminMenu;
-      case 'moderator': return moderatorMenu;
-      case 'accountmanager': return accountManagerMenu;
-      case 'callcenter': return callCenterMenu;
-      case 'accountant': return accountantMenu;
-      case 'casher': return cashierMenu;
-      case 'inventorymanager': return inventorymanagerMenuCamp;
-      case 'trainer': return trainerMenu;
-      case 'partner': return partnerMenu;
-      default: return [];
+// Invoices sitting in the review queue. Polled rather than pushed, since the
+// queue only changes when an order is paid or a registration is approved.
+const [pendingInvoices, setPendingInvoices] = useState(0);
+useEffect(() => {
+  if (!can('tax.view')) return;
+  let cancelled = false;
+  const load = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${TAX_API}/tax/drafts/pending?limit=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!cancelled) setPendingInvoices(Number(data.total || 0));
+    } catch (_) {
+      /* the badge is informational — a failure must not disturb the shell */
     }
   };
+  load();
+  const timer = setInterval(load, 120000);
+  return () => {
+    cancelled = true;
+    clearInterval(timer);
+  };
+}, [can]);
+
+  // Partner accounts keep their own small area; everyone else gets the one
+  // menu in access.js, trimmed to the permissions the API returned.
+  const partnerMenu = [
+    { icon: Home, text: ' الدورات', href: '/CoursesPartner' },
+    { icon: Settings, text: 'الإعدادات', subItems: [{ text: 'تسجيل الخروج', action: 'logout' }] },
+  ];
+  const getMenu = () => (access?.role === 'partner' ? partnerMenu : visibleMenu(access));
 
   // Toggle dropdown
   const toggleDropdown = (index) => {
@@ -176,21 +88,24 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
 
     const fetchNotifications = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/registrations");
+        const response = await fetch("https://back.acit-net.com/api/notifications/me", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
         if (!response.ok) throw new Error('Network error');
         const data = await response.json();
-        
+
         if (!isMounted) return;
 
-        const pending = data.filter(reg => reg.Status === 'Pending').length;
-        setTotalPending(pending);
+        const unread = Array.isArray(data) ? data.filter((n) => !n.IsRead).length : 0;
+        setTotalPending(unread);
       } catch (error) {
         console.error("Fetch error:", error);
       }
     };
 
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    // Poll frequently so the bell reflects new registrations live.
+    const interval = setInterval(fetchNotifications, 8000);
 
     return () => {
       isMounted = false;
@@ -199,10 +114,7 @@ const unseenCount = Math.max(0, totalPending - lastSeenCount);
   }, []);
 
   const handleNotificationClick = () => {
-    // Update last seen count to current total
-    setLastSeenCount(totalPending);
-    // Persist to localStorage
-    localStorage.setItem('lastSeenNotifications', totalPending.toString());
+    // Notifications are marked read individually on the notifications page.
     navigate("/notifications");
   };
 
@@ -225,7 +137,7 @@ return (
 
         {/* Sidebar Header (Desktop) */}
         <div className="hidden lg:flex items-center justify-between h-16 border-b p-3">
-          {!isSidebarMinimized && <img src="/abad-icon.png" alt="Radwa Icon" className="w-10" />}
+          {!isSidebarMinimized && <img src="/acit-logo.png" alt="acit Icon" className="w-10" />}
           <button onClick={toggleSidebarMinimize} className="p-2 rounded-md hover:bg-gray-100">
             {isSidebarMinimized ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
           </button>
@@ -283,7 +195,7 @@ return (
                       onClick={(e) => {
                         e.preventDefault();
                         if (subItem.href) handleNavigation(subItem.href);
-                        if (subItem.onClick) subItem.onClick();
+                        if (subItem.action === 'logout') handleLogout();
                       }}
                       className={`flex items-center px-6 py-2 text-gray-600 hover:bg-gray-50 ${
                         isActive(subItem.href) ? 'bg-gray-100' : ''
@@ -291,6 +203,13 @@ return (
                     >
                       <Dot size={16} />
                       <span>{subItem.text}</span>
+                      {/* Invoices awaiting review — the count is the whole point
+                          of the review queue, so it belongs in the nav. */}
+                      {subItem.badge === 'pendingInvoices' && pendingInvoices > 0 ? (
+                        <span className="mr-auto min-w-[20px] text-center px-1.5 py-0.5 rounded-full bg-primary text-white text-[11px] font-semibold">
+                          {pendingInvoices}
+                        </span>
+                      ) : null}
                     </a>
                   ))}
                 </div>
@@ -301,7 +220,10 @@ return (
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col">
+      {/* min-w-0: a flex item defaults to min-width:auto, so without this the
+          content column refuses to shrink below its widest child and pushes the
+          whole page sideways. */}
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header for Desktop */}
         <header className="hidden lg:flex items-center justify-between bg-white shadow-md h-16 px-6">
           <div className="flex items-center w-96">
@@ -355,7 +277,7 @@ return (
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-md hover:bg-gray-100">
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <img src="/abad-icon.png" alt="Radwa Icon" className="w-10" />
+            <img src="/acit-logo.png" alt="acit Icon" className="w-10" />
             {user.role !== 'partner' && (
               <button 
                 className="p-2 rounded-md hover:bg-gray-100 relative"
@@ -373,7 +295,13 @@ return (
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-6 lg:pr-6 pt-20 lg:pt-6">
+        {/* overflow-x-clip, not the browser default: `overflow-y:auto` with
+            `overflow-x:visible` computes x to `auto` too, so a tooltip or a
+            wide table produced a page-level horizontal scrollbar. `clip`
+            (rather than `hidden`) is not a scroll container, so `position:
+            sticky` inside still works — the bulk-approve bar depends on it.
+            Genuinely wide content scrolls in its own overflow-x-auto wrapper. */}
+        <main className="flex-1 overflow-y-auto overflow-x-clip min-w-0 p-6 lg:pr-6 pt-20 lg:pt-6">
           <Outlet />
         </main>
       </div>

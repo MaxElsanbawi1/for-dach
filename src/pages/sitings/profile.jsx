@@ -30,7 +30,7 @@ const ProfilePage = () => {
 
       try {
         const response = await fetch(
-          "https://back.businessonuae.com/api/auth/profile",
+          " https://back.acit-net.com/api/auth/profile",
           requestOptions
         );
 

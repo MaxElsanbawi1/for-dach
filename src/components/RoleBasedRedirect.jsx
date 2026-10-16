@@ -1,26 +1,17 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { firstPage } from '../access';
 
-const roleFirstPages = {
-  inventorymanager: '/',
-  cashier: '/',
-  admin: '/dashboard',
-  partner: '/CoursesPartner',
-};
-
+// Landing page after login: the first menu page this account may open.
 const RoleBasedRedirect = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { access } = useAuth();
 
   useEffect(() => {
-    if (user && user.role) {
-      const firstPage = roleFirstPages[user.role];
-      if (firstPage) {
-        navigate(firstPage);
-      }
-    }
-  }, [user, navigate]);
+    if (!access) return;
+    navigate(access.role === 'partner' ? '/CoursesPartner' : firstPage(access), { replace: true });
+  }, [access, navigate]);
 
   return null;
 };

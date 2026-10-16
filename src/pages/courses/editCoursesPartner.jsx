@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserPlus, ArrowRight, UploadCloud } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../AuthContext';
+import RichTextEditor from '../../components/RichTextEditor';
+
+import { mediaSrc } from '../../mediaSrc';
+import { appendEncoded } from '../../encodeField';
+const API = "https://back.acit-net.com/api";
 
 const EditCoursesPartner = () => {
   const navigate = useNavigate();
@@ -17,7 +22,6 @@ const EditCoursesPartner = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [price, setPrice] = useState('');
   const [courseType, setCourseType] = useState('OnSite');
-  const [courseLink, setCourseLink] = useState('');
   const [categoryID, setCategoryID] = useState('');
   const [startingTime, setStartingTime] = useState('');
   const [endingTime, setEndingTime] = useState('');
@@ -26,6 +30,7 @@ const EditCoursesPartner = () => {
   const [instructorName, setInstructorName] = useState('');
   const [error, setError] = useState('');
   const [pdfFiles, setPdfFiles] = useState([null]); // Array of PDF files
+  const [pdfTitles, setPdfTitles] = useState(['']);
 
   // State for categories
   const [categories, setCategories] = useState([]);
@@ -41,7 +46,7 @@ const EditCoursesPartner = () => {
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}`, {
+        const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${user?.token}`
@@ -60,7 +65,6 @@ const EditCoursesPartner = () => {
         setDescription(courseData.Description || '');
         setPrice(courseData.Price || '');
         setCourseType(courseData.CourseType || 'OnSite');
-        setCourseLink(courseData.CourseLink || '');
         setCategoryID(courseData.CategoryID || '');
         setStartingTime(courseData.StartingTime ? new Date(courseData.StartingTime).toISOString().split('T')[0] : '');
         setEndingTime(courseData.EndingTime ? new Date(courseData.EndingTime).toISOString().split('T')[0] : '');
@@ -70,7 +74,7 @@ const EditCoursesPartner = () => {
         
         // Set image preview if exists
         if (courseData.courseImgUrl) {
-          setImagePreview(courseData.courseImgUrl);
+          setImagePreview(mediaSrc(courseData.courseImgUrl));
         }
 
         // Parse lessons time if exists
@@ -107,7 +111,7 @@ const EditCoursesPartner = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/categories", {
+        const response = await fetch(" https://back.acit-net.com/api/categories", {
           method: "GET",
           redirect: "follow",
         });
@@ -131,7 +135,7 @@ const EditCoursesPartner = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/users", {
+        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
           method: "GET",
           redirect: "follow",
         });
@@ -141,7 +145,7 @@ const EditCoursesPartner = () => {
         }
 
         const result = await response.json();
-        const trainers = result.filter((user) => user.Role === 'trainer');
+        const trainers = Array.isArray(result) ? result : [];
         setTrainers(trainers);
       } catch (error) {
         console.error('Error fetching trainers:', error);
@@ -162,10 +166,26 @@ const EditCoursesPartner = () => {
   };
 
   // Handle PDF file change for a specific index
-  const handlePdfFileChange = (idx, file) => {
+  const handlePdfFileChange = (idx, files) => {
+    const selectedFiles = Array.from(files || []);
     setPdfFiles(prev => {
       const updated = [...prev];
-      updated[idx] = file;
+      updated[idx] = selectedFiles[0] || null;
+      if (selectedFiles.length > 1) {
+        updated.splice(idx + 1, 0, ...selectedFiles.slice(1));
+      }
+      return updated;
+    });
+    setPdfTitles(prev => {
+      const updated = [...prev];
+      updated[idx] = updated[idx] || selectedFiles[0]?.name?.replace(/\.pdf$/i, '') || '';
+      if (selectedFiles.length > 1) {
+        updated.splice(
+          idx + 1,
+          0,
+          ...selectedFiles.slice(1).map(file => file.name.replace(/\.pdf$/i, ''))
+        );
+      }
       return updated;
     });
   };
@@ -173,6 +193,7 @@ const EditCoursesPartner = () => {
   // Add more PDF file input fields
   const handleAddMorePdfInput = () => {
     setPdfFiles(prev => [...prev, null]);
+    setPdfTitles(prev => [...prev, '']);
   };
 
   // Remove PDF file input at specific index
@@ -181,6 +202,10 @@ const EditCoursesPartner = () => {
       const updated = prev.filter((_, index) => index !== idx);
       // Ensure we always have at least one input
       return updated.length === 0 ? [null] : updated;
+    });
+    setPdfTitles(prev => {
+      const updated = prev.filter((_, index) => index !== idx);
+      return updated.length === 0 ? [''] : updated;
     });
   };
 
@@ -201,9 +226,9 @@ const EditCoursesPartner = () => {
     setCourseImage(null);
     setImagePreview('');
     setPdfFiles([null]);
+    setPdfTitles(['']);
     setPrice('');
     setCourseType('OnSite');
-    setCourseLink('');
     setCategoryID('');
     setStartingTime('');
     setEndingTime('');
@@ -216,6 +241,15 @@ const EditCoursesPartner = () => {
   };
 
   // Handle form submission
+  // Headers for the rich-text editor's inline image uploads.
+  const editorHeaders = (json = true) => {
+    const token = localStorage.getItem("token") || user?.token;
+    return {
+      ...(json ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -236,10 +270,17 @@ const EditCoursesPartner = () => {
     validPdfFiles.forEach((file, idx) => {
       formData.append("pdfFile", file);
     });
+    formData.append(
+      "pdfTitles",
+      JSON.stringify(pdfFiles.reduce((titles, file, idx) => {
+        if (file) titles.push(pdfTitles[idx] || file.name.replace(/\.pdf$/i, ''));
+        return titles;
+      }, []))
+    );
     
     // Append other form data
     formData.append("CourseName", courseName);
-    formData.append("Description", description);
+    appendEncoded(formData, "Description", description);
     formData.append("Price", price);
     formData.append("CourseType", courseType);
     formData.append("CategoryID", categoryID);
@@ -249,10 +290,6 @@ const EditCoursesPartner = () => {
     formData.append("InstructorID", instructorID);
     formData.append("InstructorName", instructorName);
     
-    if (courseLink) {
-      formData.append("CourseLink", courseLink);
-    }
-
     const requestOptions = {
       method: "PUT",
       headers: {
@@ -263,7 +300,7 @@ const EditCoursesPartner = () => {
     };
     
     try {
-      const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}`, requestOptions);
+      const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, requestOptions);
       const result = await response.json();
       
       if (response.ok) {
@@ -349,13 +386,12 @@ const EditCoursesPartner = () => {
             <label htmlFor="description" className="block text-sm font-medium text-primary mb-1">
               وصف الدورة
             </label>
-            <textarea
-              id="description"
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="أدخل وصف الدورة"
-              required
+              onChange={setDescription}
+              uploadUrl={`${API}/articles/content-images`}
+              authHeaders={editorHeaders}
+              placeholder="أدخل وصف الدورة..."
             />
           </div>
 
@@ -420,6 +456,17 @@ const EditCoursesPartner = () => {
                     </button>
                   )}
                   <div className="space-y-1 text-center">
+                    <input
+                      type="text"
+                      value={pdfTitles[idx] || ''}
+                      onChange={(e) => setPdfTitles(prev => {
+                        const updated = [...prev];
+                        updated[idx] = e.target.value;
+                        return updated;
+                      })}
+                      className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-secondary"
+                      placeholder="اكتب عنوان ملف PDF"
+                    />
                     <UploadCloud
                       className="mx-auto h-12 w-12 text-gray-400"
                       stroke="currentColor"
@@ -434,9 +481,10 @@ const EditCoursesPartner = () => {
                           id={`pdfFile-${idx}`}
                           name={`pdfFile-${idx}`}
                           type="file"
+                          multiple
                           className="sr-only"
                           accept="application/pdf"
-                          onChange={e => handlePdfFileChange(idx, e.target.files[0])}
+                          onChange={e => handlePdfFileChange(idx, e.target.files)}
                         />
                       </label>
                       <p className="pr-1">أو قم بسحب وإفلات</p>
@@ -490,26 +538,6 @@ const EditCoursesPartner = () => {
               <option value="Online">عبر الإنترنت</option>
             </select>
           </div>
-
-          {/* Course Link Field (only shown for online courses) */}
-          {courseType === 'Online' && (
-            <div className="mb-4">
-              <label htmlFor="courseLink" className="block text-sm font-medium text-primary mb-1">
-                رابط الدورة
-              </label>
-              <input
-                type="url"
-                id="courseLink"
-                value={courseLink}
-                onChange={(e) => setCourseLink(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                placeholder="أدخل رابط الدورة عبر الإنترنت"
-                required={courseType === 'Online'}
-              />
-            </div>
-          )}
-
-          {/* Category ID Field */}
           <div className="mb-4">
             <label htmlFor="categoryID" className="block text-sm font-medium text-primary mb-1">
               الفئة
@@ -530,7 +558,6 @@ const EditCoursesPartner = () => {
             </select>
           </div>
 
-          {/* Starting Time Field */}
           <div className="mb-4">
             <label htmlFor="startingTime" className="block text-sm font-medium text-primary mb-1">
               تاريخ البدء
@@ -545,7 +572,6 @@ const EditCoursesPartner = () => {
             />
           </div>
 
-          {/* Ending Time Field */}
           <div className="mb-4">
             <label htmlFor="endingTime" className="block text-sm font-medium text-primary mb-1">
               تاريخ الانتهاء
@@ -560,7 +586,6 @@ const EditCoursesPartner = () => {
             />
           </div>
 
-          {/* Lessons Time Field */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-primary mb-1">
               مدة الدروس
@@ -595,7 +620,6 @@ const EditCoursesPartner = () => {
             </div>
           </div>
 
-          {/* Instructor ID Field */}
           <div className="mb-4">
             <label htmlFor="instructorID" className="block text-sm font-medium text-primary mb-1">
               المدرب
@@ -616,7 +640,6 @@ const EditCoursesPartner = () => {
             </select>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-secondary text-white py-2 px-4 rounded-md hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"

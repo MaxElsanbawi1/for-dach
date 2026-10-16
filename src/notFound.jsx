@@ -8,7 +8,7 @@ const NotFound = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white lg:bg-gray-100" dir="rtl">
       {/* Image at the top */}
       <div className="mt-0 mb-6">
-        <img src="/abad.png" alt="Radwa Icon" className="" />
+        <img src="/acit-logo.png" alt="acit Icon" className="" />
       </div>
         <h1 className='text-3xl font-semibold text-[#feb914]'>404</h1>      
         <h1 className='text-3xl font-semibold'>الصفحة غير موجودة</h1> 

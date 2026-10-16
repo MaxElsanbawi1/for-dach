@@ -23,7 +23,7 @@ export default function OurPartnersImageUpload() {
 
   const fetchPartners = async () => {
     try {
-      const response = await fetch("https://back.businessonuae.com/api/OurPartners");
+      const response = await fetch(" https://back.acit-net.com/api/ourPartners");
       if (response.ok) {
         const data = await response.json();
         setPartners(data);
@@ -64,7 +64,7 @@ export default function OurPartnersImageUpload() {
         formData.append("image", selectedFile);
       }
 
-      const response = await fetch("https://back.businessonuae.com/api/OurPartners", {
+      const response = await fetch(" https://back.acit-net.com/api/ourPartners", {
         method: "POST",
         body: formData,
       });
@@ -80,7 +80,7 @@ export default function OurPartnersImageUpload() {
         // Refresh partners list
         fetchPartners();
       } else {
-        throw new Error(result.message || 'Failed to submit the form');
+        throw new Error(result.error || result.message || 'Failed to submit the form');
       }
     } catch (err) {
       console.error(err);
@@ -94,7 +94,7 @@ export default function OurPartnersImageUpload() {
   const handleDeletePartner = async (id) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الشريك؟')) {
       try {
-        const response = await fetch(`https://back.businessonuae.com/api/OurPartners/${id}`, {
+        const response = await fetch(` https://back.acit-net.com/api/ourPartners/${id}`, {
           method: "DELETE",
         });
 

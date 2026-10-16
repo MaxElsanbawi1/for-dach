@@ -1,34 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Trash2, Edit } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../AuthContext';
+import React, { useEffect, useState } from "react";
+import { Edit, Search, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../AuthContext";
+
+const API = " https://back.acit-net.com/api";
 
 const AllCourses = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // State for courses data
   const [courses, setCourses] = useState([]);
+  const [registrationCounts, setRegistrationCounts] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  // State for search query
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // State for pagination
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 10;
 
-  // Fetch courses data
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://back.businessonuae.com/api/courses');
-      const data = await response.json();
-      setCourses(data);
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-      setError('Failed to fetch courses');
+      setError("");
+
+      const coursesResponse = await fetch(`${API}/courses`, {
+        headers: getAuthHeaders(),
+      });
+      if (!coursesResponse.ok) {
+        throw new Error(`Failed to fetch courses (${coursesResponse.status})`);
+      }
+
+      const coursesData = await coursesResponse.json();
+      setCourses(Array.isArray(coursesData) ? coursesData : []);
+
+      const registrationsResponse = await fetch(`${API}/registrations`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (registrationsResponse.ok) {
+        const registrationsData = await registrationsResponse.json();
+        const counts = Array.isArray(registrationsData)
+          ? registrationsData.reduce((acc, registration) => {
+              if (registration.CourseID) {
+                acc[registration.CourseID] = (acc[registration.CourseID] || 0) + 1;
+              }
+              return acc;
+            }, {})
+          : {};
+        setRegistrationCounts(counts);
+      }
+    } catch (fetchError) {
+      console.error("Error fetching courses:", fetchError);
+      setError("فشل تحميل الدورات");
     } finally {
       setLoading(false);
     }
@@ -38,51 +65,46 @@ const AllCourses = () => {
     fetchCourses();
   }, [user.user_id]);
 
-  // Delete course function
   const handleDeleteCourse = async (courseId) => {
-    if (!window.confirm('هل أنت متأكد أنك تريد حذف هذه الدورة؟')) {
-      return;
-    }
+    if (!window.confirm("هل أنت متأكد أنك تريد حذف هذه الدورة؟")) return;
 
     try {
-      const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}`, {
-        method: 'DELETE',
-        redirect: 'follow'
+      const response = await fetch(`${API}/courses/${courseId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        redirect: "follow",
       });
 
-      if (response.ok) {
-        // Refresh the courses list after successful deletion
-        await fetchCourses();
-      } else {
-        throw new Error('Failed to delete course');
+      if (!response.ok) {
+        throw new Error("Failed to delete course");
       }
-    } catch (error) {
-      console.error('Error deleting course:', error);
-      alert('فشل حذف الدورة. يرجى المحاولة مرة أخرى.');
+
+      await fetchCourses();
+    } catch (deleteError) {
+      console.error("Error deleting course:", deleteError);
+      alert("فشل حذف الدورة. يرجى المحاولة مرة أخرى.");
     }
   };
 
-  // Filter courses based on search query
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.CourseID.toString().includes(searchQuery) ||
-      course.CourseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.CourseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.CategoryID.toString().includes(searchQuery)
-  );
+  const filteredCourses = courses.filter((course) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      String(course.CourseID || "").includes(query) ||
+      String(course.CourseName || "").toLowerCase().includes(query) ||
+      String(course.CourseCode || "").toLowerCase().includes(query) ||
+      String(course.CategoryID || "").includes(query)
+    );
+  });
 
-  // Pagination logic
+  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
   const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Handle row click to navigate to course details
-  const handleRowClick = (courseId, e) => {
-    // Don't navigate if the click was on the delete button
-    if (e.target.closest('button')) return;
+  const handleRowClick = (courseId, event) => {
+    if (event.target.closest("button")) return;
     navigate(`/courses/${courseId}/details`);
   };
 
@@ -108,21 +130,22 @@ const AllCourses = () => {
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-2xl font-bold mb-6 text-primary">إدارة الدورات</h2>
 
-      {/* Search Input */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
         <div className="relative w-full md:w-64">
           <input
             type="text"
             placeholder="بحث..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
           />
           <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
         </div>
       </div>
 
-      {/* Courses Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white">
           <thead className="hidden md:table-header-group">
@@ -131,8 +154,11 @@ const AllCourses = () => {
               <th className="px-6 py-3 text-right text-sm font-semibold text-primary">اسم الدورة</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-primary">رمز الدورة</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-primary">الفئة</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-primary">عدد المسجلين</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ البدء</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ الانتهاء</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-primary">تاريخ الإنشاء</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-primary">أضافها</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-primary">إجراءات</th>
             </tr>
           </thead>
@@ -140,7 +166,7 @@ const AllCourses = () => {
             {currentCourses.map((course) => (
               <tr
                 key={course.CourseID}
-                onClick={(e) => handleRowClick(course.CourseID, e)}
+                onClick={(event) => handleRowClick(course.CourseID, event)}
                 className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
               >
                 <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
@@ -160,18 +186,32 @@ const AllCourses = () => {
                   {course.CategoryID}
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                  <span className="font-semibold md:hidden">عدد المسجلين: </span>
+                  <span className="inline-flex min-w-8 justify-center rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+                    {registrationCounts[course.CourseID] || 0}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                   <span className="font-semibold md:hidden">تاريخ البدء: </span>
-                  {new Date(course.StartingTime).toLocaleDateString()}
+                  {course.StartingTime ? new Date(course.StartingTime).toLocaleDateString() : "غير محدد"}
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                   <span className="font-semibold md:hidden">تاريخ الانتهاء: </span>
-                  {new Date(course.EndingTime).toLocaleDateString()}
+                  {course.EndingTime ? new Date(course.EndingTime).toLocaleDateString() : "غير محدد"}
+                </td>
+                <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                  <span className="font-semibold md:hidden">تاريخ الإنشاء: </span>
+                  {course.CreatedAt ? new Date(course.CreatedAt).toLocaleString("ar-EG", { dateStyle: "medium", timeStyle: "short" }) : "غير محدد"}
+                </td>
+                <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
+                  <span className="font-semibold md:hidden">أضافها: </span>
+                  {course.CreatedByName || course.CreatedByUsername || "غير معروف"}
                 </td>
                 <td className="px-6 py-4 text-right text-sm text-gray-700 block md:table-cell">
                   <div className="flex gap-2">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={(event) => {
+                        event.stopPropagation();
                         navigate(`/courses/${course.CourseID}/edit`);
                       }}
                       className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50"
@@ -180,8 +220,8 @@ const AllCourses = () => {
                       <Edit size={18} />
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={(event) => {
+                        event.stopPropagation();
                         handleDeleteCourse(course.CourseID);
                       }}
                       className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
@@ -197,106 +237,42 @@ const AllCourses = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       {filteredCourses.length > 0 && (
         <div className="flex justify-center mt-6">
           <div className="flex items-center space-x-1 md:space-x-2">
-            {/* Previous button */}
             <button
               onClick={() => paginate(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className={`px-2 py-2 md:px-3 md:py-2 rounded-md text-sm ${
                 currentPage === 1
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               ←
             </button>
-            
-            {/* Page numbers - show fewer on mobile */}
-            {(() => {
-              const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
-              const maxVisiblePages = window.innerWidth < 768 ? 3 : 7; // 3 on mobile, 7 on desktop
-              
-              let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-              let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-              
-              // Adjust start page if we're near the end
-              if (endPage - startPage < maxVisiblePages - 1) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-              }
-              
-              const pages = [];
-              
-              // Add first page and ellipsis if needed
-              if (startPage > 1) {
-                pages.push(
-                  <button
-                    key={1}
-                    onClick={() => paginate(1)}
-                    className="px-2 py-2 md:px-3 md:py-2 rounded-md text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  >
-                    1
-                  </button>
-                );
-                if (startPage > 2) {
-                  pages.push(
-                    <span key="ellipsis1" className="px-2 py-2 text-gray-500">
-                      ...
-                    </span>
-                  );
-                }
-              }
-              
-              // Add visible page numbers
-              for (let i = startPage; i <= endPage; i++) {
-                pages.push(
-                  <button
-                    key={i}
-                    onClick={() => paginate(i)}
-                    className={`px-2 py-2 md:px-3 md:py-2 rounded-md text-sm ${
-                      currentPage === i
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {i}
-                  </button>
-                );
-              }
-              
-              // Add last page and ellipsis if needed
-              if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                  pages.push(
-                    <span key="ellipsis2" className="px-2 py-2 text-gray-500">
-                      ...
-                    </span>
-                  );
-                }
-                pages.push(
-                  <button
-                    key={totalPages}
-                    onClick={() => paginate(totalPages)}
-                    className="px-2 py-2 md:px-3 md:py-2 rounded-md text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  >
-                    {totalPages}
-                  </button>
-                );
-              }
-              
-              return pages;
-            })()}
-            
-            {/* Next button */}
+
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => paginate(index + 1)}
+                className={`px-2 py-2 md:px-3 md:py-2 rounded-md text-sm ${
+                  currentPage === index + 1
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+
             <button
-              onClick={() => paginate(Math.min(Math.ceil(filteredCourses.length / coursesPerPage), currentPage + 1))}
-              disabled={currentPage === Math.ceil(filteredCourses.length / coursesPerPage)}
+              onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
               className={`px-2 py-2 md:px-3 md:py-2 rounded-md text-sm ${
-                currentPage === Math.ceil(filteredCourses.length / coursesPerPage)
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               →

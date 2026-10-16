@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { API } from '../tax/taxApi';
 import { UserPlus, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
@@ -7,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const AddStudents = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, can, access } = useAuth();
 
   // State for form fields
   const [nationalId, setNationalId] = useState('');
@@ -16,18 +17,27 @@ const AddStudents = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [role, setRole] = useState(''); // Default role is Student
+  const [location, setLocation] = useState('');
+  const [role, setRole] = useState('student');
   const [companyName ,setCompanyName] = useState('');
   const [error, setError] = useState('');
-  // Role options
-  const roleOptions = [
-    { value: 'Student', label: 'طالب' },
-    { value: 'manager', label: 'مدير' },
-    { value: 'Admin', label: 'مسؤل'   },
-    { value: 'trainer', label: 'مدرب'   },
-    { value: 'partner', label: 'شريك'   },
-    // Add more roles as needed
-  ];
+  // Roles come from the permission templates (the super admin's screen), so a
+  // new template shows up here without a code change. Without users.add
+  // this page adds students only, which is also all the API accepts.
+  const [roleOptions, setRoleOptions] = useState([{ value: 'student', label: 'طالب' }]);
+  useEffect(() => {
+    if (!can('users.add')) return;
+    fetch(`${API}/permissions/roles`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((roles) => {
+        setRoleOptions([
+          { value: 'student', label: 'طالب' },
+          ...roles.map((r) => ({ value: r.name, label: r.label })),
+          ...(access?.isSuperAdmin ? [{ value: 'superadmin', label: 'سوبر أدمن' }] : []),
+        ]);
+      })
+      .catch(() => {});
+  }, [can, access]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -46,6 +56,7 @@ const AddStudents = () => {
       FullName: fullName,
       Email: email,
       PhoneNumber: phoneNumber,
+      Location: location,
       Role: role,
       companyName:companyName,
     });
@@ -58,7 +69,7 @@ const AddStudents = () => {
     };
 
     try {
-      const response = await fetch("https://back.businessonuae.com/api/users", requestOptions);
+      const response = await fetch("https://back.acit-net.com/api/users", requestOptions);
       const result = await response.json();
 
       if (response.ok) {
@@ -71,7 +82,8 @@ const AddStudents = () => {
         setFullName('');
         setEmail('');
         setPhoneNumber('');
-        setRole('Student'); // Reset to default role
+        setLocation('');
+        setRole('student');
         setCompanyName('');
         setError('');
       } else {
@@ -212,6 +224,22 @@ const AddStudents = () => {
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               placeholder="أدخل رقم الهاتف"
+              required
+            />
+          </div>
+
+          {/* Location Field */}
+          <div className="mb-4">
+            <label htmlFor="location" className="block text-sm font-medium text-primary mb-1">
+              المنطقة
+            </label>
+            <input
+              type="text"
+              id="location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+              placeholder="أدخل المنطقة"
               required
             />
           </div>

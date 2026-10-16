@@ -4,6 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../AuthContext';
+import RichTextEditor from '../../components/RichTextEditor';
+import CourseTaxFields from '../tax/CourseTaxFields';
+import { appendEncoded } from '../../encodeField';
+import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo } from './CourseSeoFields';
+
+const API = "https://back.acit-net.com/api";
 
 const AddCourses = () => {
   const navigate = useNavigate();
@@ -11,24 +17,26 @@ const AddCourses = () => {
   // State for form fields
   const [courseName, setCourseName] = useState('');
   const [description, setDescription] = useState('');
+  const [seo, setSeo] = useState(EMPTY_SEO);
   const [courseImage, setCourseImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [price, setPrice] = useState('');
+  const [taxCategory, setTaxCategory] = useState('STANDARD');
+  const [priceIncludesVat, setPriceIncludesVat] = useState(false);
   const [courseType, setCourseType] = useState('OnSite');
   const [courseDays, setCourseDays] = useState('weekdays');
-  const [courseLink, setCourseLink] = useState('');
   const [categoryID, setCategoryID] = useState('');
-  const [coursesRoom, setcoursesRoom] = useState('');
   const [startingTime, setStartingTime] = useState('');
   const [endingTime, setEndingTime] = useState('');
   const [lessonsTime, setLessonsTime] = useState('');
+  const [durationNote, setDurationNote] = useState('');
   const [instructorID, setInstructorID] = useState('');
   const [instructorName, setInstructorName] = useState('');
   const [CoursePartner, setCoursePartner] = useState('');
   const [isPartnerCourse, setIsPartnerCourse] = useState(false);
   const [error, setError] = useState('');
   const [pdfFiles, setPdfFiles] = useState([null]); // Array of PDF files
-  const [specialPdf, setSpecialPdfs] = useState([null]); // Array of PDF files
+  const [pdfTitles, setPdfTitles] = useState(['']);
 
   // State for categories
   const [categories, setCategories] = useState([]);
@@ -41,16 +49,14 @@ const AddCourses = () => {
   const [lessonsEndTime, setLessonsEndTime] = useState('');
 
   // ========== STATE FOR PREVIEW MODE ==========
-  const [previewMode, setPreviewMode] = useState(false); // false = edit, true = preview
 
   // ========== REF FOR TEXTAREA ==========
-  const descriptionRef = useRef(null);
 
   // Fetch categories on component mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/categories", {
+        const response = await fetch(" https://back.acit-net.com/api/categories", {
           method: "GET",
           redirect: "follow",
         });
@@ -74,17 +80,23 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/users", {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
           method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
           redirect: "follow",
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch users');
+          throw new Error('Failed to fetch trainers');
         }
 
         const result = await response.json();
-        const trainers = result.filter((user) => user.Role === 'trainer');
+        const trainers = Array.isArray(result) ? result : [];
         setTrainers(trainers);
       } catch (error) {
         console.error('Error fetching trainers:', error);
@@ -105,17 +117,26 @@ const AddCourses = () => {
   };
 
   // Handle PDF file change for a specific index
-  const handlePdfFileChange = (idx, file) => {
+  const handlePdfFileChange = (idx, files) => {
+    const selectedFiles = Array.from(files || []);
     setPdfFiles(prev => {
       const updated = [...prev];
-      updated[idx] = file;
+      updated[idx] = selectedFiles[0] || null;
+      if (selectedFiles.length > 1) {
+        updated.splice(idx + 1, 0, ...selectedFiles.slice(1));
+      }
       return updated;
     });
-  };
-  const handlePdfFileChanges = (idx1, file) => {
-    setSpecialPdfs(prev => {
+    setPdfTitles(prev => {
       const updated = [...prev];
-      updated[idx1] = file;
+      updated[idx] = updated[idx] || selectedFiles[0]?.name?.replace(/\.pdf$/i, '') || '';
+      if (selectedFiles.length > 1) {
+        updated.splice(
+          idx + 1,
+          0,
+          ...selectedFiles.slice(1).map(file => file.name.replace(/\.pdf$/i, ''))
+        );
+      }
       return updated;
     });
   };
@@ -123,6 +144,7 @@ const AddCourses = () => {
   // Add more PDF file input fields
   const handleAddMorePdfInput = () => {
     setPdfFiles(prev => [...prev, null]);
+    setPdfTitles(prev => [...prev, '']);
   };
 
   // Remove PDF file input at specific index
@@ -131,6 +153,10 @@ const AddCourses = () => {
       const updated = prev.filter((_, index) => index !== idx);
       // Ensure we always have at least one input
       return updated.length === 0 ? [null] : updated;
+    });
+    setPdfTitles(prev => {
+      const updated = prev.filter((_, index) => index !== idx);
+      return updated.length === 0 ? [''] : updated;
     });
   };
 
@@ -146,29 +172,28 @@ const AddCourses = () => {
 
   // Reset form fields
   const resetForm = () => {
+    setSeo(EMPTY_SEO);
     setCourseName('');
     setDescription('');
     setCourseImage(null);
     setImagePreview('');
     setPdfFiles([null]);
-    setSpecialPdfs([null]);
+    setPdfTitles(['']);
     setPrice('');
     setCourseType('OnSite');
     setCourseDays('weekdays');
-    setCourseLink('');
     setCoursePartner('');
     setIsPartnerCourse(false);
     setCategoryID('');
-    setcoursesRoom('');
     setStartingTime('');
     setEndingTime('');
     setLessonsTime('');
+    setDurationNote('');
     setLessonsStartTime('');
     setLessonsEndTime('');
     setInstructorID('');
     setInstructorName('');
     setError('');
-    setPreviewMode(false); // reset preview mode
   };
 
   // Handle form submission
@@ -192,30 +217,32 @@ const AddCourses = () => {
     validPdfFiles.forEach((file, idx) => {
       formData.append("pdfFile", file);
     });
-    const validPdfFilesspecialPdf = pdfFiles.filter(f => f);
-    validPdfFilesspecialPdf.forEach((file, idx) => {
-      formData.append("specialPdf", file);
-    });
+    formData.append(
+      "pdfTitles",
+      JSON.stringify(pdfFiles.reduce((titles, file, idx) => {
+        if (file) titles.push(pdfTitles[idx] || file.name.replace(/\.pdf$/i, ''));
+        return titles;
+      }, []))
+    );
     
     // Append other form data
     formData.append("CourseName", courseName);
-    formData.append("Description", description);
+    appendEncoded(formData, "Description", description);
+    appendSeo(formData, seo, appendEncoded);
     formData.append("Price", price);
+    formData.append("TaxCategory", taxCategory);
+    formData.append("PriceIncludesVat", priceIncludesVat ? "true" : "false");
     formData.append("CourseType", courseType);
     formData.append("CourseDays", courseDays);
     formData.append("CategoryID", categoryID);
-    formData.append("coursesRoom", coursesRoom);
     formData.append("StartingTime", new Date(startingTime).toISOString());
     formData.append("EndingTime", new Date(endingTime).toISOString());
     formData.append("LessonsTime", formattedLessonsTime);
+    appendEncoded(formData, "DurationNote", durationNote.trim());
     formData.append("InstructorID", instructorID);
     formData.append("InstructorName", instructorName);
-    formData.append("CoursePartner", CoursePartner);
+    formData.append("CoursePartner", isPartnerCourse ? CoursePartner.trim() : "");
     
-    if (courseLink) {
-      formData.append("CourseLink", courseLink);
-    }
-
     const requestOptions = {
       method: "POST",
       headers: {
@@ -226,7 +253,7 @@ const AddCourses = () => {
     };
     
     try {
-      const response = await fetch("https://back.businessonuae.com/api/courses", requestOptions);
+      const response = await fetch(" https://back.acit-net.com/api/courses", requestOptions);
       const result = await response.json();
       
       if (response.ok) {
@@ -255,51 +282,13 @@ const AddCourses = () => {
     }
   }, [instructorID, trainers]);
 
-  // ========== FUNCTIONS TO INSERT HTML TAGS ==========
-  const insertAtCursor = (text) => {
-    const textarea = descriptionRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const newDescription = description.substring(0, start) + text + description.substring(end);
-    setDescription(newDescription);
-
-    // Set cursor position after the inserted text
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + text.length, start + text.length);
-    }, 0);
-  };
-
-  const insertTag = (openTag, closeTag = '') => {
-    const textarea = descriptionRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = description.substring(start, end);
-
-    let newText;
-    if (selectedText) {
-      // Wrap selected text with tags
-      newText = openTag + selectedText + closeTag;
-    } else {
-      // No selection, insert open and close tags with cursor in between
-      newText = openTag + closeTag;
-      setDescription(description.substring(0, start) + newText + description.substring(end));
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + openTag.length, start + openTag.length);
-      }, 0);
-      return;
-    }
-
-    setDescription(description.substring(0, start) + newText + description.substring(end));
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length);
-    }, 0);
+  // Headers for the rich-text editor's inline image uploads.
+  const editorHeaders = (json = true) => {
+    const token = localStorage.getItem("token") || user?.token;
+    return {
+      ...(json ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
   };
 
   return (
@@ -354,87 +343,19 @@ const AddCourses = () => {
             />
           </div>
 
-          {/* ========== MODIFIED DESCRIPTION FIELD WITH PREVIEW TOGGLE AND TOOLBAR ========== */}
+          {/* Description Field */}
           <div className="mb-4">
-            <div className="flex justify-between items-center mb-1">
-              <label htmlFor="description" className="block text-sm font-medium text-primary">
-                وصف الدورة
-              </label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode(false)}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    !previewMode
-                      ? 'bg-secondary text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  تحرير
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode(true)}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    previewMode
-                      ? 'bg-secondary text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  معاينة
-                </button>
-              </div>
-            </div>
-
-            {!previewMode ? (
-              <>
-                {/* Toolbar for HTML tags */}
-                <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-100 rounded-md">
-                  <button
-                    type="button"
-                    onClick={() => insertAtCursor('<br />')}
-                    className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50"
-                  >
-                    &lt;br /&gt;
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertTag('<span class="text-primary">', '</span>')}
-                    className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm text-[#140342] hover:bg-gray-50"
-                  >
-                    &lt;span class="text-primary"&gt;
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertTag('<span class="font-bold">', '</span>')}
-                    className="px-3 py-1 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50"
-                  >
-                    &lt;span class="font-bold"&gt;
-                  </button>
-                </div>
-                <textarea
-                  ref={descriptionRef}
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                  placeholder="أدخل وصف الدورة (يمكنك استخدام وسوم HTML)"
-                  rows={6}
-                  required
-                />
-              </>
-            ) : (
-              <div className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 min-h-[120px] prose prose-sm max-w-none">
-                {description ? (
-                  <div dangerouslySetInnerHTML={{ __html: description }} />
-                ) : (
-                  <p className="text-gray-400">لا يوجد محتوى للمعاينة</p>
-                )}
-              </div>
-            )}
-            <p className="text-xs text-gray-500 mt-1">يمكنك استخدام الأزرار أعلاه لإدراج وسوم HTML.</p>
+            <label htmlFor="description" className="block text-sm font-medium text-primary mb-1">
+              وصف الدورة
+            </label>
+            <RichTextEditor
+              value={description}
+              onChange={setDescription}
+              uploadUrl={`${API}/articles/content-images`}
+              authHeaders={editorHeaders}
+              placeholder="أدخل وصف الدورة..."
+            />
           </div>
-          {/* ========== END OF MODIFIED DESCRIPTION FIELD ========== */}
 
           {/* Course Image Field */}
           <div className="mb-4">
@@ -497,6 +418,17 @@ const AddCourses = () => {
                     </button>
                   )}
                   <div className="space-y-1 text-center">
+                    <input
+                      type="text"
+                      value={pdfTitles[idx] || ''}
+                      onChange={(e) => setPdfTitles(prev => {
+                        const updated = [...prev];
+                        updated[idx] = e.target.value;
+                        return updated;
+                      })}
+                      className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-secondary"
+                      placeholder="اكتب عنوان ملف PDF"
+                    />
                     <UploadCloud
                       className="mx-auto h-12 w-12 text-gray-400"
                       stroke="currentColor"
@@ -511,9 +443,10 @@ const AddCourses = () => {
                           id={`pdfFile-${idx}`}
                           name={`pdfFile-${idx}`}
                           type="file"
+                          multiple
                           className="sr-only"
                           accept="application/pdf"
-                          onChange={e => handlePdfFileChange(idx, e.target.files[0])}
+                          onChange={e => handlePdfFileChange(idx, e.target.files)}
                         />
                       </label>
                       <p className="pr-1">أو قم بسحب وإفلات</p>
@@ -535,48 +468,6 @@ const AddCourses = () => {
             </div>
           </div>
 
-          {/* PDF خاص  Files Field */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-primary mb-1">
-              ملفات PDF all للدورة (اختياري)
-            </label>
-            <div className="space-y-4">
-              {specialPdf.map((file, idx1) => (
-                <div key={idx1} className="relative mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  {/* X button to remove this input */}
-
-                  <div className="space-y-1 text-center">
-                    <UploadCloud
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                    />
-                    <div className="flex text-sm text-gray-600">
-                      <label
-                        htmlFor={`specialPdf-${idx1}`}
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-secondary hover:text-primary focus-within:outline-none"
-                      >
-                        <span>اختر ملف PDF</span>
-                        <input
-                          id={`specialPdf-${idx1}`}
-                          name={`specialPdf-${idx1}`}
-                          type="file"
-                          className="sr-only"
-                          accept="application/pdf"
-                          onChange={e => handlePdfFileChanges(idx1, e.target.files[0])}
-                        />
-                      </label>
-                      <p className="pr-1">أو قم بسحب وإفلات</p>
-                    </div>
-                    <p className="text-xs text-gray-500">PDF حتى 10MB</p>
-                    {file && (
-                      <p className="text-xs text-green-600">تم اختيار: {file.name}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          </div>
 
           {/* Price Field */}
           <div className="mb-4">
@@ -594,6 +485,16 @@ const AddCourses = () => {
             />
           </div>
 
+          <CourseTaxFields
+            price={price}
+            taxCategory={taxCategory}
+            priceIncludesVat={priceIncludesVat}
+            onChange={({ taxCategory: tc, priceIncludesVat: pv }) => {
+              setTaxCategory(tc);
+              setPriceIncludesVat(pv);
+            }}
+          />
+
           {/* Course Type Field */}
           <div className="mb-4">
             <label htmlFor="courseType" className="block text-sm font-medium text-primary mb-1">
@@ -610,27 +511,9 @@ const AddCourses = () => {
               <option value="Online">عبر الإنترنت</option>
             </select>
           </div>
-
-          {/* Course Link Field (only shown for online courses) */}
-          {courseType === 'Online' && (
-            <div className="mb-4">
-              <label htmlFor="courseLink" className="block text-sm font-medium text-primary mb-1">
-                رابط الدورة
-              </label>
-              <input
-                type="url"
-                id="courseLink"
-                value={courseLink}
-                onChange={(e) => setCourseLink(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                placeholder="أدخل رابط الدورة عبر الإنترنت"
-                required={courseType === 'Online'}
-              />
-            </div>
-          )}
           <div className="mb-4">
             <label htmlFor="CourseDays" className="block text-sm font-medium text-primary mb-1">
-              نوع الدورة
+              أيام الدورة
             </label>
             <select
               id="CourseDays"
@@ -639,11 +522,11 @@ const AddCourses = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             >
-              <option value="weekdays">weekdays</option>
-              <option value="weekends">weekends </option>
+              <option value="weekdays">أيام الأسبوع (من الأحد إلى الأربعاء)</option>
+              <option value="weekends">نهاية الأسبوع (الجمعة والسبت)</option>
             </select>
           </div>
-          {/* Category ID Field */}
+
           <div className="mb-4">
             <label htmlFor="categoryID" className="block text-sm font-medium text-primary mb-1">
               الفئة
@@ -664,7 +547,6 @@ const AddCourses = () => {
             </select>
           </div>
 
-          {/* Starting Time Field */}
           <div className="mb-4">
             <label htmlFor="startingTime" className="block text-sm font-medium text-primary mb-1">
               تاريخ البدء
@@ -679,7 +561,6 @@ const AddCourses = () => {
             />
           </div>
 
-          {/* Ending Time Field */}
           <div className="mb-4">
             <label htmlFor="endingTime" className="block text-sm font-medium text-primary mb-1">
               تاريخ الانتهاء
@@ -694,7 +575,6 @@ const AddCourses = () => {
             />
           </div>
 
-          {/* Lessons Time Field */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-primary mb-1">
               مدة الدروس
@@ -729,7 +609,21 @@ const AddCourses = () => {
             </div>
           </div>
 
-          {/* Instructor ID Field */}
+          <div className="mb-4">
+            <label htmlFor="durationNote" className="block text-sm font-medium text-primary mb-1">
+              تنبيه في تبويب المدة (اختياري)
+            </label>
+            <textarea
+              id="durationNote"
+              rows={2}
+              value={durationNote}
+              onChange={(e) => setDurationNote(e.target.value)}
+              placeholder="مثال: الدورة تُعقد أيام السبت والأحد فقط، أو قد يتغير موعد المحاضرة الأولى"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+            />
+            <p className="mt-1 text-xs text-gray-500">يظهر للزائر تحت مدة الدورة في صفحة الدورة. اتركه فارغًا لإخفائه.</p>
+          </div>
+
           <div className="mb-4">
             <label htmlFor="instructorID" className="block text-sm font-medium text-primary mb-1">
               المدرب
@@ -749,23 +643,7 @@ const AddCourses = () => {
               ))}
             </select>
           </div>
-           
 
-          <div className="mb-4">
-            <label htmlFor="coursesRoom" className="block text-sm font-medium text-primary mb-1">
-            رقم الفصل 
-            </label>
-            <textarea
-              id="coursesRoom"
-              value={coursesRoom}
-              onChange={(e) => setcoursesRoom(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder=" رقم الفصل   "
-              required
-            />
-          </div>
-
-          {/* Partner Course Option */}
           <div className="mb-4">
             <div className="flex items-center">
               <input
@@ -781,7 +659,6 @@ const AddCourses = () => {
             </div>
           </div>
 
-          {/* Course Partner Field - Only show when isPartnerCourse is true */}
           {isPartnerCourse && (
             <div className="mb-4">
               <label htmlFor="coursePartner" className="block text-sm font-medium text-primary mb-1">
@@ -799,7 +676,8 @@ const AddCourses = () => {
             </div>
           )}
 
-          {/* Submit Button */}
+          <CourseSeoFields value={seo} onChange={setSeo} />
+
           <button
             type="submit"
             className="w-full bg-secondary text-white py-2 px-4 rounded-md hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"

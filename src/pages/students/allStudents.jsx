@@ -9,6 +9,8 @@ const AllStudents = () => {
 
   // State for users data
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // State for search query
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,29 +25,40 @@ const AllStudents = () => {
       try {
         const requestOptions = {
           method: 'GET',
+          headers: {
+            Authorization: `Bearer ${user?.token || localStorage.getItem('token')}`,
+          },
           redirect: 'follow',
         };
 
-        const response = await fetch('https://back.businessonuae.com/api/users', requestOptions);
+        const response = await fetch(' https://back.acit-net.com/api/users', requestOptions);
         const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || `Failed to load students (${response.status})`);
+        }
         // Filter users to include only students
-        const students = data.filter((user) => user.Role === 'student');
+        const students = Array.isArray(data)
+          ? data.filter((item) => String(item.Role || '').toLowerCase() === 'student')
+          : [];
         setUsers(students);
       } catch (error) {
         console.error('Error fetching users:', error);
+        setError(error.message || 'Failed to load students.');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUsers();
-  }, [user.user_id]);
+  }, [user?.user_id, user?.token]);
 
   // Filter users based on search query
   const filteredUsers = users.filter(
     (user) =>
-      user.UserID.toString().includes(searchQuery) ||
-      user.FullName.includes(searchQuery) ||
-      user.Email.includes(searchQuery) ||
-      user.PhoneNumber.includes(searchQuery)
+      String(user.UserID || '').includes(searchQuery) ||
+      String(user.FullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(user.Email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(user.PhoneNumber || '').includes(searchQuery)
   );
 
   // Pagination logic
@@ -81,6 +94,8 @@ const AllStudents = () => {
         </div>
 
         {/* Users Table */}
+        {loading && <p className="py-8 text-center text-gray-500">Loading...</p>}
+        {error && <p className="mb-4 rounded-md bg-red-50 p-4 text-center text-red-700">{error}</p>}
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white">
             <thead className="hidden md:table-header-group">

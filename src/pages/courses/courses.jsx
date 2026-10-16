@@ -19,7 +19,7 @@ const Courses = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/courses");
+        const response = await fetch(" https://back.acit-net.com/api/courses");
         const result = await response.json();
         setCourses(result);
 

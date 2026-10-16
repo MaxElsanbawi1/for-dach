@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserPlus, ArrowRight, UploadCloud } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../AuthContext';
+import RichTextEditor from '../../components/RichTextEditor';
+import CourseTaxFields from '../tax/CourseTaxFields';
+
+import { mediaSrc } from '../../mediaSrc';
+import { appendEncoded } from '../../encodeField';
+import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo } from './CourseSeoFields';
+const API = "https://back.acit-net.com/api";
 
 const EditCourses = () => {
   const navigate = useNavigate();
@@ -13,19 +20,25 @@ const EditCourses = () => {
   // State for form fields
   const [courseName, setCourseName] = useState('');
   const [description, setDescription] = useState('');
+  const [seo, setSeo] = useState(EMPTY_SEO);
   const [courseImage, setCourseImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [price, setPrice] = useState('');
+  const [taxCategory, setTaxCategory] = useState('STANDARD');
+  const [priceIncludesVat, setPriceIncludesVat] = useState(false);
   const [courseType, setCourseType] = useState('OnSite');
-  const [courseLink, setCourseLink] = useState('');
   const [categoryID, setCategoryID] = useState('');
   const [startingTime, setStartingTime] = useState('');
   const [endingTime, setEndingTime] = useState('');
   const [lessonsTime, setLessonsTime] = useState('');
+  const [durationNote, setDurationNote] = useState('');
   const [instructorID, setInstructorID] = useState('');
   const [instructorName, setInstructorName] = useState('');
+  const [CoursePartner, setCoursePartner] = useState('');
+  const [isPartnerCourse, setIsPartnerCourse] = useState(false);
   const [error, setError] = useState('');
   const [pdfFiles, setPdfFiles] = useState([null]); // Array of PDF files
+  const [pdfTitles, setPdfTitles] = useState(['']);
 
   // State for categories
   const [categories, setCategories] = useState([]);
@@ -37,15 +50,18 @@ const EditCourses = () => {
   const [lessonsStartTime, setLessonsStartTime] = useState('');
   const [lessonsEndTime, setLessonsEndTime] = useState('');
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   // Fetch course data on component mount
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}`, {
+        const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
           method: "GET",
-          headers: {
-            "Authorization": `Bearer ${user?.token}`
-          },
+          headers: getAuthHeaders(),
           redirect: "follow",
         });
 
@@ -58,19 +74,25 @@ const EditCourses = () => {
         // Populate form fields with existing data
         setCourseName(courseData.CourseName || '');
         setDescription(courseData.Description || '');
+        setSeo(seoFromCourse(courseData));
         setPrice(courseData.Price || '');
+        setTaxCategory(courseData.TaxCategory || 'STANDARD');
+        setPriceIncludesVat(!!courseData.PriceIncludesVat);
         setCourseType(courseData.CourseType || 'OnSite');
-        setCourseLink(courseData.CourseLink || '');
         setCategoryID(courseData.CategoryID || '');
         setStartingTime(courseData.StartingTime ? new Date(courseData.StartingTime).toISOString().split('T')[0] : '');
         setEndingTime(courseData.EndingTime ? new Date(courseData.EndingTime).toISOString().split('T')[0] : '');
         setLessonsTime(courseData.LessonsTime || '');
+        setDurationNote(courseData.DurationNote || '');
         setInstructorID(courseData.InstructorID || '');
+        const partner = String(courseData.CoursePartner ?? '').trim();
+        setIsPartnerCourse(partner !== '');
+        setCoursePartner(partner);
         setInstructorName(courseData.InstructorName || '');
         
         // Set image preview if exists
         if (courseData.courseImgUrl) {
-          setImagePreview(courseData.courseImgUrl);
+          setImagePreview(mediaSrc(courseData.courseImgUrl));
         }
 
         // Parse lessons time if exists
@@ -107,8 +129,9 @@ const EditCourses = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/categories", {
+        const response = await fetch(" https://back.acit-net.com/api/categories", {
           method: "GET",
+          headers: getAuthHeaders(),
           redirect: "follow",
         });
 
@@ -131,8 +154,9 @@ const EditCourses = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("https://back.businessonuae.com/api/users", {
+        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
           method: "GET",
+          headers: getAuthHeaders(),
           redirect: "follow",
         });
 
@@ -141,7 +165,7 @@ const EditCourses = () => {
         }
 
         const result = await response.json();
-        const trainers = result.filter((user) => user.Role === 'trainer');
+        const trainers = Array.isArray(result) ? result : [];
         setTrainers(trainers);
       } catch (error) {
         console.error('Error fetching trainers:', error);
@@ -162,10 +186,26 @@ const EditCourses = () => {
   };
 
   // Handle PDF file change for a specific index
-  const handlePdfFileChange = (idx, file) => {
+  const handlePdfFileChange = (idx, files) => {
+    const selectedFiles = Array.from(files || []);
     setPdfFiles(prev => {
       const updated = [...prev];
-      updated[idx] = file;
+      updated[idx] = selectedFiles[0] || null;
+      if (selectedFiles.length > 1) {
+        updated.splice(idx + 1, 0, ...selectedFiles.slice(1));
+      }
+      return updated;
+    });
+    setPdfTitles(prev => {
+      const updated = [...prev];
+      updated[idx] = updated[idx] || selectedFiles[0]?.name?.replace(/\.pdf$/i, '') || '';
+      if (selectedFiles.length > 1) {
+        updated.splice(
+          idx + 1,
+          0,
+          ...selectedFiles.slice(1).map(file => file.name.replace(/\.pdf$/i, ''))
+        );
+      }
       return updated;
     });
   };
@@ -173,6 +213,7 @@ const EditCourses = () => {
   // Add more PDF file input fields
   const handleAddMorePdfInput = () => {
     setPdfFiles(prev => [...prev, null]);
+    setPdfTitles(prev => [...prev, '']);
   };
 
   // Remove PDF file input at specific index
@@ -181,6 +222,10 @@ const EditCourses = () => {
       const updated = prev.filter((_, index) => index !== idx);
       // Ensure we always have at least one input
       return updated.length === 0 ? [null] : updated;
+    });
+    setPdfTitles(prev => {
+      const updated = prev.filter((_, index) => index !== idx);
+      return updated.length === 0 ? [''] : updated;
     });
   };
 
@@ -196,26 +241,39 @@ const EditCourses = () => {
 
   // Reset form fields
   const resetForm = () => {
+    setSeo(EMPTY_SEO);
     setCourseName('');
     setDescription('');
     setCourseImage(null);
     setImagePreview('');
     setPdfFiles([null]);
+    setPdfTitles(['']);
     setPrice('');
     setCourseType('OnSite');
-    setCourseLink('');
     setCategoryID('');
     setStartingTime('');
     setEndingTime('');
     setLessonsTime('');
+    setDurationNote('');
     setLessonsStartTime('');
     setLessonsEndTime('');
     setInstructorID('');
     setInstructorName('');
+    setIsPartnerCourse(false);
+    setCoursePartner('');
     setError('');
   };
 
   // Handle form submission
+  // Headers for the rich-text editor's inline image uploads.
+  const editorHeaders = (json = true) => {
+    const token = localStorage.getItem("token") || user?.token;
+    return {
+      ...(json ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -236,34 +294,40 @@ const EditCourses = () => {
     validPdfFiles.forEach((file, idx) => {
       formData.append("pdfFile", file);
     });
+    formData.append(
+      "pdfTitles",
+      JSON.stringify(pdfFiles.reduce((titles, file, idx) => {
+        if (file) titles.push(pdfTitles[idx] || file.name.replace(/\.pdf$/i, ''));
+        return titles;
+      }, []))
+    );
     
     // Append other form data
     formData.append("CourseName", courseName);
-    formData.append("Description", description);
+    appendEncoded(formData, "Description", description);
+    appendSeo(formData, seo, appendEncoded);
     formData.append("Price", price);
+    formData.append("TaxCategory", taxCategory);
+    formData.append("PriceIncludesVat", priceIncludesVat ? "true" : "false");
     formData.append("CourseType", courseType);
     formData.append("CategoryID", categoryID);
     formData.append("StartingTime", new Date(startingTime).toISOString());
     formData.append("EndingTime", new Date(endingTime).toISOString());
     formData.append("LessonsTime", formattedLessonsTime);
+    appendEncoded(formData, "DurationNote", durationNote.trim());
     formData.append("InstructorID", instructorID);
+    formData.append("CoursePartner", isPartnerCourse ? CoursePartner.trim() : "");
     formData.append("InstructorName", instructorName);
     
-    if (courseLink) {
-      formData.append("CourseLink", courseLink);
-    }
-
     const requestOptions = {
       method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${user.token}`
-      },
+      headers: getAuthHeaders(),
       body: formData,
       redirect: "follow",
     };
     
     try {
-      const response = await fetch(`https://back.businessonuae.com/api/courses/${courseId}`, requestOptions);
+      const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, requestOptions);
       const result = await response.json();
       
       if (response.ok) {
@@ -349,13 +413,12 @@ const EditCourses = () => {
             <label htmlFor="description" className="block text-sm font-medium text-primary mb-1">
               وصف الدورة
             </label>
-            <textarea
-              id="description"
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="أدخل وصف الدورة"
-              required
+              onChange={setDescription}
+              uploadUrl={`${API}/articles/content-images`}
+              authHeaders={editorHeaders}
+              placeholder="أدخل وصف الدورة..."
             />
           </div>
 
@@ -420,6 +483,17 @@ const EditCourses = () => {
                     </button>
                   )}
                   <div className="space-y-1 text-center">
+                    <input
+                      type="text"
+                      value={pdfTitles[idx] || ''}
+                      onChange={(e) => setPdfTitles(prev => {
+                        const updated = [...prev];
+                        updated[idx] = e.target.value;
+                        return updated;
+                      })}
+                      className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-right focus:outline-none focus:ring-2 focus:ring-secondary"
+                      placeholder="اكتب عنوان ملف PDF"
+                    />
                     <UploadCloud
                       className="mx-auto h-12 w-12 text-gray-400"
                       stroke="currentColor"
@@ -434,9 +508,10 @@ const EditCourses = () => {
                           id={`pdfFile-${idx}`}
                           name={`pdfFile-${idx}`}
                           type="file"
+                          multiple
                           className="sr-only"
                           accept="application/pdf"
-                          onChange={e => handlePdfFileChange(idx, e.target.files[0])}
+                          onChange={e => handlePdfFileChange(idx, e.target.files)}
                         />
                       </label>
                       <p className="pr-1">أو قم بسحب وإفلات</p>
@@ -474,6 +549,16 @@ const EditCourses = () => {
             />
           </div>
 
+          <CourseTaxFields
+            price={price}
+            taxCategory={taxCategory}
+            priceIncludesVat={priceIncludesVat}
+            onChange={({ taxCategory: tc, priceIncludesVat: pv }) => {
+              setTaxCategory(tc);
+              setPriceIncludesVat(pv);
+            }}
+          />
+
           {/* Course Type Field */}
           <div className="mb-4">
             <label htmlFor="courseType" className="block text-sm font-medium text-primary mb-1">
@@ -490,26 +575,6 @@ const EditCourses = () => {
               <option value="Online">عبر الإنترنت</option>
             </select>
           </div>
-
-          {/* Course Link Field (only shown for online courses) */}
-          {courseType === 'Online' && (
-            <div className="mb-4">
-              <label htmlFor="courseLink" className="block text-sm font-medium text-primary mb-1">
-                رابط الدورة
-              </label>
-              <input
-                type="url"
-                id="courseLink"
-                value={courseLink}
-                onChange={(e) => setCourseLink(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                placeholder="أدخل رابط الدورة عبر الإنترنت"
-                required={courseType === 'Online'}
-              />
-            </div>
-          )}
-
-          {/* Category ID Field */}
           <div className="mb-4">
             <label htmlFor="categoryID" className="block text-sm font-medium text-primary mb-1">
               الفئة
@@ -530,7 +595,6 @@ const EditCourses = () => {
             </select>
           </div>
 
-          {/* Starting Time Field */}
           <div className="mb-4">
             <label htmlFor="startingTime" className="block text-sm font-medium text-primary mb-1">
               تاريخ البدء
@@ -545,7 +609,6 @@ const EditCourses = () => {
             />
           </div>
 
-          {/* Ending Time Field */}
           <div className="mb-4">
             <label htmlFor="endingTime" className="block text-sm font-medium text-primary mb-1">
               تاريخ الانتهاء
@@ -560,7 +623,6 @@ const EditCourses = () => {
             />
           </div>
 
-          {/* Lessons Time Field */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-primary mb-1">
               مدة الدروس
@@ -595,7 +657,21 @@ const EditCourses = () => {
             </div>
           </div>
 
-          {/* Instructor ID Field */}
+          <div className="mb-4">
+            <label htmlFor="durationNote" className="block text-sm font-medium text-primary mb-1">
+              تنبيه في تبويب المدة (اختياري)
+            </label>
+            <textarea
+              id="durationNote"
+              rows={2}
+              value={durationNote}
+              onChange={(e) => setDurationNote(e.target.value)}
+              placeholder="مثال: الدورة تُعقد أيام السبت والأحد فقط، أو قد يتغير موعد المحاضرة الأولى"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+            />
+            <p className="mt-1 text-xs text-gray-500">يظهر للزائر تحت مدة الدورة في صفحة الدورة. اتركه فارغًا لإخفائه.</p>
+          </div>
+
           <div className="mb-4">
             <label htmlFor="instructorID" className="block text-sm font-medium text-primary mb-1">
               المدرب
@@ -616,7 +692,40 @@ const EditCourses = () => {
             </select>
           </div>
 
-          {/* Submit Button */}
+          <div className="mb-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isPartnerCourse"
+                checked={isPartnerCourse}
+                onChange={(e) => setIsPartnerCourse(e.target.checked)}
+                className="h-4 w-4 text-secondary focus:ring-secondary border-gray-300 rounded"
+              />
+              <label htmlFor="isPartnerCourse" className="mr-2 block text-sm font-medium text-primary">
+                هل هذه دورة شريك؟
+              </label>
+            </div>
+          </div>
+
+          {isPartnerCourse && (
+            <div className="mb-4">
+              <label htmlFor="coursePartner" className="block text-sm font-medium text-primary mb-1">
+                اسم الشريك
+              </label>
+              <input
+                type="text"
+                id="coursePartner"
+                value={CoursePartner}
+                onChange={(e) => setCoursePartner(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                placeholder="أدخل اسم الشريك"
+                required
+              />
+            </div>
+          )}
+
+          <CourseSeoFields value={seo} onChange={setSeo} />
+
           <button
             type="submit"
             className="w-full bg-secondary text-white py-2 px-4 rounded-md hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"

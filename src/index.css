@@ -5,18 +5,74 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --acit-gold-rgb: 7 77 132; /* #C58A2A */
+  --acit-gold: rgb(var(--acit-gold-rgb));
+}
+
 body {
   font-family: "Noto Kufi Arabic", serif;
 }
 
+.article-editor .ql-toolbar {
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.article-editor .ql-container {
+  min-height: 320px;
+  border: 0;
+  font-size: 16px;
+}
+
+.article-editor .ql-editor {
+  min-height: 320px;
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+}
+
+/* The editor is RTL as a whole, but Quill only mirrors list padding and the
+   number/bullet marker for items tagged .ql-direction-rtl. Untagged items keep
+   the LTR offsets, which put the marker on top of the text. */
+.article-editor .ql-editor ol,
+.article-editor .ql-editor ul {
+  padding-left: 0;
+  padding-right: 1.5em;
+}
+.article-editor .ql-editor li:not(.ql-direction-rtl) {
+  padding-left: 0;
+  padding-right: 1.5em;
+}
+.article-editor .ql-editor li:not(.ql-direction-rtl)::before {
+  margin-left: 0.3em;
+  margin-right: -1.5em;
+  text-align: left;
+}
+.article-editor .ql-editor li.ql-indent-1:not(.ql-direction-rtl) { padding-left: 0; padding-right: 4.5em; }
+.article-editor .ql-editor li.ql-indent-2:not(.ql-direction-rtl) { padding-left: 0; padding-right: 7.5em; }
+.article-editor .ql-editor li.ql-indent-3:not(.ql-direction-rtl) { padding-left: 0; padding-right: 10.5em; }
+
+.article-editor .ql-editor img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+.article-editor .ql-editor hr {
+  border: 0;
+  border-top: 1px solid #d1d5db;
+  margin: 1em 0;
+}
+
 /* Custom styles for buttons */
 .btn-primary {
-  background-color: #074d84; /* Secondary color */
+  background-color: var(--acit-gold);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #074d84; /* Primary color */
+  background-color: rgb(var(--acit-gold-rgb) / 0.9);
 }
 
 @media print {

@@ -88,20 +88,20 @@ export default function StudentInvoice() {
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <div className="text-right">
           <h1 className="text-xl font-bold text-gray-800">شبكة أباد للتدريب</h1>
-          <p className="text-sm text-gray-600">Abadnet Training & Development</p>
+          <p className="text-sm text-gray-600">Acitnet Training & Development</p>
           <p className="text-xs text-gray-500">P.O.Box 110298 | Riyadh 11465 | Saudi Arabia</p>
           <p className="text-xs text-gray-500">T: +966 1 4781299 | M: +966 533155640</p>
         </div>
         <div className="text-left">
           <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">ABAD</span>
+            <span className="text-white font-bold text-lg">Acit</span>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
       <div className="flex bg-gray-200 rounded-t-lg mb-6">
-        {['Abadnet', 'Abadnet', 'Abadnet', 'Abadnet', 'Abadnet', 'Abadnet', 'Abadnet'].map((tab, index) => (
+        {['Acitnet', 'Acitnet', 'Acitnet', 'Acitnet', 'Acitnet', 'Acitnet', 'Acitnet'].map((tab, index) => (
           <button
             key={index}
             className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-300 first:rounded-tr-lg last:rounded-tl-lg"
@@ -152,7 +152,7 @@ export default function StudentInvoice() {
                 className="border border-gray-300 rounded px-3 py-2 w-32 text-center"
               />
             )}
-            <span className="text-sm text-gray-600 w-8">SAR</span>
+            <span className="text-sm text-gray-600 w-8">⃁</span>
           </div>
 
           {/* Payment */}
@@ -172,7 +172,7 @@ export default function StudentInvoice() {
                 className="border border-gray-300 rounded px-3 py-2 w-32 text-center"
               />
             )}
-            <span className="text-sm text-gray-600 w-8">SAR</span>
+            <span className="text-sm text-gray-600 w-8">⃁</span>
           </div>
 
           {/* Tax Rate */}
@@ -203,7 +203,7 @@ export default function StudentInvoice() {
             <span className="px-3 py-2 w-32 text-center inline-block border border-gray-200 bg-gray-50 rounded">
               {taxAmount || '0'}
             </span>
-            <span className="text-sm text-gray-600 w-8">SAR</span>
+            <span className="text-sm text-gray-600 w-8">⃁</span>
           </div>
 
           {/* Discount */}
@@ -234,7 +234,7 @@ export default function StudentInvoice() {
             <span className="px-3 py-2 w-32 text-center inline-block border border-gray-200 bg-gray-50 rounded">
               {totalPayment || '0'}
             </span>
-            <span className="text-sm text-gray-600 w-8">SAR</span>
+            <span className="text-sm text-gray-600 w-8">⃁</span>
           </div>
 
           {/* Balance */}
@@ -245,7 +245,7 @@ export default function StudentInvoice() {
             <span className="px-3 py-2 w-32 text-center inline-block border border-gray-200 bg-gray-50 rounded">
               {balance || '0'}
             </span>
-            <span className="text-sm text-gray-600 w-8">SAR</span>
+            <span className="text-sm text-gray-600 w-8">⃁</span>
           </div>
 
           {/* Student ID */}

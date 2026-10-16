@@ -7,14 +7,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://back.businessonuae.com',
+        target: ' https://back.acit-net.com',
         changeOrigin: true,
-        secure: true,
-        headers: {
-          Origin: 'https://back.businessonuae.com'
-        }
+        secure: false,
       },
     },
   },
 })
-      

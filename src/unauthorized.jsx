@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, ArrowLeft, Home } from 'lucide-react';
+import { Shield, ArrowLeft, User } from 'lucide-react';
 import { useAuth } from './AuthContext';
 
 const Unauthorized = () => {
@@ -8,7 +8,7 @@ const Unauthorized = () => {
   const { user } = useAuth();
 
   const handleGoHome = () => {
-    navigate('/dashboard');
+    navigate('/ProfilePage');
   };
 
   const handleGoBack = () => {
@@ -32,7 +32,7 @@ const Unauthorized = () => {
 
         {/* Message */}
         <p className="text-gray-600 mb-6">
-          عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة.
+          مالكش صلاحية تفتح الصفحة دي. لو محتاجها في شغلك، اطلبها من مدير النظام.
           {user && (
             <span className="block mt-2 text-sm">
               دورك الحالي: <span className="font-semibold text-primary">{user.role}</span>
@@ -46,8 +46,8 @@ const Unauthorized = () => {
             onClick={handleGoHome}
             className="w-full bg-primary text-white py-3 px-4 rounded-md hover:bg-secondary transition-colors duration-200 flex items-center justify-center"
           >
-            <Home size={20} className="ml-2" />
-            العودة للرئيسية
+            <User size={20} className="ml-2" />
+            الملف الشخصي
           </button>
 
           <button

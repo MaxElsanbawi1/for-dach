@@ -42,11 +42,7 @@ const Login = () => {
     };
 
     try {
-      // Use relative path locally (to trigger Vite Proxy) and absolute path in production
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const apiUrl = isLocal ? "/api/auth/login" : "https://back.businessonuae.com/api/auth/login";
-
-      const response = await fetch(apiUrl, requestOptions);
+      const response = await fetch(" https://back.acit-net.com/api/auth/login", requestOptions);
       const text = await response.text();
       let result;
       try {
@@ -57,7 +53,7 @@ const Login = () => {
         console.log("API Error Response:", result); // Added for debugging
       }
       if (response.ok) {
-        login(result.token, result.role, result.user_id, result.name, result.branch_id, result.companyName);
+        login(result.token, result.role, result.user_id, result.name, result.companyName);
         window.localStorage.setItem("companyName", result.companyName)
         toast.success('تم تسجيل الدخول بنجاح!', {
           position: 'top-left',
@@ -68,14 +64,8 @@ const Login = () => {
           draggable: true,
         });
         
-        // Redirect based on user role
-        if (result.role === 'partner') {
-          navigate('/CoursesPartner');
-        } else if (result.role === 'admin') {
-          navigate('/');
-        } else {
-          navigate('/');
-        }
+        // "/" sends each account to the first page its permissions open.
+        navigate('/');
       } else {
         const message =
           result.message ||
@@ -124,7 +114,7 @@ const Login = () => {
       />
 
       <div className="mt-0 mb-6">
-        <img src="/abad.png" alt="Radwa Icon" className="" />
+        <img src="/acit-logo.png" alt="acit Icon" className="" />
       </div>
       <div className="bg-white lg:shadow-lg lg:rounded-lg p-8 w-full h-full lg:h-auto lg:max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-primary font-ibm-plex-sans-arabic">
@@ -138,7 +128,7 @@ const Login = () => {
         <form onSubmit={handleLogin}>
           <div className="mb-4">
             <label htmlFor="username" className="block text-sm font-medium text-primary font-ibm-plex-sans-arabic">
-              اسم المستخدم
+              اسم المستخدم أو البريد الإلكتروني
             </label>
             <input
               type="text"
@@ -146,7 +136,7 @@ const Login = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-secondary"
-              placeholder="أدخل اسم المستخدم"
+              placeholder="أدخل اسم المستخدم أو البريد الإلكتروني"
               required
             />
           </div>

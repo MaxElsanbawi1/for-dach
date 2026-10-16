@@ -3,6 +3,8 @@ import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 
+const API = 'https://back.acit-net.com/api';
+
 const UsersDashboards = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -17,22 +19,32 @@ const UsersDashboards = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
 
+  const [error, setError] = useState('');
+
   // Fetch users data on component mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const requestOptions = {
+        setError('');
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API}/users`, {
           method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
           redirect: 'follow',
-        };
+        });
+        const data = await response.json().catch(() => ({}));
 
-        const response = await fetch('https://back.businessonuae.com/api/users', requestOptions);
-        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || `تعذر تحميل المستخدمين (${response.status})`);
+        }
+
         // Filter users to include only students
-        const students = data.filter((user) => user.Role != 'student');
+        const students = (Array.isArray(data) ? data : []).filter((user) => user.Role != 'student');
         setUsers(students);
-      } catch (error) {
-        console.error('Error fetching users:', error);
+      } catch (fetchError) {
+        console.error('Error fetching users:', fetchError);
+        setError(fetchError.message);
+        setUsers([]);
       }
     };
 
@@ -65,6 +77,10 @@ const UsersDashboards = () => {
     <>
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold mb-6 text-primary">إدارة المستخدمين</h2>
+
+        {error && (
+          <p className="mb-6 rounded bg-red-50 p-4 text-red-700">{error}</p>
+        )}
 
         {/* Search Input */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">

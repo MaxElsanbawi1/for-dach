@@ -1,3 +1,4 @@
+import './apiFetch';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -8,6 +9,8 @@ import { AuthProvider } from './AuthContext';
 import Layout from './components/Layout';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import NotFound from './notFound';
+import Permissions from './pages/users/Permissions';
+import ActivityLog from './pages/activity/ActivityLog';
 import Login from './login';
 import Unauthorized from './unauthorized';
 import Registrations from './pages/registrations/registrations';
@@ -18,6 +21,7 @@ import RegistrationsDetails from './pages/registrations/detailsRegistrations';
 import PendingRegistrations from './pages/registrations/pendingRegistrations';
 import ApprovedRegistrations from './pages/registrations/approvedRegistrations';
 import RejectedRegistrations from './pages/registrations/rejectedRegistrations';
+import DirectRegistrations from './pages/registrations/directRegistrations';
 import Courses from './pages/courses/courses';
 import AllCourses from './pages/courses/allCourses';
 import Categories from './pages/courses/categories/categories';
@@ -37,6 +41,12 @@ import AddCoursesSame from './pages/courses/addSame';
 import { CourseProvider } from './pages/context/DashoaedContexr';
 import BlockUnblockUserPage from './pages/students/blockStudent';
 import BlockedUsers from './pages/students/BlockedUsers';
+import PaidCourseStudents from './pages/students/PaidCourseStudents';
+import Complaints from './pages/complaints/Complaints';
+import OnboardingLeads from './pages/onboarding/OnboardingLeads';
+import OnboardingQuestions from './pages/onboarding/OnboardingQuestions';
+import CourseStudents from './pages/students/CourseStudents';
+import QRFormStudents from './pages/students/QRFormStudents';
 import AllCoursesTrainer from './pages/users/allcorcrsestrainer';
 import Trainer1 from './pages/users/allcorcrsestrainer';
 import OurPartnersImageUpload from './pages/clients&Our partners/Our partners';
@@ -48,7 +58,22 @@ import EditCourses from './pages/courses/editCourse';
 import EditCoursesPartner from './pages/courses/editCoursesPartner';
 import StudentInvoice from './pages/students/StudentInvoice';
 import CourseAttendance from './pages/courses/CourseAttendance';
-
+import Consultations from './pages/consultations/Consultations';
+import TaxOverview from './pages/tax/TaxOverview';
+import TamaraNotifications from './pages/payments/TamaraNotifications';
+import PaymentsLog from './pages/payments/PaymentsLog';
+import TaxInvoices from './pages/tax/TaxInvoices';
+import TaxInvoiceDetails from './pages/tax/TaxInvoiceDetails';
+import VatReturn from './pages/tax/VatReturn';
+import TaxSettings from './pages/tax/TaxSettings';
+import BundleDiscounts from './pages/discounts/BundleDiscounts';
+import InvoiceDrafts from './pages/tax/InvoiceDrafts';
+import DraftEditor from './pages/tax/DraftEditor';
+import AgingReport from './pages/tax/AgingReport';
+import Articles from './pages/articles/Articles';
+import ArticleCategories from './pages/articles/ArticleCategories';
+import DatabaseBackup from './pages/settings/DatabaseBackup';
+import CourseRatings from './pages/courses/courseRatings';
 
 export default function App() {
   return (
@@ -62,10 +87,10 @@ export default function App() {
             <Route index element={<RoleBasedRedirect />} />
             <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
-
               <Route path="/registrations" element={<Registrations />} />
               <Route path="/registrations/all" element={<AllRegistrations />} />
               <Route path="/registrations/pending" element={<PendingRegistrations />} />
+              <Route path="/registrations/direct" element={<DirectRegistrations />} />
               <Route path="/registrations/approved" element={<ApprovedRegistrations />} />
               <Route path="/registrations/rejected" element={<RejectedRegistrations />} />
               <Route path="/registrations/:registrationId/details" element={<RegistrationsDetails />} />
@@ -87,17 +112,51 @@ export default function App() {
               <Route path="/courses/categories/:categoryId/details" element={<DetailsCategories />} />
               <Route path="CoursesPartner" element={<CoursesPartner />} />
               
+              <Route path="/payments" element={<PaymentsLog />} />
+              <Route path="/complaints" element={<Complaints />} />
+              <Route path="/onboarding" element={<OnboardingLeads />} />
+              <Route path="/onboarding/questions" element={<OnboardingQuestions />} />
+              <Route path="/payments/tamara" element={<TamaraNotifications />} />
+              <Route path="/tax" element={<TaxOverview />} />
+              <Route path="/tax/invoices" element={<TaxInvoices />} />
+                 <Route path="/courses/ratings" element={<CourseRatings />} />
+              <Route path="/tax/invoices/:invoiceId" element={<TaxInvoiceDetails />} />
+              {/* Drafts are the only editable stage — issued invoices have no edit route. */}
+              <Route path="/tax/drafts" element={<InvoiceDrafts />} />
+              <Route path="/tax/drafts/:draftId" element={<DraftEditor />} />
+              <Route path="/tax/aging" element={<AgingReport />} />
+              <Route path="/tax/vat-return" element={<VatReturn />} />
+              <Route path="/tax/settings" element={<TaxSettings />} />
+              <Route path="/discounts" element={<BundleDiscounts />} />
+              <Route path="/consultations" element={<Consultations />} />
+              <Route path="/consultations/networks" element={<Consultations fixedType="networks" />} />
+              <Route path="/consultations/other" element={<Consultations fixedType="other" />} />
+              <Route path="/consultations/software" element={<Consultations fixedType="software" />} />
+              <Route path="/consultations/security" element={<Consultations fixedType="security" />} />
+              <Route path="/consultations/ai" element={<Consultations fixedType="ai" />} />
+              <Route path="/consultations/cloud" element={<Consultations fixedType="cloud" />} />
+              <Route path="/consultations/marketing" element={<Consultations fixedType="marketing" />} />
+              <Route path="/consultations/support" element={<Consultations fixedType="support" />} />
+              <Route path="/articles" element={<Articles />} />
+              <Route path="/articles/categories" element={<ArticleCategories />} />
+              <Route path="/settings/database-backup" element={<DatabaseBackup />} />
+
               <Route path="/students" element={<Dashboard />} />
 
               <Route path="/students/add" element={<AddStudents />} />
               <Route path="/students/blocked" element={<BlockUnblockUserPage />} />
               <Route path="/students/Allblocked" element={<BlockedUsers />} />
               <Route path="/students/all" element={<AllStudents />} />
+              <Route path="/students/course-students" element={<CourseStudents />} />
+              <Route path="/students/paid-course-students" element={<PaidCourseStudents />} />
+              <Route path="/students/qr-form" element={<QRFormStudents />} />
               <Route path="/students/:userId/details" element={<StudentsDetails />} />
               <Route path="/students/invoice" element={<StudentInvoice />} />
 
               <Route path="/users" element={<UsersDashboards />} />
               <Route path="/users/add" element={<AddUsers />} />
+              <Route path="/users/permissions" element={<Permissions />} />
+              <Route path="/activity" element={<ActivityLog />} />
               <Route path="allcorcrsestrainer" element={<Trainer1 />} />
 
               <Route path="/ProfilePage" element={<ProfilePage />} />
