@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { History, User, ChevronDown, ChevronUp, X, Search } from 'lucide-react';
+import { History, User, ChevronDown, ChevronUp, X, Search, Download } from 'lucide-react';
 import { API } from '../tax/taxApi';
+import { exportExcel, fetchAllPages } from '../../components/DateExport';
 
 // "السجل": every change made in the dashboard - who, what, when, and the values
 // they sent. Pick an employee to see everything that account did. Entries are
@@ -42,6 +43,21 @@ const FIELD_LABELS = {
   CourseID: 'الدورة', Notes: 'ملاحظات', note: 'ملاحظة',
 };
 
+// The details object as "field: value" lines, for the Excel file.
+const detailsText = (details, permLabel, roleLabel) =>
+  Object.entries(details || {})
+    .filter(([, v]) => v !== '' && v !== null && v !== undefined)
+    .map(([key, value]) => {
+      let v = value;
+      if (['allow', 'deny', 'permissions'].includes(key) && Array.isArray(value)) v = value.map(permLabel).join('، ');
+      else if (['role', 'Role'].includes(key)) v = roleLabel(value);
+      else if (typeof value === 'boolean') v = value ? 'نعم' : 'لا';
+      else if (Array.isArray(value)) v = value.join('، ');
+      else if (typeof value === 'object') v = JSON.stringify(value);
+      return `${FIELD_LABELS[key] || key}: ${v}`;
+    })
+    .join('\n');
+
 function Details({ details, permLabel, roleLabel }) {
   const entries = Object.entries(details || {}).filter(([, v]) => v !== '' && v !== null && v !== undefined);
   if (!entries.length) return <p className="text-sm text-gray-500">مفيش تفاصيل إضافية.</p>;
@@ -78,6 +94,8 @@ export default function ActivityLog() {
   const [open, setOpen] = useState(null);
   const [permNames, setPermNames] = useState({});
   const [roleNames, setRoleNames] = useState({ superadmin: 'سوبر أدمن', student: 'طالب' });
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   useEffect(() => {
     api('/activity/people').then(setPeople).catch(() => {});
@@ -112,6 +130,33 @@ export default function ActivityLog() {
   };
   const person = useMemo(() => people.find((p) => String(p.user_id) === String(filters.userId)), [people, filters.userId]);
   const pages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
+
+  // Every entry matching the current filters (all pages), as an Excel file.
+  const exportAll = async () => {
+    setExporting(true);
+    setExportError('');
+    try {
+      const rows = await fetchAllPages('/activity', filters, { pageSize: 200 });
+      const columns = [
+        { header: 'الوقت', key: 'created_at', width: 20 },
+        { header: 'الموظف', value: (r) => r.user_name || `#${r.user_id}` },
+        { header: 'رقم الموظف', key: 'user_id' },
+        { header: 'الدور', value: (r) => (r.role ? roleLabel(r.role) : '') },
+        { header: 'النوع', value: (r) => METHOD_LABEL[r.method] || r.method },
+        { header: 'العملية', key: 'action', width: 40 },
+        { header: 'القسم', key: 'section' },
+        { header: 'التفاصيل', value: (r) => detailsText(r.details, permLabel, roleLabel), width: 60 },
+        { header: 'المسار', value: (r) => `${r.method} /api${r.path}`, width: 30 },
+        { header: 'IP', key: 'ip' },
+      ];
+      const label = filters.from || filters.to ? `${filters.from || 'البداية'} إلى ${filters.to || 'النهارده'}` : '';
+      await exportExcel(person ? `السجل - ${person.name || person.user_id}` : 'السجل', columns, rows, { rangeLabel: label });
+    } catch (e) {
+      setExportError(e.message || 'تعذر التصدير');
+    } finally {
+      setExporting(false);
+    }
+  };
   const input = 'rounded-md border border-gray-300 px-3 py-2 text-sm';
 
   return (
@@ -177,6 +222,15 @@ export default function ActivityLog() {
             <X size={14} /> مسح الفلاتر
           </button>
         )}
+        <button
+          type="button"
+          onClick={exportAll}
+          disabled={exporting || !data.total}
+          className="mr-auto flex items-center gap-1 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+        >
+          <Download size={15} /> {exporting ? 'جاري التجهيز...' : 'تحميل Excel'}
+        </button>
+        {exportError && <p className="w-full text-xs text-red-600">{exportError}</p>}
       </div>
 
       {person && (

@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus, Download } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { exportExcel } from "../../components/DateExport";
 
 const API = "https://back.acit-net.com/api";
 const emptyCategory = { name: "", slug: "", description: "", sortOrder: 0, isActive: true };
+
+const EXPORT_COLUMNS = [
+  { header: "الترتيب", key: "sortOrder" },
+  { header: "الاسم", key: "name" },
+  { header: "الرابط", key: "slug" },
+  { header: "الوصف", key: "description" },
+  { header: "الحالة", value: (c) => (c.isActive ? "مفعّل" : "متوقف") },
+  { header: "تاريخ الإنشاء", key: "createdAt" },
+];
 
 function headers() {
   const token = localStorage.getItem("token");
@@ -19,6 +29,7 @@ export default function ArticleCategories() {
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(emptyCategory);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const editing = Boolean(form.id);
 
   const load = async () => {
@@ -58,6 +69,18 @@ export default function ArticleCategories() {
       editing ? "تم تحديث التصنيف" : "تم إنشاء التصنيف"
     );
     setForm(emptyCategory);
+  };
+
+  // No date range here: the list is ordered by hand and dragging only makes sense on the whole of it.
+  const exportCategories = async () => {
+    setExporting(true);
+    try {
+      await exportExcel("تصنيفات المقالات", EXPORT_COLUMNS, categories);
+    } catch (error) {
+      toast.error(error.message || "تعذر التصدير");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const onDrop = async (event, targetId) => {
@@ -116,7 +139,17 @@ export default function ArticleCategories() {
       </form>
 
       <div className="rounded-lg bg-white p-5 shadow">
-        <div className="mb-4 text-sm text-gray-500">اسحب الصفوف لحفظ ترتيب دائم للتصنيفات.</div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm text-gray-500">اسحب الصفوف لحفظ ترتيب دائم للتصنيفات.</div>
+          <button
+            type="button"
+            onClick={exportCategories}
+            disabled={exporting}
+            className="flex items-center gap-1 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+          >
+            <Download size={15} /> {exporting ? "جاري التجهيز..." : "تحميل Excel"}
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y">
             <thead className="bg-gray-50 text-right text-sm font-semibold text-gray-700">

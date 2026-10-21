@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu, X, Home, Users, Settings, BarChart, Dot, Bell, ChevronDown, ChevronUp, Search, User, LogOut, Contact, Package, Map, FileText, ShoppingBag, ChevronLeft, ChevronRight, Receipt, CreditCard, MessageSquare, UserPlus, Percent } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext'; // Import useAuth from your AuthContext
 import { API as TAX_API } from '../pages/tax/taxApi';
 import { visibleMenu } from '../access';
+import TrainerSessionAlert from './TrainerSessionAlert';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // State for mobile sidebar
@@ -41,6 +42,29 @@ useEffect(() => {
   };
   load();
   const timer = setInterval(load, 120000);
+  return () => {
+    cancelled = true;
+    clearInterval(timer);
+  };
+}, [can]);
+
+// Unread messages from trainers (pages/settings/TrainerChats.jsx).
+const [trainerChats, setTrainerChats] = useState(0);
+useEffect(() => {
+  if (!can('superadmin')) return;
+  let cancelled = false;
+  const load = async () => {
+    try {
+      const res = await fetch(`${TAX_API.trim()}/telegram/chats/unread`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!cancelled) setTrainerChats(Number(data.unread || 0));
+    } catch (_) {
+      /* informational only */
+    }
+  };
+  load();
+  const timer = setInterval(load, 30000);
   return () => {
     cancelled = true;
     clearInterval(timer);
@@ -210,6 +234,11 @@ return (
                           {pendingInvoices}
                         </span>
                       ) : null}
+                      {subItem.badge === 'trainerChats' && trainerChats > 0 ? (
+                        <span className="mr-auto min-w-[20px] text-center px-1.5 py-0.5 rounded-full bg-sky-500 text-white text-[11px] font-semibold">
+                          {trainerChats}
+                        </span>
+                      ) : null}
                     </a>
                   ))}
                 </div>
@@ -302,8 +331,12 @@ return (
             sticky` inside still works — the bulk-approve bar depends on it.
             Genuinely wide content scrolls in its own overflow-x-auto wrapper. */}
         <main className="flex-1 overflow-y-auto overflow-x-clip min-w-0 p-6 lg:pr-6 pt-20 lg:pt-6">
-          <Outlet />
+          {/* Pages load on demand (main.jsx); the menu stays while one loads. */}
+          <Suspense fallback={<div className="flex h-64 items-center justify-center text-gray-500">جاري التحميل...</div>}>
+            <Outlet />
+          </Suspense>
         </main>
+        <TrainerSessionAlert />
       </div>
     </div>
   );

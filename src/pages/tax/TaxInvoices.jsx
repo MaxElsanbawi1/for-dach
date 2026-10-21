@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Download, AlertTriangle, FilePlus } from "lucide-react";
-import { taxFetch, money, formatDate, datePresets, downloadCsv } from "./taxApi";
+import { taxFetch, money, formatDate, datePresets } from "./taxApi";
+import { exportExcel, fetchAllPages } from "../../components/DateExport";
 
 const typeLabels = {
   SIMPLIFIED_TAX_INVOICE: "مبسطة",
@@ -27,6 +28,30 @@ const paymentLabels = {
   unpaid: ["غير مسددة", "bg-gray-100 text-gray-600"],
 };
 
+const EXPORT_COLUMNS = [
+  { header: "رقم الفاتورة", key: "invoice_number" },
+  { header: "التاريخ", value: (i) => formatDate(i.issued_at) },
+  { header: "النوع", value: (i) => typeLabels[i.invoice_type] || i.invoice_type },
+  { header: "المستند", value: (i) => docLabels[i.document_type] || i.document_type },
+  { header: "العميل", value: (i) => i.buyer?.name || "", width: 30 },
+  { header: "إيميل العميل", value: (i) => i.buyer?.email || "" },
+  { header: "جوال العميل", value: (i) => i.buyer?.phone || "" },
+  { header: "الرقم الضريبي للعميل", value: (i) => i.buyer?.vat_number || "" },
+  { header: "المبلغ بدون ضريبة", key: "price_excluding_vat" },
+  { header: "الضريبة", key: "vat_amount" },
+  { header: "الإجمالي", key: "total_with_vat" },
+  { header: "العملة", key: "currency" },
+  { header: "الحالة", value: (i) => (statusLabels[i.status] || statusLabels.issued)[0] },
+  {
+    header: "السداد",
+    value: (i) =>
+      i.document_type === "INVOICE" && i.status !== "cancelled" ? (paymentLabels[i.payment_status] || paymentLabels.unpaid)[0] : "",
+  },
+  { header: "الاستحقاق", value: (i) => i.due_date || "" },
+  { header: "المتبقي", key: "balance_due" },
+  { header: "أيام التأخير", value: (i) => i.days_overdue || 0 },
+];
+
 const TaxInvoices = () => {
   const preset = datePresets().thisQuarter;
   const [invoices, setInvoices] = useState([]);
@@ -42,30 +67,30 @@ const TaxInvoices = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   const invoicesPerPage = 25;
   const navigate = useNavigate();
+
+  // The list's filters, shared by the page request and the Excel export.
+  const filterParams = useCallback(() => {
+    const f = { from, to, type, document_type: documentType, tax_category: taxCategory };
+    if (search) f.search = search;
+    // The overdue filter only makes sense over a full date range, so it
+    // widens the window rather than intersecting with the quarter preset.
+    if (overdueOnly) Object.assign(f, { overdue: "true", from: "1970-01-01", to: "2999-12-31" });
+    return f;
+  }, [from, to, type, documentType, taxCategory, overdueOnly, search]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const params = new URLSearchParams({
-        from,
-        to,
-        type,
-        document_type: documentType,
-        tax_category: taxCategory,
+        ...filterParams(),
         page: String(currentPage),
         limit: String(invoicesPerPage),
       });
-      if (search) params.set("search", search);
-      // The overdue filter only makes sense over a full date range, so it
-      // widens the window rather than intersecting with the quarter preset.
-      if (overdueOnly) {
-        params.set("overdue", "true");
-        params.set("from", "1970-01-01");
-        params.set("to", "2999-12-31");
-      }
       const res = await taxFetch(`/tax/invoices?${params.toString()}`);
       setInvoices(res.data || []);
       setPages(res.pages || 1);
@@ -75,7 +100,7 @@ const TaxInvoices = () => {
     } finally {
       setLoading(false);
     }
-  }, [from, to, type, documentType, taxCategory, overdueOnly, search, currentPage]);
+  }, [filterParams, currentPage]);
 
   useEffect(() => {
     load();
@@ -86,38 +111,22 @@ const TaxInvoices = () => {
     setCurrentPage(1);
   }, [from, to, type, documentType, taxCategory, overdueOnly, search]);
 
-  const exportCsv = () => {
-    const rows = [
-      [
-        "رقم الفاتورة",
-        "التاريخ",
-        "النوع",
-        "المستند",
-        "العميل",
-        "المبلغ بدون ضريبة",
-        "الضريبة",
-        "الإجمالي",
-        "الحالة",
-        "الاستحقاق",
-        "المتبقي",
-        "أيام التأخير",
-      ],
-      ...invoices.map((i) => [
-        i.invoice_number,
-        formatDate(i.issued_at),
-        typeLabels[i.invoice_type] || i.invoice_type,
-        docLabels[i.document_type] || i.document_type,
-        i.buyer.name || "",
-        i.price_excluding_vat,
-        i.vat_amount,
-        i.total_with_vat,
-        (statusLabels[i.status] || statusLabels.issued)[0],
-        i.due_date || "",
-        i.balance_due,
-        i.days_overdue || 0,
-      ]),
-    ];
-    downloadCsv(`tax-invoices-${from}_${to}.csv`, rows);
+  // Every invoice matching the filters (all pages, not just the 25 on screen).
+  const exportAll = async () => {
+    setExporting(true);
+    setExportError("");
+    try {
+      const rows = await fetchAllPages("/tax/invoices", filterParams(), {
+        pick: (b) => ({ rows: b.data || [], total: b.total }),
+      });
+      await exportExcel("الفواتير الضريبية", EXPORT_COLUMNS, rows, {
+        rangeLabel: overdueOnly ? "المتأخرة" : `${from || "البداية"} إلى ${to || "النهارده"}`,
+      });
+    } catch (e) {
+      setExportError(e.message || "تعذر التصدير");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const pageNumbers = [];
@@ -223,15 +232,16 @@ const TaxInvoices = () => {
           </label>
           <div className="text-sm text-gray-600">عرض {total} مستند</div>
           <button
-            onClick={exportCsv}
-            disabled={invoices.length === 0}
-            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90 disabled:opacity-50"
+            onClick={exportAll}
+            disabled={exporting || total === 0}
+            className="flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
           >
             <Download size={16} />
-            تصدير CSV
+            {exporting ? "جاري التجهيز..." : "تحميل Excel"}
           </button>
         </div>
       </div>
+      {exportError && <p className="-mt-4 mb-4 text-left text-xs text-red-600">{exportError}</p>}
 
       {error ? (
         <div className="bg-red-50 border-r-4 border-red-500 p-4 mb-6">

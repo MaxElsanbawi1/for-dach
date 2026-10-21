@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Search, Lock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
+import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
+
+const EXPORT_COLUMNS = [
+  { header: 'رقم المستخدم', key: 'UserID' },
+  { header: 'الاسم الكامل', key: 'FullName' },
+  { header: 'البريد الإلكتروني', key: 'Email' },
+  { header: 'رقم الهاتف', key: 'PhoneNumber' },
+  { header: 'تاريخ الإنشاء', key: 'CreatedAt' },
+];
 
 const BlockedUsers = () => {
   const navigate = useNavigate();
@@ -18,6 +27,11 @@ const BlockedUsers = () => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
+  const range = useDateRange();
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [range.from, range.to]);
 
   // Fetch blocked users data on component mount
   useEffect(() => {
@@ -45,7 +59,7 @@ const BlockedUsers = () => {
   }, []);
 
   // Filter users based on search query
-  const filteredUsers = blockedUsers.filter(
+  const filteredUsers = range.filter(blockedUsers, (u) => u.CreatedAt).filter(
     (user) =>
       user.UserID.toString().includes(searchQuery) ||
       user.FullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -98,6 +112,12 @@ const BlockedUsers = () => {
           {blockedUsers.length}
         </span>
       </h2>
+
+      <DateRangeBar
+        range={range}
+        count={filteredUsers.length}
+        onExport={() => exportExcel('المستخدمون المحظورون', EXPORT_COLUMNS, filteredUsers, { rangeLabel: range.label })}
+      />
 
       {/* Search Input */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">

@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, FileText, CheckCheck, AlertTriangle, Clock } from
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { taxFetch, money, formatDateTime } from "./taxApi";
+import { useDateRange, DateRangeBar, exportExcel } from "../../components/DateExport";
 
 const POLICY_LABELS = {
   ALWAYS_REVIEW: "مراجعة يدوية لكل فاتورة",
@@ -16,6 +17,20 @@ const SOURCE_LABELS = {
   REGISTRATION: ["من تسجيل معتمد", "bg-purple-100 text-purple-700"],
   MANUAL: ["إنشاء يدوي", "bg-gray-200 text-gray-700"],
 };
+
+const EXPORT_COLUMNS = [
+  { header: "رقم المسودة", key: "id" },
+  { header: "العميل", value: (d) => d.buyer?.name || "غير محدد" },
+  { header: "الإيميل", value: (d) => d.buyer?.email || "" },
+  { header: "المصدر", value: (d) => (SOURCE_LABELS[d.source_kind] || SOURCE_LABELS.MANUAL)[0] },
+  { header: "البنود", key: "line_count" },
+  { header: "الإجمالي", value: (d) => Number(d.total_with_vat || 0) },
+  { header: "العملة", key: "currency" },
+  { header: "تاريخ الإنشاء", key: "created_at" },
+  { header: "الانتظار", value: (d) => waitedFor(d.waiting_hours) },
+  { header: "متأخرة", value: (d) => !!d.is_stale },
+  { header: "معدّلة", value: (d) => !!d.was_edited },
+];
 
 /** "منذ 14 ساعة" / "منذ 3 أيام" */
 const waitedFor = (hours) => {
@@ -41,6 +56,13 @@ const InvoiceDrafts = () => {
   const [approving, setApproving] = useState(false);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const navigate = useNavigate();
+  const range = useDateRange();
+
+  // A selection made under another range could hold drafts no longer on screen,
+  // and bulk approve would issue them unseen.
+  useEffect(() => {
+    setSelected([]);
+  }, [range.from, range.to]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,11 +86,12 @@ const InvoiceDrafts = () => {
   // reversed here rather than there - reversing the query would drop the
   // oldest (most overdue) drafts once the queue outgrows the cap.
   const drafts = useMemo(() => (data ? [...data.drafts].reverse() : []), [data]);
-  const allSelected = drafts.length > 0 && selected.length === drafts.length;
+  const shown = range.filter(drafts, (d) => d.created_at);
+  const allSelected = shown.length > 0 && selected.length === shown.length;
 
   const toggle = (id) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-  const toggleAll = () => setSelected(allSelected ? [] : drafts.map((d) => d.id));
+  const toggleAll = () => setSelected(allSelected ? [] : shown.map((d) => d.id));
 
   const selectedTotal = useMemo(
     () =>
@@ -152,6 +175,12 @@ const InvoiceDrafts = () => {
           </button>
         </div>
 
+        <DateRangeBar
+          range={range}
+          count={shown.length}
+          onExport={() => exportExcel("مسودات الفواتير", EXPORT_COLUMNS, shown, { rangeLabel: range.label })}
+        />
+
         {/* stale-draft warning — a draft sitting too long is a ZATCA reporting risk */}
         {data.overdue_draft_count > 0 ? (
           <div className="bg-red-50 border-r-4 border-red-500 p-4 mb-6 flex items-start">
@@ -199,10 +228,12 @@ const InvoiceDrafts = () => {
           </div>
         ) : null}
 
-        {drafts.length === 0 ? (
+        {shown.length === 0 ? (
           <div className="text-center py-16">
             <FileText className="mx-auto text-gray-300" size={48} />
-            <p className="text-gray-500 mt-4">لا توجد فواتير بانتظار المراجعة</p>
+            <p className="text-gray-500 mt-4">
+              {drafts.length === 0 ? "لا توجد فواتير بانتظار المراجعة" : "مفيش مسودات في الفترة دي"}
+            </p>
             <p className="text-xs text-gray-400 mt-1">
               ستظهر هنا تلقائياً عند سداد طلب أو اعتماد تسجيل.
             </p>
@@ -230,7 +261,7 @@ const InvoiceDrafts = () => {
                 </tr>
               </thead>
               <tbody>
-                {drafts.map((d) => {
+                {shown.map((d) => {
                   const [srcLabel, srcTone] = SOURCE_LABELS[d.source_kind] || SOURCE_LABELS.MANUAL;
                   return (
                     <tr

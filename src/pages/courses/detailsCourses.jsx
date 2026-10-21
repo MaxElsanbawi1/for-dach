@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import RegistrationInvoiceButton, { useRegistrationInvoices } from "../../components/RegistrationInvoiceButton";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Printer, Search, Download, Edit } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -22,6 +22,15 @@ const escapeHtml = (value) =>
 const CourseDetails = () => {
   const navigate = useNavigate();
   const { courseId } = useParams();
+  const { hash } = useLocation();
+
+  // Links like /courses/5/details#sessions (from the trainer page) jump to that section
+  // once the managers above have rendered.
+  useEffect(() => {
+    if (!hash) return;
+    const t = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" }), 600);
+    return () => clearTimeout(t);
+  }, [hash]);
 
   const [course, setCourse] = useState(null);
   const [registrations, setRegistrations] = useState([]);
@@ -907,9 +916,9 @@ const CourseDetails = () => {
         </div>
       </div>
 
-      <LessonsManager courseId={courseId} />
-      <QuizPdfManager courseId={courseId} />
-      <LiveSessionsManager courseId={courseId} />
+      <div id="lessons" className="scroll-mt-4"><LessonsManager courseId={courseId} /></div>
+      <div id="quizzes" className="scroll-mt-4"><QuizPdfManager courseId={courseId} /></div>
+      <div id="sessions" className="scroll-mt-4"><LiveSessionsManager courseId={courseId} /></div>
 
       {course && (
         <div className="space-y-6 printable-area">

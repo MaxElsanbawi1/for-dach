@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
 
 const API = ' https://back.acit-net.com/api';
 
@@ -31,6 +32,17 @@ const statusClasses = {
   cancelled: 'bg-red-100 text-red-700',
 };
 
+const EXPORT_COLUMNS = [
+  { header: 'النوع', value: (c) => typeLabels[c.Type] || c.Type },
+  { header: 'الاسم', key: 'FullName' },
+  { header: 'البريد الإلكتروني', key: 'Email' },
+  { header: 'رقم الهاتف', key: 'PhoneNumber' },
+  { header: 'الشركة', key: 'Company' },
+  { header: 'التفاصيل', key: 'Message' },
+  { header: 'الحالة', value: (c) => statusLabels[c.Status] || c.Status },
+  { header: 'التاريخ', key: 'CreatedAt' },
+];
+
 export default function Consultations({ fixedType = '' }) {
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,14 +50,16 @@ export default function Consultations({ fixedType = '' }) {
   const [statusFilter, setStatusFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ FullName: '', Email: '' });
+  const range = useDateRange();
+  const datedConsultations = range.filter(consultations, (item) => item.CreatedAt);
 
   const filteredConsultations = useMemo(() => {
-    return consultations.filter((item) => {
+    return datedConsultations.filter((item) => {
       const typeMatch = !fixedType || item.Type === fixedType;
       const statusMatch = !statusFilter || item.Status === statusFilter;
       return typeMatch && statusMatch;
     });
-  }, [consultations, fixedType, statusFilter]);
+  }, [datedConsultations, fixedType, statusFilter]);
 
   const fetchConsultations = async () => {
     try {
@@ -173,6 +187,19 @@ export default function Consultations({ fixedType = '' }) {
           ))}
         </select>
       </div>
+
+      <DateRangeBar
+        range={range}
+        count={filteredConsultations.length}
+        onExport={() =>
+          exportExcel(
+            fixedType ? `الاستشارات - ${typeLabels[fixedType] || fixedType}` : 'طلبات الاستشارات',
+            EXPORT_COLUMNS,
+            filteredConsultations,
+            { rangeLabel: range.label }
+          )
+        }
+      />
 
       {message && (
         <div className="mb-5 rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-center">

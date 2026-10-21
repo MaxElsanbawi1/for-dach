@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, Search } from 'lucide-react';
+import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
 
 const API = 'https://back.acit-net.com/api';
 const PER_PAGE = 15;
@@ -11,6 +12,15 @@ const STATUS_STYLES = {
 };
 
 const STATUS_FILTERS = ['all', 'pending', 'in_progress', 'resolved'];
+
+const EXPORT_COLUMNS = [
+  { header: 'التاريخ', key: 'created_at' },
+  { header: 'المرسل', key: 'name' },
+  { header: 'الإيميل', key: 'email' },
+  { header: 'الجوال', key: 'phone' },
+  { header: 'الرسالة', key: 'message' },
+  { header: 'الحالة', value: (r) => STATUS_STYLES[r.status]?.label || r.status || '' },
+];
 
 function formatDateTime(value) {
   if (!value) return '-';
@@ -26,6 +36,11 @@ export default function Complaints() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [savingId, setSavingId] = useState(null);
+  const range = useDateRange();
+
+  useEffect(() => {
+    setPage(1);
+  }, [range.from, range.to]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,9 +97,10 @@ export default function Complaints() {
     }
   };
 
+  const datedRows = range.filter(rows, (r) => r.created_at);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((r) => {
+    return datedRows.filter((r) => {
       if (status !== 'all' && r.status !== status) return false;
       if (!q) return true;
       return [r.name, r.email, r.phone, r.message]
@@ -93,7 +109,7 @@ export default function Complaints() {
         .toLowerCase()
         .includes(q);
     });
-  }, [rows, status, search]);
+  }, [datedRows, status, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const pageRows = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -119,6 +135,12 @@ export default function Complaints() {
           تحديث
         </button>
       </div>
+
+      <DateRangeBar
+        range={range}
+        count={filtered.length}
+        onExport={() => exportExcel('رسائل تواصل معنا', EXPORT_COLUMNS, filtered, { rangeLabel: range.label })}
+      />
 
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative w-full md:w-80">

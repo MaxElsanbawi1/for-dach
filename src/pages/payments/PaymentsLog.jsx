@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, Search } from 'lucide-react';
+import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
 
 const API = 'https://back.acit-net.com/api';
 const PAGE_SIZE = 25;
@@ -46,6 +47,22 @@ function gatewayLabel(row) {
   return row.payment_method ? `${name} - ${row.payment_method}` : name;
 }
 
+const EXPORT_COLUMNS = [
+  { header: 'رقم الطلب', value: (r) => r.order_number || r.id },
+  { header: 'التاريخ', key: 'created_at' },
+  { header: 'العميل', value: (r) => r.billing_name || r.user_name || '' },
+  { header: 'الإيميل', key: 'user_email' },
+  { header: 'الجوال', value: (r) => r.billing_phone || r.user?.phone || '' },
+  { header: 'المدينة', key: 'billing_location' },
+  { header: 'قبل الضريبة', value: (r) => Number(r.subtotal || 0) },
+  { header: 'الخصم', value: (r) => Number(r.discount || 0) },
+  { header: 'الضريبة', value: (r) => Number(r.tax || 0) },
+  { header: 'الإجمالي', value: (r) => Number(r.total || 0) },
+  { header: 'العملة', key: 'currency' },
+  { header: 'الحالة', value: (r) => STATUS_STYLES[r.status]?.label || r.status || '' },
+  { header: 'وسيلة الدفع', value: gatewayLabel },
+];
+
 export default function PaymentsLog() {
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('all');
@@ -53,6 +70,11 @@ export default function PaymentsLog() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const range = useDateRange();
+
+  useEffect(() => {
+    setPage(1);
+  }, [range.from, range.to]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,17 +114,18 @@ export default function PaymentsLog() {
     load();
   }, [load]);
 
-  // The server returns the whole filtered set, so paging is done here.
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  // The server returns the whole filtered set, so the date range and paging are done here.
+  const shown = range.filter(rows, (r) => r.created_at);
+  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
   const pageRows = useMemo(
-    () => rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [rows, page]
+    () => shown.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [shown, page]
   );
 
   // Totals cover every row in the current filter, not just the visible page.
   const totals = useMemo(
     () =>
-      rows.reduce(
+      shown.reduce(
         (acc, r) => {
           acc.total += Number(r.total || 0);
           acc.tax += Number(r.tax || 0);
@@ -111,10 +134,10 @@ export default function PaymentsLog() {
         },
         { total: 0, tax: 0, collected: 0 }
       ),
-    [rows]
+    [shown]
   );
 
-  const currency = rows[0]?.currency || 'SAR';
+  const currency = shown[0]?.currency || 'SAR';
 
   return (
     <div className="bg-white rounded-lg shadow p-6" dir="rtl">
@@ -136,11 +159,17 @@ export default function PaymentsLog() {
         </button>
       </div>
 
-      {!loading && !error && rows.length > 0 && (
+      <DateRangeBar
+        range={range}
+        count={shown.length}
+        onExport={() => exportExcel('سجل المدفوعات', EXPORT_COLUMNS, shown, { rangeLabel: range.label })}
+      />
+
+      {!loading && !error && shown.length > 0 && (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-lg bg-gray-50 p-4">
             <div className="text-sm text-gray-500">عدد العمليات</div>
-            <div className="mt-1 text-xl font-bold text-primary">{rows.length}</div>
+            <div className="mt-1 text-xl font-bold text-primary">{shown.length}</div>
           </div>
           <div className="rounded-lg bg-gray-50 p-4">
             <div className="text-sm text-gray-500">إجمالي المحصّل</div>
@@ -194,11 +223,11 @@ export default function PaymentsLog() {
       {error && <p className="mb-4 rounded bg-red-50 p-4 text-red-700">{error}</p>}
       {loading && <p className="py-8 text-center text-gray-500">جاري التحميل...</p>}
 
-      {!loading && !error && rows.length === 0 && (
+      {!loading && !error && shown.length === 0 && (
         <div className="rounded bg-gray-50 p-8 text-center text-gray-600">لا توجد مدفوعات.</div>
       )}
 
-      {!loading && !error && rows.length > 0 && (
+      {!loading && !error && shown.length > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse text-right text-sm">
             <thead>
@@ -258,7 +287,7 @@ export default function PaymentsLog() {
         </div>
       )}
 
-      {!loading && !error && rows.length > PAGE_SIZE && (
+      {!loading && !error && shown.length > PAGE_SIZE && (
         <div className="mt-6 flex items-center justify-center gap-2">
           <button
             type="button"
@@ -269,7 +298,7 @@ export default function PaymentsLog() {
             السابق
           </button>
           <span className="px-3 text-sm text-gray-600">
-            صفحة {page} من {totalPages} ({rows.length} عملية)
+            صفحة {page} من {totalPages} ({shown.length} عملية)
           </span>
           <button
             type="button"

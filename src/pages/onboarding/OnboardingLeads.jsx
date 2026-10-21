@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, Search, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
 
 const API = 'https://back.acit-net.com/api';
 const PER_PAGE = 15;
@@ -43,6 +44,34 @@ function formatDateTime(value) {
   return Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('ar-EG');
 }
 
+// An answer can be a multi-choice array or an object; the sheet needs plain text.
+function answerText(value) {
+  if (value === null || value === undefined || value === '') return '-';
+  if (Array.isArray(value)) return value.map(answerText).join('، ');
+  if (typeof value === 'object') {
+    return value.label ?? value.text ?? value.value ?? Object.values(value).map(answerText).join('، ');
+  }
+  return String(value);
+}
+
+const EXPORT_COLUMNS = [
+  { header: 'التاريخ', key: 'created_at' },
+  { header: 'الاسم', value: (r) => r.name || 'زائر بدون اسم' },
+  { header: 'الإيميل', key: 'email' },
+  { header: 'الجوال', key: 'phone' },
+  { header: 'البلد', key: 'country' },
+  { header: 'المدينة', value: (r) => [r.city, r.region].filter(Boolean).join(' — ') },
+  { header: 'IP', key: 'ip' },
+  { header: 'التقدم', value: (r) => (r.is_completed ? 'أكمل' : `وقف عند سؤال ${Number(r.last_step || 0) + 1}`) },
+  { header: 'الحالة', value: (r) => STATUS_STYLES[r.status]?.label || r.status || '' },
+  {
+    header: 'الإجابات',
+    width: 60,
+    value: (r) =>
+      (r.answers || []).map((a) => `${a.question || 'سؤال محذوف'}: ${answerText(a.answer)}`).join(' | '),
+  },
+];
+
 export default function OnboardingLeads() {
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('all');
@@ -51,6 +80,11 @@ export default function OnboardingLeads() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState(null);
+  const range = useDateRange();
+
+  useEffect(() => {
+    setPage(1);
+  }, [range.from, range.to]);
 
   const authHeaders = (json = false) => {
     const token = localStorage.getItem('token');
@@ -120,9 +154,10 @@ export default function OnboardingLeads() {
     }
   };
 
+  const datedRows = range.filter(rows, (r) => r.created_at);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((r) => {
+    return datedRows.filter((r) => {
       if (!q) return true;
       return [r.name, r.email, r.phone, r.country, r.city]
         .filter(Boolean)
@@ -130,7 +165,7 @@ export default function OnboardingLeads() {
         .toLowerCase()
         .includes(q);
     });
-  }, [rows, search]);
+  }, [datedRows, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const pageRows = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -166,6 +201,12 @@ export default function OnboardingLeads() {
           تحديث
         </button>
       </div>
+
+      <DateRangeBar
+        range={range}
+        count={filtered.length}
+        onExport={() => exportExcel('العملاء المحتملون', EXPORT_COLUMNS, filtered, { rangeLabel: range.label })}
+      />
 
       {!loading && !error && byCountry.length > 0 && (
         <div className="mb-6 flex flex-wrap gap-3">

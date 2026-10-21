@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDateRange, DateRangeBar, exportExcel } from "../../components/DateExport";
 
 const API = "https://back.acit-net.com/api";
 
@@ -10,12 +11,26 @@ const getAuthHeaders = (json = false) => {
   };
 };
 
+const STATUS_LABELS = { Pending: "في انتظار الموافقة", Approved: "تمت الموافقة", Rejected: "مرفوض" };
+
+const EXPORT_COLUMNS = [
+  { header: "الكورس", key: "CourseName" },
+  { header: "الطالب", key: "FullName" },
+  { header: "الإيميل", key: "Email" },
+  { header: "التقييم", key: "Rating" },
+  { header: "الرأي", key: "Review" },
+  { header: "الحالة", value: (r) => STATUS_LABELS[r.Status] || r.Status },
+  { header: "تاريخ التقييم", key: "CreatedAt" },
+];
+
 export default function CourseRatings() {
   const [ratings, setRatings] = useState([]);
   const [status, setStatus] = useState("Pending");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const range = useDateRange();
+  const shown = range.filter(ratings, (r) => r.CreatedAt);
 
   const fetchRatings = async () => {
     try {
@@ -75,15 +90,21 @@ export default function CourseRatings() {
         </select>
       </div>
 
+      <DateRangeBar
+        range={range}
+        count={shown.length}
+        onExport={() => exportExcel("تقييمات الكورسات", EXPORT_COLUMNS, shown, { rangeLabel: range.label })}
+      />
+
       {message && <p className="mb-4 rounded bg-blue-50 p-3 text-blue-700">{message}</p>}
       {loading && <p className="text-center">جاري التحميل...</p>}
       {error && <p className="rounded bg-red-50 p-4 text-red-700">{error}</p>}
 
-      {!loading && !error && ratings.length === 0 && (
+      {!loading && !error && shown.length === 0 && (
         <p className="rounded bg-gray-50 p-6 text-center text-gray-600">لا توجد تقييمات.</p>
       )}
 
-      {!loading && !error && ratings.length > 0 && (
+      {!loading && !error && shown.length > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse text-right">
             <thead>
@@ -97,7 +118,7 @@ export default function CourseRatings() {
               </tr>
             </thead>
             <tbody>
-              {ratings.map((rating) => (
+              {shown.map((rating) => (
                 <tr key={rating.RatingID} className="align-top">
                   <td className="border p-3 font-bold text-primary">{rating.CourseName}</td>
                   <td className="border p-3">

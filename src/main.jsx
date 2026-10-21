@@ -1,5 +1,5 @@
 import './apiFetch';
-import { StrictMode } from 'react';
+import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
@@ -9,76 +9,81 @@ import { AuthProvider } from './AuthContext';
 import Layout from './components/Layout';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import NotFound from './notFound';
-import Permissions from './pages/users/Permissions';
-import ActivityLog from './pages/activity/ActivityLog';
+// Every page is its own file, fetched the first time it is opened (the dashboard
+// used to be one 2.7MB bundle downloaded before anything showed).
+const Permissions = lazy(() => import('./pages/users/Permissions'));
+const ActivityLog = lazy(() => import('./pages/activity/ActivityLog'));
 import Login from './login';
 import Unauthorized from './unauthorized';
-import Registrations from './pages/registrations/registrations';
-import Dashboard from './pages/dashoard';
-import Notifications from './pages/notifications/notifications';
-import AllRegistrations from './pages/registrations/allRegistrations';
-import RegistrationsDetails from './pages/registrations/detailsRegistrations';
-import PendingRegistrations from './pages/registrations/pendingRegistrations';
-import ApprovedRegistrations from './pages/registrations/approvedRegistrations';
-import RejectedRegistrations from './pages/registrations/rejectedRegistrations';
-import DirectRegistrations from './pages/registrations/directRegistrations';
-import Courses from './pages/courses/courses';
-import AllCourses from './pages/courses/allCourses';
-import Categories from './pages/courses/categories/categories';
-import AllCategories from './pages/courses/categories/allCategories';
-import DetailsCategories from './pages/courses/categories/detailsCategories';
-import AllStudents from './pages/students/allStudents';
-import StudentsDetails from './pages/students/detailsStudents';
-import UsersDashboards from './pages/users/users';
-import AddUsers from './pages/students/addStudents';
-import AddStudents from './pages/students/addStudents';
-import AddCategories from './pages/courses/categories/addCategories';
-import AddCourses from './pages/courses/addCourses';
-import EditCourse from './pages/courses/editCourse';
-import CourseDetails from './pages/courses/detailsCourses';
-import ProfilePage from './pages/sitings/profile';
-import AddCoursesSame from './pages/courses/addSame';
+const Registrations = lazy(() => import('./pages/registrations/registrations'));
+const Dashboard = lazy(() => import('./pages/dashoard'));
+const Notifications = lazy(() => import('./pages/notifications/notifications'));
+const AllRegistrations = lazy(() => import('./pages/registrations/allRegistrations'));
+const RegistrationsDetails = lazy(() => import('./pages/registrations/detailsRegistrations'));
+const PendingRegistrations = lazy(() => import('./pages/registrations/pendingRegistrations'));
+const ApprovedRegistrations = lazy(() => import('./pages/registrations/approvedRegistrations'));
+const RejectedRegistrations = lazy(() => import('./pages/registrations/rejectedRegistrations'));
+const DirectRegistrations = lazy(() => import('./pages/registrations/directRegistrations'));
+const Courses = lazy(() => import('./pages/courses/courses'));
+const AllCourses = lazy(() => import('./pages/courses/allCourses'));
+const Categories = lazy(() => import('./pages/courses/categories/categories'));
+const AllCategories = lazy(() => import('./pages/courses/categories/allCategories'));
+const DetailsCategories = lazy(() => import('./pages/courses/categories/detailsCategories'));
+const AllStudents = lazy(() => import('./pages/students/allStudents'));
+const StudentsDetails = lazy(() => import('./pages/students/detailsStudents'));
+const UsersDashboards = lazy(() => import('./pages/users/users'));
+const AddUsers = lazy(() => import('./pages/students/addStudents'));
+const AddStudents = lazy(() => import('./pages/students/addStudents'));
+const AddCategories = lazy(() => import('./pages/courses/categories/addCategories'));
+const AddCourses = lazy(() => import('./pages/courses/addCourses'));
+const EditCourse = lazy(() => import('./pages/courses/editCourse'));
+const CourseDetails = lazy(() => import('./pages/courses/detailsCourses'));
+const ProfilePage = lazy(() => import('./pages/sitings/profile'));
+const AddCoursesSame = lazy(() => import('./pages/courses/addSame'));
 import { CourseProvider } from './pages/context/DashoaedContexr';
-import BlockUnblockUserPage from './pages/students/blockStudent';
-import BlockedUsers from './pages/students/BlockedUsers';
-import PaidCourseStudents from './pages/students/PaidCourseStudents';
-import Complaints from './pages/complaints/Complaints';
-import OnboardingLeads from './pages/onboarding/OnboardingLeads';
-import OnboardingQuestions from './pages/onboarding/OnboardingQuestions';
-import CourseStudents from './pages/students/CourseStudents';
-import QRFormStudents from './pages/students/QRFormStudents';
-import AllCoursesTrainer from './pages/users/allcorcrsestrainer';
-import Trainer1 from './pages/users/allcorcrsestrainer';
-import OurPartnersImageUpload from './pages/clients&Our partners/Our partners';
-import ClientsImageUpload from './pages/clients&Our partners/clients';
-import OffersImageUpload from './pages/offers/Offers';
-import CoursesPartner from './pages/courses/courcesPartner';
-import CourseDetailsPartner from './pages/courses/detailsCoursesPartner';
-import EditCourses from './pages/courses/editCourse';
-import EditCoursesPartner from './pages/courses/editCoursesPartner';
-import StudentInvoice from './pages/students/StudentInvoice';
-import CourseAttendance from './pages/courses/CourseAttendance';
-import Consultations from './pages/consultations/Consultations';
-import TaxOverview from './pages/tax/TaxOverview';
-import GatewayNotifications from './pages/payments/GatewayNotifications';
-import PaymentsLog from './pages/payments/PaymentsLog';
-import TaxInvoices from './pages/tax/TaxInvoices';
-import TaxInvoiceDetails from './pages/tax/TaxInvoiceDetails';
-import VatReturn from './pages/tax/VatReturn';
-import TaxSettings from './pages/tax/TaxSettings';
-import BundleDiscounts from './pages/discounts/BundleDiscounts';
-import InvoiceDrafts from './pages/tax/InvoiceDrafts';
-import DraftEditor from './pages/tax/DraftEditor';
-import AgingReport from './pages/tax/AgingReport';
-import Articles from './pages/articles/Articles';
-import ArticleCategories from './pages/articles/ArticleCategories';
-import DatabaseBackup from './pages/settings/DatabaseBackup';
-import CourseRatings from './pages/courses/courseRatings';
+const BlockUnblockUserPage = lazy(() => import('./pages/students/blockStudent'));
+const BlockedUsers = lazy(() => import('./pages/students/BlockedUsers'));
+const PaidCourseStudents = lazy(() => import('./pages/students/PaidCourseStudents'));
+const Complaints = lazy(() => import('./pages/complaints/Complaints'));
+const OnboardingLeads = lazy(() => import('./pages/onboarding/OnboardingLeads'));
+const OnboardingQuestions = lazy(() => import('./pages/onboarding/OnboardingQuestions'));
+const CourseStudents = lazy(() => import('./pages/students/CourseStudents'));
+const QRFormStudents = lazy(() => import('./pages/students/QRFormStudents'));
+const AllCoursesTrainer = lazy(() => import('./pages/users/allcorcrsestrainer'));
+const Trainer1 = lazy(() => import('./pages/users/allcorcrsestrainer'));
+const OurPartnersImageUpload = lazy(() => import('./pages/clients&Our partners/Our partners'));
+const ClientsImageUpload = lazy(() => import('./pages/clients&Our partners/clients'));
+const OffersImageUpload = lazy(() => import('./pages/offers/Offers'));
+const CoursesPartner = lazy(() => import('./pages/courses/courcesPartner'));
+const CourseDetailsPartner = lazy(() => import('./pages/courses/detailsCoursesPartner'));
+const EditCourses = lazy(() => import('./pages/courses/editCourse'));
+const EditCoursesPartner = lazy(() => import('./pages/courses/editCoursesPartner'));
+const StudentInvoice = lazy(() => import('./pages/students/StudentInvoice'));
+const CourseAttendance = lazy(() => import('./pages/courses/CourseAttendance'));
+const Consultations = lazy(() => import('./pages/consultations/Consultations'));
+const TaxOverview = lazy(() => import('./pages/tax/TaxOverview'));
+const GatewayNotifications = lazy(() => import('./pages/payments/GatewayNotifications'));
+const PaymentsLog = lazy(() => import('./pages/payments/PaymentsLog'));
+const TaxInvoices = lazy(() => import('./pages/tax/TaxInvoices'));
+const TaxInvoiceDetails = lazy(() => import('./pages/tax/TaxInvoiceDetails'));
+const VatReturn = lazy(() => import('./pages/tax/VatReturn'));
+const TaxSettings = lazy(() => import('./pages/tax/TaxSettings'));
+const BundleDiscounts = lazy(() => import('./pages/discounts/BundleDiscounts'));
+const InvoiceDrafts = lazy(() => import('./pages/tax/InvoiceDrafts'));
+const DraftEditor = lazy(() => import('./pages/tax/DraftEditor'));
+const AgingReport = lazy(() => import('./pages/tax/AgingReport'));
+const Articles = lazy(() => import('./pages/articles/Articles'));
+const ArticleCategories = lazy(() => import('./pages/articles/ArticleCategories'));
+const DatabaseBackup = lazy(() => import('./pages/settings/DatabaseBackup'));
+const WhatsappSettings = lazy(() => import('./pages/settings/WhatsappSettings'));
+const TrainerChats = lazy(() => import('./pages/settings/TrainerChats'));
+const CourseRatings = lazy(() => import('./pages/courses/courseRatings'));
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Suspense fallback={<PageLoading />}>
         <Routes>
           <Route path="login" element={<Login />} />
           <Route path="unauthorized" element={<Unauthorized />} />
@@ -142,6 +147,8 @@ export default function App() {
               <Route path="/articles" element={<Articles />} />
               <Route path="/articles/categories" element={<ArticleCategories />} />
               <Route path="/settings/database-backup" element={<DatabaseBackup />} />
+              <Route path="/settings/whatsapp" element={<WhatsappSettings />} />
+              <Route path="/trainer-chats" element={<TrainerChats />} />
 
               <Route path="/students" element={<Dashboard />} />
 
@@ -169,9 +176,14 @@ export default function App() {
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
+}
+
+function PageLoading() {
+  return <div className="flex h-64 items-center justify-center text-gray-500">جاري التحميل...</div>;
 }
 
 createRoot(document.getElementById('root')).render(

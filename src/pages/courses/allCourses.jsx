@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Edit, Search, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../AuthContext";
+import { useDateRange, DateRangeBar, exportExcel } from "../../components/DateExport";
 
 const API = " https://back.acit-net.com/api";
 
@@ -16,6 +17,11 @@ const AllCourses = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 10;
+  const range = useDateRange();
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [range.from, range.to]);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -37,21 +43,13 @@ const AllCourses = () => {
       const coursesData = await coursesResponse.json();
       setCourses(Array.isArray(coursesData) ? coursesData : []);
 
-      const registrationsResponse = await fetch(`${API}/registrations`, {
+      // Counts per course from the server, not by downloading every registration.
+      const statsResponse = await fetch(`${API}/registrations/stats`, {
         headers: getAuthHeaders(),
       });
-
-      if (registrationsResponse.ok) {
-        const registrationsData = await registrationsResponse.json();
-        const counts = Array.isArray(registrationsData)
-          ? registrationsData.reduce((acc, registration) => {
-              if (registration.CourseID) {
-                acc[registration.CourseID] = (acc[registration.CourseID] || 0) + 1;
-              }
-              return acc;
-            }, {})
-          : {};
-        setRegistrationCounts(counts);
+      if (statsResponse.ok) {
+        const stats = await statsResponse.json();
+        setRegistrationCounts(stats.byCourse || {});
       }
     } catch (fetchError) {
       console.error("Error fetching courses:", fetchError);
@@ -86,7 +84,7 @@ const AllCourses = () => {
     }
   };
 
-  const filteredCourses = courses.filter((course) => {
+  const filteredCourses = range.filter(courses, (course) => course.CreatedAt).filter((course) => {
     const query = searchQuery.toLowerCase();
     return (
       String(course.CourseID || "").includes(query) ||
@@ -102,6 +100,20 @@ const AllCourses = () => {
   const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const exportColumns = [
+    { header: "رقم الدورة", key: "CourseID" },
+    { header: "اسم الدورة", key: "CourseName" },
+    { header: "رمز الدورة", key: "CourseCode" },
+    { header: "الفئة", key: "CategoryID" },
+    { header: "المدرب", key: "InstructorName" },
+    { header: "السعر", key: "Price" },
+    { header: "عدد المسجلين", value: (c) => registrationCounts[c.CourseID] || 0 },
+    { header: "تاريخ البدء", key: "StartingTime" },
+    { header: "تاريخ الانتهاء", key: "EndingTime" },
+    { header: "تاريخ الإنشاء", key: "CreatedAt" },
+    { header: "أضافها", value: (c) => c.CreatedByName || c.CreatedByUsername || "" },
+  ];
 
   const handleRowClick = (courseId, event) => {
     if (event.target.closest("button")) return;
@@ -129,6 +141,12 @@ const AllCourses = () => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-2xl font-bold mb-6 text-primary">إدارة الدورات</h2>
+
+      <DateRangeBar
+        range={range}
+        count={filteredCourses.length}
+        onExport={() => exportExcel("الدورات", exportColumns, filteredCourses, { rangeLabel: range.label })}
+      />
 
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
         <div className="relative w-full md:w-64">

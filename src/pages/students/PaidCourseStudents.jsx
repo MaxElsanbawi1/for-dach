@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
 
 const API = 'https://back.acit-net.com/api';
 const PER_PAGE = 10;
@@ -8,6 +9,19 @@ const PER_PAGE = 10;
 // Where the money came in through.
 const SOURCE_LABELS = { online: 'أونلاين', manual: 'تحصيل يدوي' };
 const SOURCE_FILTERS = ['all', 'online', 'manual'];
+
+const EXPORT_COLUMNS = [
+  { header: 'الاسم الكامل', key: 'name' },
+  { header: 'رقم الهاتف', key: 'phone' },
+  { header: 'البريد الإلكتروني', key: 'email' },
+  { header: 'رقم الهوية', key: 'national_id' },
+  { header: 'اسم الدورة', key: 'course' },
+  { header: 'المبلغ المدفوع', value: (s) => Number(s.amount || 0) },
+  { header: 'العملة', key: 'currency' },
+  { header: 'الحالة', value: (s) => SOURCE_LABELS[s.source] || s.source || '' },
+  { header: 'المرجع', key: 'reference' },
+  { header: 'تاريخ الدفع', key: 'paid_at' },
+];
 
 function money(value) {
   return Number(value || 0).toLocaleString('ar-EG', {
@@ -23,6 +37,11 @@ const PaidCourseStudents = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState('');
+  const range = useDateRange();
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [range.from, range.to]);
 
   const fetchSeats = useCallback(async () => {
     setError('');
@@ -59,9 +78,10 @@ const PaidCourseStudents = () => {
     fetchSeats();
   }, [fetchSeats]);
 
+  const datedSeats = range.filter(seats, (s) => s.paid_at);
   const filteredSeats = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return seats.filter((s) => {
+    return datedSeats.filter((s) => {
       if (source !== 'all' && s.source !== source) return false;
       if (!q) return true;
       return [s.name, s.email, s.phone, s.national_id, s.course, s.reference]
@@ -70,7 +90,7 @@ const PaidCourseStudents = () => {
         .toLowerCase()
         .includes(q);
     });
-  }, [seats, source, searchQuery]);
+  }, [datedSeats, source, searchQuery]);
 
   const indexOfLast = currentPage * PER_PAGE;
   const currentSeats = filteredSeats.slice(indexOfLast - PER_PAGE, indexOfLast);
@@ -80,6 +100,12 @@ const PaidCourseStudents = () => {
     <>
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold mb-6 text-primary">مسجلين داخل الكورس (دفعوا)</h2>
+
+        <DateRangeBar
+          range={range}
+          count={filteredSeats.length}
+          onExport={() => exportExcel('مسجلين دفعوا', EXPORT_COLUMNS, filteredSeats, { rangeLabel: range.label })}
+        />
 
         {/* Search + source filter */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">

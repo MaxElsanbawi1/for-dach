@@ -92,37 +92,16 @@ const StudentsDetails = () => {
     }).format(price);
   };
 
+  // The server matches the student's registrations by account, email, national
+  // id or phone (?forUser=) - the page used to download every registration.
   const fetchStudentRegistrations = async (student) => {
-    const registrationsResponse = await fetch(' https://back.acit-net.com/api/registrations', {
-      method: 'GET',
-      redirect: 'follow',
-    });
-
+    if (!student?.UserID) return;
+    const registrationsResponse = await fetch(
+      ` https://back.acit-net.com/api/registrations?forUser=${encodeURIComponent(student.UserID)}&page=1&limit=100`
+    );
     if (!registrationsResponse.ok) return;
-
     const registrationsResult = await registrationsResponse.json();
-    const registrationsList = Array.isArray(registrationsResult) ? registrationsResult : [];
-    const normalize = (value) => String(value || '').trim().toLowerCase();
-    const userIdValue = normalize(student.UserID);
-    const userEmail = normalize(student.Email);
-    const userNationalId = normalize(student.NationalId);
-    const userPhone = normalize(student.PhoneNumber);
-
-    const matchedRegistrations = registrationsList.filter((registration) => {
-      const registrationUserId = normalize(registration.UserID);
-      const registrationEmail = normalize(registration.Email);
-      const registrationNationalId = normalize(registration.NationalId);
-      const registrationPhone = normalize(registration.PhoneNumber);
-
-      return (
-        (userIdValue && registrationUserId === userIdValue) ||
-        (userEmail && registrationEmail === userEmail) ||
-        (userNationalId && registrationNationalId === userNationalId) ||
-        (userPhone && registrationPhone === userPhone)
-      );
-    });
-
-    setStudentRegistrations(matchedRegistrations);
+    setStudentRegistrations(Array.isArray(registrationsResult?.rows) ? registrationsResult.rows : []);
   };
 
 

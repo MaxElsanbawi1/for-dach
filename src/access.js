@@ -23,6 +23,8 @@ export const MENU = [
   ]},
   { icon: Package, text: "الدورات", href: "/courses", subItems: [
     { text: "كل الدورات", href: "/courses/all", need: "courses.view" },
+    // Same page under two names: overseers see every trainer, a trainer sees their own.
+    { text: "دورات المدربين", href: "/allcorcrsestrainer", need: "courses.view", roles: ["admin"] },
     { text: "دوراتي كمدرب", href: "/allcorcrsestrainer", need: "courses.view", roles: ["trainer"] },
     { text: "تقييمات الكورسات", href: "/courses/ratings", need: "courses.ratings" },
     { text: "أضافة دورة ", href: "/courses/addSame", need: "courses.add" },
@@ -90,6 +92,8 @@ export const MENU = [
   { icon: Settings, text: "الإعدادات", subItems: [
     { text: "ملفي الشخصي", href: "/ProfilePage" },
     { text: "نسخة احتياطية لقاعدة البيانات", href: "/settings/database-backup", need: "superadmin" },
+    { text: "تنبيهات المحاضرات (تليجرام)", href: "/settings/whatsapp", need: "superadmin" },
+    { text: "محادثات المدربين", href: "/trainer-chats", need: "superadmin", badge: "trainerChats" },
     { text: "تسجيل الخروج", action: "logout" },
   ]},
 ];
@@ -138,7 +142,14 @@ export function allowed(need, access, roles) {
 export function visibleMenu(access) {
   return MENU.map((item) => {
     if (!item.subItems) return allowed(item.need, access, item.roles) ? item : null;
-    const subItems = item.subItems.filter((s) => s.action || allowed(s.need, access, s.roles));
+    const seen = new Set();
+    const subItems = item.subItems.filter((s) => {
+      if (!(s.action || allowed(s.need, access, s.roles))) return false;
+      // One entry per page: the first that the account may open.
+      if (s.href && seen.has(s.href)) return false;
+      if (s.href) seen.add(s.href);
+      return true;
+    });
     const real = subItems.filter((s) => !s.action);
     return real.length ? { ...item, subItems } : null;
   }).filter(Boolean);
@@ -149,7 +160,12 @@ export function needFor(path) {
   for (const item of MENU) {
     // A parent with sub-items only opens its dropdown; its children decide.
     for (const entry of item.subItems || [item]) {
-      if (entry.href && matchPath(entry.href, path)) return { need: entry.need, roles: entry.roles };
+      if (entry.href && matchPath(entry.href, path)) {
+        // A page listed under several names (one per role) opens for any of those roles.
+        const same = MENU.flatMap((i) => i.subItems || [i]).filter((e) => e.href === entry.href);
+        const roles = same.some((e) => !e.roles) ? undefined : [...new Set(same.flatMap((e) => e.roles))];
+        return { need: entry.need, roles };
+      }
     }
   }
   const hit = PAGE_NEEDS.find(([pattern]) => matchPath(pattern, path));

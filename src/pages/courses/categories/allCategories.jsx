@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, Pencil } from 'lucide-react';
+import { Search, Trash2, Pencil, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../AuthContext';
 import mediaSrc from '../../../mediaSrc';
+import { exportExcel } from '../../../components/DateExport';
 
 const API = 'https://back.acit-net.com/api';
+
+const EXPORT_COLUMNS = [
+  { header: 'رقم الفئة', key: 'CategoryID' },
+  { header: 'اسم الفئة', key: 'CategoryName' },
+  { header: 'وصف الفئة', value: (c) => c.CategoryDescription || 'لا يوجد وصف' },
+];
 
 const AllCategories = () => {
   const navigate = useNavigate();
@@ -21,6 +28,8 @@ const AllCategories = () => {
   const categoriesPerPage = 10;
 
   const [deletingId, setDeletingId] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   // The category being edited, held as a copy so cancelling changes nothing.
   const [editing, setEditing] = useState(null);
@@ -90,6 +99,19 @@ const AllCategories = () => {
   const indexOfLastCategory = currentPage * categoriesPerPage;
   const indexOfFirstCategory = indexOfLastCategory - categoriesPerPage;
   const currentCategories = filteredCategories.slice(indexOfFirstCategory, indexOfLastCategory);
+
+  // Categories carry no date, so there is no range to pick - only the export.
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError('');
+    try {
+      await exportExcel('الفئات', EXPORT_COLUMNS, filteredCategories);
+    } catch (error) {
+      setExportError(error.message || 'تعذر التصدير');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const closeEditor = () => {
     setEditing(null);
@@ -178,7 +200,19 @@ const AllCategories = () => {
             />
             <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
           </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500">{filteredCategories.length} سجل</span>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-1 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            >
+              <Download size={15} /> {exporting ? 'جاري التجهيز...' : 'تحميل Excel'}
+            </button>
+          </div>
         </div>
+        {exportError && <p className="-mt-4 mb-4 text-xs text-red-600">{exportError}</p>}
 
         {/* Categories Table */}
         <div className="overflow-x-auto">

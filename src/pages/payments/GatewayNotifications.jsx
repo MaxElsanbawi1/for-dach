@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { API } from '../tax/taxApi';
+import { useDateRange, DateRangeBar, exportExcel, fetchAllPages } from '../../components/DateExport';
 
 // Every notification one payment gateway sent the server (webhooks / callbacks),
 // and what was done with it. Each gateway has its own page in the menu.
@@ -39,6 +40,13 @@ export default function GatewayNotifications({ gateway }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState(null);
+  const range = useDateRange();
+  // New dates go back to page 1 in the same render (one request, not two).
+  const dateRange = {
+    ...range,
+    setFrom: (v) => { range.setFrom(v); setPage(1); },
+    setTo: (v) => { range.setTo(v); setPage(1); },
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,6 +55,8 @@ export default function GatewayNotifications({ gateway }) {
       const params = new URLSearchParams({ gateway, page: String(page), limit: String(PAGE_SIZE) });
       if (outcome) params.set('outcome', outcome);
       if (search.trim()) params.set('search', search.trim());
+      if (range.from) params.set('from', range.from);
+      if (range.to) params.set('to', range.to);
 
       const response = await fetch(`${API}/payments/notifications?${params}`);
       // Parse defensively: an auth failure may return HTML from the proxy, not JSON.
@@ -63,13 +73,38 @@ export default function GatewayNotifications({ gateway }) {
     } finally {
       setLoading(false);
     }
-  }, [page, gateway, outcome, search]);
+  }, [page, gateway, outcome, search, range.from, range.to]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Every notification matching the filters (all pages). The raw body is left
+  // out: it can pass Excel's cell limit and the details view already shows it.
+  const exportAll = async () => {
+    const all = await fetchAllPages(
+      '/payments/notifications',
+      { gateway, outcome, search: search.trim(), ...range.params },
+      { pick: (b) => ({ rows: Array.isArray(b.data) ? b.data : [], total: b.total }) }
+    );
+    const columns = [
+      { header: 'الوقت', key: 'received_at', width: 20 },
+      { header: 'رقم الطلب', key: 'order_number' },
+      { header: 'حالة الطلب', key: 'order_status' },
+      { header: `مرجع ${label}`, key: 'gateway_ref', width: 30 },
+      { header: 'العميل', key: 'customer_name' },
+      { header: 'إيميل العميل', key: 'customer_email' },
+      { header: 'المبلغ', key: 'amount' },
+      { header: 'العملة', key: 'currency' },
+      { header: 'نوع الحدث', key: 'event_type' },
+      { header: `حالة ${label}`, key: 'gateway_status' },
+      { header: 'النتيجة', value: (r) => OUTCOME_STYLES[r.outcome]?.label || r.outcome },
+      { header: 'الخطأ', key: 'error', width: 40 },
+    ];
+    await exportExcel(`إشعارات ${label}`, columns, all, { rangeLabel: range.active ? range.label : '' });
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-6" dir="rtl">
@@ -90,6 +125,8 @@ export default function GatewayNotifications({ gateway }) {
           تحديث
         </button>
       </div>
+
+      <DateRangeBar range={dateRange} onExport={exportAll} count={total} />
 
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative w-full md:w-72">

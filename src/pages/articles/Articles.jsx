@@ -4,9 +4,23 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import RichTextEditor from "../../components/RichTextEditor";
 import { appendEncoded } from "../../encodeField";
+import { useDateRange, DateRangeBar, exportExcel, fetchAllPages } from "../../components/DateExport";
 
 const API = "https://back.acit-net.com/api";
 const API_ORIGIN = API.replace(/\/api\/?$/, "");
+const EXPORT_COLUMNS = [
+  { header: "رقم المقال", key: "id" },
+  { header: "العنوان", key: "title", width: 40 },
+  { header: "الرابط", key: "slug", width: 30 },
+  { header: "التصنيف", value: (a) => a.category?.name || "" },
+  { header: "الحالة", value: (a) => (a.status === "PUBLISHED" ? "منشور" : "مسودة") },
+  { header: "مميّز", key: "isFeatured" },
+  { header: "المشاهدات", key: "views" },
+  { header: "الترتيب", key: "sortOrder" },
+  { header: "الكاتب", value: (a) => a.author?.name || "" },
+  { header: "تاريخ النشر", key: "publishedAt", width: 20 },
+  { header: "تاريخ الإنشاء", key: "createdAt", width: 20 },
+];
 const emptyArticle = { title: "", slug: "", excerpt: "", content: "", featuredImage: "", categoryId: "", authorId: "", status: "DRAFT", isFeatured: false, sortOrder: 0, seoTitle: "", seoDescription: "", seoKeywords: "" };
 
 function headers(json = true) {
@@ -119,7 +133,24 @@ export default function Articles() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ search: "", status: "", featured: "", categoryId: "", page: 1 });
   const [total, setTotal] = useState(0);
-  const query = useMemo(() => new URLSearchParams(Object.entries(filters).filter(([, v]) => v !== "")).toString(), [filters]);
+  const range = useDateRange();
+  // Changing the dates goes back to page 1 in the same render, so only one request goes out.
+  const dateRange = {
+    ...range,
+    setFrom: (v) => { range.setFrom(v); setFilters((f) => ({ ...f, page: 1 })); },
+    setTo: (v) => { range.setTo(v); setFilters((f) => ({ ...f, page: 1 })); },
+  };
+  const query = useMemo(
+    () => new URLSearchParams(Object.entries({ ...filters, from: range.from, to: range.to }).filter(([, v]) => v !== "")).toString(),
+    [filters, range.from, range.to]
+  );
+
+  // Every article matching the filters and dates, not just the 20 on screen.
+  const exportAll = async () => {
+    const { page, ...rest } = filters;
+    const rows = await fetchAllPages("/articles", { ...rest, ...range.params }, { pick: (b) => ({ rows: b.data || [], total: b.total }) });
+    await exportExcel("المقالات", EXPORT_COLUMNS, rows, { rangeLabel: range.active ? range.label : "" });
+  };
 
   const load = async () => {
     setLoading(true);
@@ -172,6 +203,7 @@ export default function Articles() {
     <div className="space-y-5" dir="rtl">
       <ToastContainer />
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900">المقالات</h1><p className="text-sm text-gray-500">إنشاء المقالات ونشرها وفلترتها وإعادة ترتيبها.</p></div><button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 font-semibold text-white"><Plus size={18} />مقال جديد</button></div>
+      <DateRangeBar range={dateRange} onExport={exportAll} count={total} />
       <div className="rounded-lg bg-white p-4 shadow">
         <div className="mb-4 grid gap-3 md:grid-cols-5">
           <div className="relative md:col-span-2"><Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" /><input className="w-full rounded-md border p-2 pr-9" placeholder="بحث في المقالات..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })} /></div>
