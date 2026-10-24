@@ -61,6 +61,12 @@ window.fetch = (input, init = {}) => {
     if (res.status === 403) forbiddenAt = Date.now();
     // The session ended (token expired or the account was blocked): back to login.
     if (res.status === 401 && !/\/auth\/login/i.test(url) && !window.location.pathname.startsWith("/login")) {
+      // For the activity log if it was a timeout (the API decides; other 401s are ignored).
+      originalFetch(`${API}/auth/session-expired`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        keepalive: true,
+      }).catch(() => {});
       localStorage.removeItem("token");
       window.location.assign("/login");
     }

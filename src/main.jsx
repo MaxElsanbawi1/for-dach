@@ -60,7 +60,7 @@ import StudentInvoice from './pages/students/StudentInvoice';
 import CourseAttendance from './pages/courses/CourseAttendance';
 import Consultations from './pages/consultations/Consultations';
 import TaxOverview from './pages/tax/TaxOverview';
-import TamaraNotifications from './pages/payments/TamaraNotifications';
+import GatewayNotifications from './pages/payments/GatewayNotifications';
 import PaymentsLog from './pages/payments/PaymentsLog';
 import TaxInvoices from './pages/tax/TaxInvoices';
 import TaxInvoiceDetails from './pages/tax/TaxInvoiceDetails';
@@ -116,7 +116,9 @@ export default function App() {
               <Route path="/complaints" element={<Complaints />} />
               <Route path="/onboarding" element={<OnboardingLeads />} />
               <Route path="/onboarding/questions" element={<OnboardingQuestions />} />
-              <Route path="/payments/tamara" element={<TamaraNotifications />} />
+              {['tap', 'tamara', 'tabby', 'paypal', 'paytabs'].map((g) => (
+                <Route key={g} path={`/payments/${g}`} element={<GatewayNotifications key={g} gateway={g} />} />
+              ))}
               <Route path="/tax" element={<TaxOverview />} />
               <Route path="/tax/invoices" element={<TaxInvoices />} />
                  <Route path="/courses/ratings" element={<CourseRatings />} />

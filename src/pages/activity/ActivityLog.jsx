@@ -21,8 +21,10 @@ const METHOD_STYLE = {
   PUT: 'bg-blue-50 text-blue-700',
   PATCH: 'bg-blue-50 text-blue-700',
   DELETE: 'bg-red-50 text-red-700',
+  // Signed out automatically when the session length ran out.
+  AUTO: 'bg-red-600 text-white',
 };
-const METHOD_LABEL = { POST: 'إضافة', PUT: 'تعديل', PATCH: 'تعديل', DELETE: 'حذف' };
+const METHOD_LABEL = { POST: 'إضافة', PUT: 'تعديل', PATCH: 'تعديل', DELETE: 'حذف', AUTO: 'خرج تلقائي' };
 
 const formatTime = (value) =>
   new Date(value).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });

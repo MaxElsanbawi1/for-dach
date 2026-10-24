@@ -21,6 +21,27 @@ async function fetchAccess(token) {
   return { role: data.role, isSuperAdmin: !!data.isSuperAdmin, permissions: new Set(data.permissions || []) };
 }
 
+// When the login token runs out (ms since epoch), from its own "exp" claim.
+function tokenExpiry(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload.exp ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+// Tell the API a session ran out on its own, for the activity log. The API
+// checks the token really is over and logs each session once.
+export function reportSessionExpired(token) {
+  if (!token) return;
+  fetch(`${API}/auth/session-expired`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    keepalive: true,
+  }).catch(() => {});
+}
+
 // Utility functions for localStorage operations
 const getLocalStorageItem = (key) => {
   try {
@@ -56,6 +77,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const result = await fetchAccess(token);
       if (result.expired) {
+        reportSessionExpired(token);
         clearSession();
         return;
       }
@@ -103,7 +125,40 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setAccess(null);
   }
-  const logout = clearSession;
+  const logout = () => {
+    // Tell the API first so the logout shows in the activity log; the session
+    // is cleared regardless of whether the call gets through.
+    const token = getLocalStorageItem("token");
+    if (token) {
+      fetch(`${API}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        keepalive: true,
+      }).catch(() => {});
+    }
+    clearSession();
+  };
+
+  // Sign out when the session length set in the permissions screen is up,
+  // without waiting for the next request to be refused.
+  useEffect(() => {
+    if (!user?.token) return;
+    const expiry = tokenExpiry(user.token);
+    if (!expiry) return;
+    const expire = () => {
+      reportSessionExpired(user.token);
+      clearSession();
+    };
+    const remaining = expiry - Date.now();
+    if (remaining <= 0) {
+      expire();
+      return;
+    }
+    // Capped to setTimeout's ~24.8-day limit (tokens from before session lengths lasted 30 days).
+    const timer = setTimeout(expire, Math.min(remaining, 2 ** 31 - 1));
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.token]);
 
   const can = useCallback(
     (key) => !!access && (access.isSuperAdmin || access.permissions.has(key)),

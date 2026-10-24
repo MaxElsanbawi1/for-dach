@@ -1,20 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { API } from '../tax/taxApi';
 
-const API = 'https://back.acit-net.com/api';
+// Every notification one payment gateway sent the server (webhooks / callbacks),
+// and what was done with it. Each gateway has its own page in the menu.
+// Read from /api/payments/notifications (acit-back/services/gatewayNotifications.js).
+
 const PAGE_SIZE = 25;
 
-// Tamara's own outcomes, mapped to how the row should read at a glance.
+const GATEWAY_LABELS = { tap: 'Tap', tamara: 'تمارا', tabby: 'تابي', paypal: 'PayPal', paytabs: 'PayTabs' };
+
+// What the server did with the notification, as it should read at a glance.
 const OUTCOME_STYLES = {
   paid: { label: 'مدفوع', className: 'bg-green-100 text-green-800' },
   pending: { label: 'قيد الانتظار', className: 'bg-yellow-100 text-yellow-800' },
   failed: { label: 'فشل', className: 'bg-red-100 text-red-800' },
   error: { label: 'خطأ', className: 'bg-red-100 text-red-800' },
+  rejected: { label: 'مرفوض (توقيع غير صحيح)', className: 'bg-red-100 text-red-800' },
   skipped: { label: 'متخطى', className: 'bg-gray-100 text-gray-700' },
   ignored: { label: 'مهمَل', className: 'bg-gray-100 text-gray-700' },
 };
 
-const OUTCOME_FILTERS = ['', 'paid', 'pending', 'failed', 'error'];
+const OUTCOME_FILTERS = ['', 'paid', 'pending', 'failed', 'rejected', 'error'];
 
 function formatDateTime(value) {
   if (!value) return '-';
@@ -22,7 +29,8 @@ function formatDateTime(value) {
   return Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('ar-EG');
 }
 
-export default function TamaraNotifications() {
+export default function GatewayNotifications({ gateway }) {
+  const label = GATEWAY_LABELS[gateway] || gateway;
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -36,15 +44,12 @@ export default function TamaraNotifications() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ gateway, page: String(page), limit: String(PAGE_SIZE) });
       if (outcome) params.set('outcome', outcome);
       if (search.trim()) params.set('search', search.trim());
 
-      const response = await fetch(`${API}/payments/tamara/notifications?${params}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      // Parse defensively: an auth failure returns HTML from the proxy, not JSON.
+      const response = await fetch(`${API}/payments/notifications?${params}`);
+      // Parse defensively: an auth failure may return HTML from the proxy, not JSON.
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data.message || `تعذّر تحميل الإشعارات (${response.status})`);
@@ -58,7 +63,7 @@ export default function TamaraNotifications() {
     } finally {
       setLoading(false);
     }
-  }, [page, outcome, search]);
+  }, [page, gateway, outcome, search]);
 
   useEffect(() => {
     load();
@@ -70,9 +75,9 @@ export default function TamaraNotifications() {
     <div className="bg-white rounded-lg shadow p-6" dir="rtl">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-primary">إشعارات تمارا</h2>
+          <h2 className="text-2xl font-bold text-primary">إشعارات {label}</h2>
           <p className="mt-1 text-sm text-gray-500">
-            كل إشعار أرسلته تمارا للسيرفر، وما تم بناءً عليه.
+            كل إشعار أرسلته {label} للسيرفر، وما تم بناءً عليه.
           </p>
         </div>
         <button
@@ -95,7 +100,7 @@ export default function TamaraNotifications() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="بحث برقم الطلب أو معرّف تمارا..."
+            placeholder="بحث برقم الطلب، العميل، أو رقم العملية..."
             className="w-full rounded-md border border-gray-300 py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-secondary"
           />
           <Search size={18} className="absolute right-3 top-2.5 text-gray-400" />
@@ -114,7 +119,7 @@ export default function TamaraNotifications() {
                 outcome === value ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              {value ? OUTCOME_STYLES[value]?.label || value : 'الكل'}
+              {value ? OUTCOME_STYLES[value]?.label.split(' ')[0] || value : 'كل النتائج'}
             </button>
           ))}
         </div>
@@ -127,7 +132,7 @@ export default function TamaraNotifications() {
         <div className="rounded bg-gray-50 p-8 text-center text-gray-600">
           لا توجد إشعارات.
           <span className="mt-1 block text-sm">
-            تصل الإشعارات هنا تلقائياً عند كل عملية دفع عبر تمارا.
+            تصل الإشعارات هنا تلقائياً عند كل عملية دفع عبر {label}.
           </span>
         </div>
       )}
@@ -141,7 +146,7 @@ export default function TamaraNotifications() {
                 <th className="border p-3">الطلب</th>
                 <th className="border p-3">العميل</th>
                 <th className="border p-3">المبلغ</th>
-                <th className="border p-3">حالة تمارا</th>
+                <th className="border p-3">حالة {label}</th>
                 <th className="border p-3">النتيجة</th>
                 <th className="border p-3">التفاصيل</th>
               </tr>
@@ -159,8 +164,8 @@ export default function TamaraNotifications() {
                       <td className="border p-3 whitespace-nowrap">{formatDateTime(row.received_at)}</td>
                       <td className="border p-3">
                         <div className="font-bold text-primary">{row.order_number || '-'}</div>
-                        <div className="font-mono text-xs text-gray-500">
-                          {row.tamara_order_id ? `${row.tamara_order_id.slice(0, 8)}…` : '-'}
+                        <div className="font-mono text-xs text-gray-500" title={row.gateway_ref || ''}>
+                          {row.gateway_ref ? `${row.gateway_ref.slice(0, 12)}${row.gateway_ref.length > 12 ? '…' : ''}` : '-'}
                         </div>
                       </td>
                       <td className="border p-3">
@@ -170,13 +175,13 @@ export default function TamaraNotifications() {
                       <td className="border p-3 whitespace-nowrap">
                         {row.amount == null ? '-' : `${row.amount} ${row.currency || ''}`}
                       </td>
-                      <td className="border p-3">{row.tamara_status || row.event_type || '-'}</td>
+                      <td className="border p-3">{row.gateway_status || row.event_type || '-'}</td>
                       <td className="border p-3">
                         <span className={`rounded px-2 py-1 text-xs font-bold ${style.className}`}>
                           {style.label}
                         </span>
                         {row.error && (
-                          <div className="mt-1 max-w-xs text-xs text-red-600">{row.error}</div>
+                          <div className="mt-1 max-w-xs break-words text-xs text-red-600">{row.error}</div>
                         )}
                       </td>
                       <td className="border p-3">

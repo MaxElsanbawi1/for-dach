@@ -31,6 +31,31 @@ const tabs = [
   { key: 'audit', label: 'سجل التغييرات', icon: History },
 ];
 
+// Login length before the account is signed out; empty = inherit.
+const DEFAULT_SESSION_HOURS = 4;
+const SUPERADMIN_SESSION_HOURS = 24;
+const MAX_SESSION_HOURS = 168;
+const toHours = (value) => (value === '' || value == null ? null : Number(value));
+
+function SessionHoursInput({ value, onChange, inherited, disabled }) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 block text-gray-600">مدة الجلسة (ساعات)</span>
+      <input
+        type="number"
+        min={1}
+        max={MAX_SESSION_HOURS}
+        step={1}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`${inherited} (الافتراضي)`}
+        className="w-36 rounded-md border border-gray-300 px-3 py-2"
+      />
+    </label>
+  );
+}
+
 function PermissionGroups({ groups, isOn, sourceOf, onToggle, disabled }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -74,6 +99,7 @@ function StaffTab({ groups, roles, users, reload, myId }) {
   const [role, setRole] = useState('');
   const [allow, setAllow] = useState([]);
   const [deny, setDeny] = useState([]);
+  const [hours, setHours] = useState('');
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -83,11 +109,16 @@ function StaffTab({ groups, roles, users, reload, myId }) {
     setRole(selected.Role);
     setAllow(selected.allow);
     setDeny(selected.deny);
+    setHours(selected.SessionHours ?? '');
   }, [selected]);
 
   const roleLabel = (name) => (name === 'superadmin' ? 'سوبر أدمن' : roles.find((r) => r.name === name)?.label || name);
   const template = useMemo(() => new Set(roles.find((r) => r.name === role)?.permissions || []), [roles, role]);
   const isSuper = role === 'superadmin';
+  // What the account gets when its own field is left empty.
+  const inheritedHours = isSuper
+    ? SUPERADMIN_SESSION_HOURS
+    : roles.find((r) => r.name === role)?.sessionHours || DEFAULT_SESSION_HOURS;
   const isOn = (key) => isSuper || (template.has(key) ? !deny.includes(key) : allow.includes(key));
   const sourceOf = (key) => (allow.includes(key) ? 'allow' : deny.includes(key) ? 'deny' : null);
 
@@ -117,7 +148,7 @@ function StaffTab({ groups, roles, users, reload, myId }) {
   const save = async () => {
     setSaving(true);
     try {
-      await api(`/permissions/users/${selectedId}`, { method: 'PUT', body: JSON.stringify({ role, allow, deny }) });
+      await api(`/permissions/users/${selectedId}`, { method: 'PUT', body: JSON.stringify({ role, allow, deny, sessionHours: toHours(hours) }) });
       toast.success('تم حفظ صلاحيات المستخدم');
       await reload();
     } catch (e) {
@@ -188,6 +219,7 @@ function StaffTab({ groups, roles, users, reload, myId }) {
                   <option value="superadmin">سوبر أدمن (كل الصلاحيات)</option>
                 </select>
               </label>
+              <SessionHoursInput value={hours} onChange={setHours} inherited={inheritedHours} disabled={isSelf} />
               <button
                 type="button"
                 onClick={save}
@@ -246,6 +278,7 @@ function RolesTab({ groups, roles, reload }) {
   const [selected, setSelected] = useState(null);
   const [label, setLabel] = useState('');
   const [perms, setPerms] = useState([]);
+  const [hours, setHours] = useState('');
   const [newName, setNewName] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -254,6 +287,7 @@ function RolesTab({ groups, roles, reload }) {
     if (current) {
       setLabel(current.label);
       setPerms(current.permissions);
+      setHours(current.sessionHours ?? '');
     }
   }, [current]);
 
@@ -312,7 +346,7 @@ function RolesTab({ groups, roles, reload }) {
                 <span className="font-medium text-gray-800">{r.label}</span>
                 <span className="mr-2 text-xs text-gray-400">{r.name}</span>
               </span>
-              <span className="text-xs text-gray-500">{r.users} مستخدم · {r.permissions.length} صلاحية</span>
+              <span className="text-xs text-gray-500">{r.users} مستخدم · {r.permissions.length} صلاحية · {r.sessionHours || DEFAULT_SESSION_HOURS} س</span>
             </button>
           ))}
         </div>
@@ -342,6 +376,7 @@ function RolesTab({ groups, roles, reload }) {
                 <span className="mb-1 block text-gray-600">اسم القالب بالعربي</span>
                 <input value={label} onChange={(e) => setLabel(e.target.value)} className="rounded-md border border-gray-300 px-3 py-2" />
               </label>
+              <SessionHoursInput value={hours} onChange={setHours} inherited={DEFAULT_SESSION_HOURS} />
               <span className="text-sm text-gray-500">عليه {current.users} مستخدم</span>
               <div className="mr-auto flex gap-2">
                 {current.users === 0 && (
@@ -352,7 +387,7 @@ function RolesTab({ groups, roles, reload }) {
                 <button
                   type="button"
                   disabled={saving}
-                  onClick={() => save(current.name, { label, permissions: perms })}
+                  onClick={() => save(current.name, { label, permissions: perms, sessionHours: toHours(hours) })}
                   className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2 text-white disabled:opacity-50"
                 >
                   <Save size={16} /> {saving ? 'جاري الحفظ...' : 'حفظ'}
@@ -405,6 +440,9 @@ function AuditTab({ labelOf }) {
                   {d.removed?.length > 0 && <div className="text-red-700">شال: {keys(d.removed)}</div>}
                   {d.allow?.length > 0 && <div className="text-green-700">زيادة: {keys(d.allow)}</div>}
                   {d.deny?.length > 0 && <div className="text-red-700">مسحوبة: {keys(d.deny)}</div>}
+                  {d.sessionHours && (
+                    <div>مدة الجلسة: {d.sessionHours.from ?? 'الافتراضي'} ← {d.sessionHours.to ?? 'الافتراضي'} ساعة</div>
+                  )}
                 </td>
               </tr>
             );
@@ -457,6 +495,7 @@ export default function Permissions() {
       <p className="max-w-3xl text-sm text-gray-600">
         كل موظف عليه قالب (دور) بيحدد يشوف إيه ويعمل إيه في الداشبورد. تقدر تزوّد أو تسحب صلاحية لموظف معيّن من غير ما تغيّر القالب.
         الصلاحيات اللي عليها علامة <span className="text-red-700">حساس</span> فيها بيانات شخصية أو فلوس أو حذف. التغيير بيشتغل على طول، وبيتسجّل في سجل التغييرات.
+        مدة الجلسة: بعدها الحساب بيتعمله تسجيل خروج تلقائي. لو سبتها فاضية بياخد مدة القالب، والقالب لو فاضي بياخد {DEFAULT_SESSION_HOURS} ساعات (السوبر أدمن {SUPERADMIN_SESSION_HOURS} ساعة).
       </p>
 
       {error && <p className="rounded-md bg-red-50 p-3 text-red-700">{error}</p>}

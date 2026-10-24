@@ -73,7 +73,11 @@ export const MENU = [
   ]},
   { icon: CreditCard, text: "المدفوعات", href: "/payments", subItems: [
     { text: "سجل المدفوعات", href: "/payments", need: "orders.view" },
+    { text: "إشعارات Tap", href: "/payments/tap", need: "orders.view" },
     { text: "إشعارات تمارا", href: "/payments/tamara", need: "orders.view" },
+    { text: "إشعارات تابي", href: "/payments/tabby", need: "orders.view" },
+    { text: "إشعارات PayPal", href: "/payments/paypal", need: "orders.view" },
+    { text: "إشعارات PayTabs", href: "/payments/paytabs", need: "orders.view" },
   ]},
   { icon: Receipt, text: "الضرائب", href: "/tax", subItems: [
     { text: "نظرة عامة", href: "/tax", need: "tax.view" },
