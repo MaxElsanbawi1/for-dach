@@ -7,8 +7,13 @@ import { UploadCloud } from "lucide-react";
 import { mediaSrc } from "../../mediaSrc";
 
 export const EMPTY_SEO = {
+  // The course URL. Edit form only (seoFromCourse fills it); a new course
+  // gets its URL from its name, or from the other runs of the same course.
+  Slug: undefined,
   SeoTitle: "",
   MetaDescription: "",
+  SeoIntro: "",
+  ImageAlt: "",
   Faq: [], // [{ q, a }]
   OgImage: "", // saved image URL
   ogImageFile: null, // newly picked file, uploaded on save
@@ -33,6 +38,9 @@ export function parseFaq(raw) {
 export const seoFromCourse = (c = {}) => ({
   SeoTitle: c.SeoTitle || "",
   MetaDescription: c.MetaDescription || "",
+  Slug: c.Slug || "",
+  SeoIntro: c.SeoIntro || "",
+  ImageAlt: c.ImageAlt || "",
   Faq: parseFaq(c.Faq),
   OgImage: c.OgImage || "",
   ogImageFile: null,
@@ -43,6 +51,9 @@ export const seoFromCourse = (c = {}) => ({
 export function appendSeo(formData, seo, appendEncoded) {
   formData.append("SeoTitle", seo.SeoTitle.trim());
   formData.append("MetaDescription", seo.MetaDescription.trim());
+  if (typeof seo.Slug === "string") appendEncoded(formData, "Slug", seo.Slug.trim());
+  appendEncoded(formData, "SeoIntro", seo.SeoIntro.trim());
+  appendEncoded(formData, "ImageAlt", seo.ImageAlt.trim());
   const faq = seo.Faq.map((f) => ({ q: f.q.trim(), a: f.a.trim() })).filter((f) => f.q && f.a);
   appendEncoded(formData, "Faq", faq.length ? JSON.stringify(faq) : "");
   if (seo.ogImageFile) formData.append("ogImage", seo.ogImageFile);
@@ -58,6 +69,20 @@ const Counter = ({ value, min, max }) => {
     </span>
   );
 };
+
+/** First sentence and image alt made from the course name and mode, in
+ *  the shape the keyword plan uses ("دورة … في جدة"). */
+export function autoSeoFor(courseName = "", courseType = "OnSite") {
+  const name = String(courseName).trim().replace(/^دورة\s+/, "");
+  if (!name) return { SeoIntro: "", ImageAlt: "" };
+  return {
+    SeoIntro:
+      courseType === "Online"
+        ? `يقدّم معهد ACIT للتدريب دورة ${name} أونلاين مباشر مع المدرب.`
+        : `يقدّم معهد ACIT للتدريب في جدة دورة ${name} حضورياً في مقر المعهد.`,
+    ImageAlt: `دورة ${name} في جدة - معهد ACIT`,
+  };
+}
 
 export default function CourseSeoFields({ value, onChange }) {
   const set = (key) => (e) => onChange({ ...value, [key]: e.target.value });
@@ -94,7 +119,7 @@ export default function CourseSeoFields({ value, onChange }) {
           className={input}
           value={value.SeoTitle}
           onChange={set("SeoTitle")}
-          placeholder="مثال: دورة CCNA 200-301 المعتمدة في جدة | أكاديمية ACIT"
+          placeholder="مثال: دورة CCNA 200-301 المعتمدة في جدة | معهد ACIT"
         />
       </div>
 
@@ -109,6 +134,53 @@ export default function CourseSeoFields({ value, onChange }) {
           value={value.MetaDescription}
           onChange={set("MetaDescription")}
           placeholder="جملتان تلخصان الدورة: لمن هي، مدتها، الشهادة التي تؤهل لها، وطريقة الحضور."
+        />
+      </div>
+
+      {typeof value.Slug === "string" && (
+      <div className="mb-4">
+        <label className="mb-1 block font-medium">الرابط (Slug)</label>
+        <div className="flex items-stretch" dir="ltr">
+          <span className="flex items-center rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-2 text-sm text-gray-500">
+            acit.edu.sa/courses/
+          </span>
+          <input
+            className={`${input} rounded-l-none`}
+            value={value.Slug}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                // Same shape the API stores: lowercase words joined by "-".
+                Slug: e.target.value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+/, ""),
+              })
+            }
+            placeholder="ccna-200-301"
+          />
+        </div>
+        <p className="mt-1 text-xs text-gray-500">
+          اتركه فاضي ليتعمل من اسم الدورة. لو غيّرته، الرابط القديم بيتحوّل للجديد لوحده (الإعدادات ← تحويل الروابط)، وبيتطبّق على كل مواعيد الدورة.
+        </p>
+      </div>
+      )}
+
+      <div className="mb-4">
+        <label className="mb-1 block font-medium">أول جملة في الصفحة</label>
+        <textarea
+          className={input}
+          rows={2}
+          value={value.SeoIntro}
+          onChange={set("SeoIntro")}
+          placeholder="جملة فيها الكلمة الرئيسية، تظهر تحت العنوان مباشرة."
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1 block font-medium">وصف صورة الدورة (Alt)</label>
+        <input
+          className={input}
+          value={value.ImageAlt}
+          onChange={set("ImageAlt")}
+          placeholder="مثال: دورة CCNA في جدة - معهد ACIT"
         />
       </div>
 

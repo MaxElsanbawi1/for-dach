@@ -137,7 +137,7 @@ export default function BundleDiscounts() {
     <div dir="rtl" className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
       <ToastContainer position="top-center" rtl />
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">خصم الدورات المتعددة</h1>
+        <h1 className="text-2xl font-bold text-gray-800">خصم الموقع</h1>
         <p className="text-gray-600 mt-1">
           كلما أضاف الطالب دورة أخرى للسلة زاد الخصم. ولا يُجمع الخصم مع الكوبون: يأخذ الطالب الأوفر له منهما.
         </p>

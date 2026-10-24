@@ -13,6 +13,7 @@ import NotFound from './notFound';
 // used to be one 2.7MB bundle downloaded before anything showed).
 const Permissions = lazy(() => import('./pages/users/Permissions'));
 const ActivityLog = lazy(() => import('./pages/activity/ActivityLog'));
+const OnlineNow = lazy(() => import('./pages/activity/OnlineNow'));
 import Login from './login';
 import Unauthorized from './unauthorized';
 const Registrations = lazy(() => import('./pages/registrations/registrations'));
@@ -35,6 +36,7 @@ const UsersDashboards = lazy(() => import('./pages/users/users'));
 const AddUsers = lazy(() => import('./pages/students/addStudents'));
 const AddStudents = lazy(() => import('./pages/students/addStudents'));
 const AddCategories = lazy(() => import('./pages/courses/categories/addCategories'));
+const CategorySeo = lazy(() => import('./pages/courses/categories/CategorySeo'));
 const AddCourses = lazy(() => import('./pages/courses/addCourses'));
 const EditCourse = lazy(() => import('./pages/courses/editCourse'));
 const CourseDetails = lazy(() => import('./pages/courses/detailsCourses'));
@@ -76,6 +78,7 @@ const Articles = lazy(() => import('./pages/articles/Articles'));
 const ArticleCategories = lazy(() => import('./pages/articles/ArticleCategories'));
 const DatabaseBackup = lazy(() => import('./pages/settings/DatabaseBackup'));
 const WhatsappSettings = lazy(() => import('./pages/settings/WhatsappSettings'));
+const Redirects = lazy(() => import('./pages/settings/Redirects'));
 const TrainerChats = lazy(() => import('./pages/settings/TrainerChats'));
 const CourseRatings = lazy(() => import('./pages/courses/courseRatings'));
 
@@ -114,6 +117,7 @@ export default function App() {
 
               <Route path="/courses/categories" element={<AllCategories />} />
               <Route path="/courses/categories/add" element={<AddCategories />} />
+              <Route path="/courses/categories/seo" element={<CategorySeo />} />
               <Route path="/courses/categories/:categoryId/details" element={<DetailsCategories />} />
               <Route path="CoursesPartner" element={<CoursesPartner />} />
               
@@ -148,6 +152,7 @@ export default function App() {
               <Route path="/articles/categories" element={<ArticleCategories />} />
               <Route path="/settings/database-backup" element={<DatabaseBackup />} />
               <Route path="/settings/whatsapp" element={<WhatsappSettings />} />
+              <Route path="/settings/redirects" element={<Redirects />} />
               <Route path="/trainer-chats" element={<TrainerChats />} />
 
               <Route path="/students" element={<Dashboard />} />
@@ -166,6 +171,7 @@ export default function App() {
               <Route path="/users/add" element={<AddUsers />} />
               <Route path="/users/permissions" element={<Permissions />} />
               <Route path="/activity" element={<ActivityLog />} />
+              <Route path="/online" element={<OnlineNow />} />
               <Route path="allcorcrsestrainer" element={<Trainer1 />} />
 
               <Route path="/ProfilePage" element={<ProfilePage />} />

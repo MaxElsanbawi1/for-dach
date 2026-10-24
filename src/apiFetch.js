@@ -56,6 +56,8 @@ window.fetch = (input, init = {}) => {
   if (!headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
   }
+  // The page open now, for "المتصلون الآن" (acit-back/services/activityLog.js).
+  headers.set("X-Dash-Page", window.location.pathname);
 
   return originalFetch(input, { ...init, headers }).then((res) => {
     if (res.status === 403) forbiddenAt = Date.now();

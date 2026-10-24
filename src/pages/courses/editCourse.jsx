@@ -702,7 +702,7 @@ const EditCourses = () => {
                 className="h-4 w-4 text-secondary focus:ring-secondary border-gray-300 rounded"
               />
               <label htmlFor="isPartnerCourse" className="mr-2 block text-sm font-medium text-primary">
-                هل هذه دورة شريك؟
+                هل هذه دورة خاصه؟
               </label>
             </div>
           </div>

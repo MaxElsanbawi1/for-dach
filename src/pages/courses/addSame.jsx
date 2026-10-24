@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserPlus, ArrowRight, UploadCloud } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { appendEncoded } from '../../encodeField';
-import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo } from './CourseSeoFields';
+import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo, autoSeoFor } from './CourseSeoFields';
 
 const AddSameCourses = () => {
   const navigate = useNavigate();
@@ -32,6 +32,23 @@ const AddSameCourses = () => {
   // The API copies the chosen course's SEO to the new date on its own; it is
   // only sent when edited here, so an untouched form never clears it.
   const [seoTouched, setSeoTouched] = useState(false);
+
+  // An empty first sentence / alt fills itself from the course name and
+  // mode, and keeps following them while it is left as filled.
+  const lastAuto = useRef({ SeoIntro: '', ImageAlt: '' });
+  useEffect(() => {
+    const next = autoSeoFor(courseName, courseType);
+    const prev = lastAuto.current;
+    lastAuto.current = next;
+    setSeo((s) => {
+      const patch = {};
+      for (const k of Object.keys(next)) {
+        const current = s[k] || '';
+        if ((!current || current === prev[k]) && current !== next[k]) patch[k] = next[k];
+      }
+      return Object.keys(patch).length ? { ...s, ...patch } : s;
+    });
+  }, [courseName, courseType, seo.SeoIntro, seo.ImageAlt]);
 
   // State for categories and trainers
   const [categories, setCategories] = useState([]);
@@ -129,7 +146,8 @@ const AddSameCourses = () => {
     const partner = String(course.CoursePartner ?? '').trim();
     setIsPartnerCourse(partner !== '');
     setCoursePartner(partner);
-    setSeo(seoFromCourse(course));
+    // A new run shares the course's URL (the API copies it), so no slug field here.
+    setSeo({ ...seoFromCourse(course), Slug: undefined });
     setSeoTouched(false);
     
     // Clear lessons time inputs as they require manual re-entry
@@ -154,7 +172,11 @@ const AddSameCourses = () => {
     formData.append("CourseDays", courseDays);
     formData.append('InstructorID', instructorID);
     formData.append('CoursePartner', isPartnerCourse ? CoursePartner.trim() : '');
+    // First sentence / alt always go (they fill themselves from the name).
+    // Sent once only: a field sent twice reaches the API as an array, and
+    // decodeEncodedFields drops it.
     if (seoTouched) appendSeo(formData, seo, appendEncoded);
+    else for (const key of ['SeoIntro', 'ImageAlt']) appendEncoded(formData, key, (seo[key] || '').trim());
     if (courseImage) {
       formData.append('CourseImage', courseImage);
     }
@@ -434,7 +456,7 @@ const AddSameCourses = () => {
               className="h-4 w-4 text-secondary focus:ring-secondary border-gray-300 rounded"
             />
             <label htmlFor="isPartnerCourse" className="mr-2 block text-sm font-medium text-primary">
-              هل هذه دورة شريك؟
+              هل هذه دورة خاصه؟
             </label>
           </div>
         </div>
@@ -456,15 +478,14 @@ const AddSameCourses = () => {
           </div>
         )}
 
-        <div className="mb-4">
-          <CourseSeoFields
-            value={seo}
-            onChange={(next) => {
-              setSeo(next);
-              setSeoTouched(true);
-            }}
-          />
-        </div>
+        {/* Starts from the chosen course's SEO; only sent if edited here. */}
+        <CourseSeoFields
+          value={seo}
+          onChange={(next) => {
+            setSeo(next);
+            setSeoTouched(true);
+          }}
+        />
 
 {/* Submit Button */}
         <button

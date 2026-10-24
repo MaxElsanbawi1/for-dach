@@ -1,32 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { API } from '../tax/taxApi';
 import { UserPlus, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// One form, two pages: /students/add always adds a student; /users/add
+// (المستخدمين ← إضافة مستخدم) lets the account pick the role.
 const AddStudents = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const usersPage = pathname.startsWith('/users');
   const { user, can, access } = useAuth();
+  const noun = usersPage ? 'المستخدم' : 'الطالب';
 
-  // State for form fields
-  const [nationalId, setNationalId] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [location, setLocation] = useState('');
   const [role, setRole] = useState('student');
-  const [companyName ,setCompanyName] = useState('');
-  const [error, setError] = useState('');
+  const [companyName, setCompanyName] = useState('');
   // Roles come from the permission templates (the super admin's screen), so a
   // new template shows up here without a code change. Without users.add
-  // this page adds students only, which is also all the API accepts.
+  // only students can be added, which is also all the API accepts.
   const [roleOptions, setRoleOptions] = useState([{ value: 'student', label: 'طالب' }]);
   useEffect(() => {
-    if (!can('users.add')) return;
+    if (!usersPage || !can('users.add')) return;
     fetch(`${API}/permissions/roles`)
       .then((r) => (r.ok ? r.json() : []))
       .then((roles) => {
@@ -37,7 +33,17 @@ const AddStudents = () => {
         ]);
       })
       .catch(() => {});
-  }, [can, access]);
+  }, [usersPage, can, access]);
+
+  // State for form fields
+  const [nationalId, setNationalId] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [location, setLocation] = useState('');
+  const [error, setError] = useState('');
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -57,8 +63,8 @@ const AddStudents = () => {
       Email: email,
       PhoneNumber: phoneNumber,
       Location: location,
-      Role: role,
-      companyName:companyName,
+      Role: usersPage ? role : 'student',
+      ...(usersPage && role === 'partner' ? { companyName } : {}),
     });
 
     const requestOptions = {
@@ -74,7 +80,7 @@ const AddStudents = () => {
 
       if (response.ok) {
         console.log('New User Added:', result);
-        toast.success('تمت إضافة المستخدم بنجاح!');
+        toast.success(`تمت إضافة ${noun} بنجاح!`);
         // Clear all form inputs
         setNationalId('');
         setUsername('');
@@ -87,13 +93,13 @@ const AddStudents = () => {
         setCompanyName('');
         setError('');
       } else {
-        setError(result.message || 'فشل في إضافة المستخدم');
-        toast.error(result.message || 'فشل في إضافة المستخدم');
+        setError(result.message || `فشل في إضافة ${noun}`);
+        toast.error(result.message || `فشل في إضافة ${noun}`);
       }
     } catch (error) {
       console.error('Error:', error);
-      setError('حدث خطأ أثناء إضافة المستخدم');
-      toast.error('حدث خطأ أثناء إضافة المستخدم');
+      setError(`حدث خطأ أثناء إضافة ${noun}`);
+      toast.error(`حدث خطأ أثناء إضافة ${noun}`);
     }
   };
   return (
@@ -114,17 +120,17 @@ const AddStudents = () => {
 
         {/* Back Button */}
         <button
-          onClick={() => navigate('/students')}
+          onClick={() => navigate(usersPage ? '/users' : '/students')}
           className="flex items-center text-primary hover:text-secondary mb-6"
         >
           <ArrowRight size={20} className="ml-2" />
-          العودة إلى قائمة الطلاب
+          {usersPage ? 'العودة إلى قائمة المستخدمين' : 'العودة إلى قائمة الطلاب'}
         </button>
 
         {/* Page Title */}
         <h2 className="text-2xl font-bold mb-6 text-primary flex items-center">
           <UserPlus size={24} className="ml-2" />
-          إضافة مستخدم جديد
+          {usersPage ? 'إضافة مستخدم جديد' : 'إضافة طالب جديد'}
         </h2>
 
         {/* Error Message */}
@@ -244,35 +250,36 @@ const AddStudents = () => {
             />
           </div>
 
-
-          {/* Role Field */}
-          <div className="mb-4">
-            <label htmlFor="role" className="block text-sm font-medium text-primary mb-1">
-              الدور
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-              required
-            >
-              {roleOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Role: only on the users page; the students page always adds a student. */}
+          {usersPage && (
+            <div className="mb-4">
+              <label htmlFor="role" className="block text-sm font-medium text-primary mb-1">
+                الدور
+              </label>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                required
+              >
+                {roleOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Company Name Field - Only show when role is partner */}
-          {role === 'partner' && (
+          {usersPage && role === 'partner' && (
             <div className="mb-4">
               <label htmlFor="companyName" className="block text-sm font-medium text-primary mb-1">
                 اسم الشركة
               </label>
               <input
-              name='companyName'
+                name="companyName"
                 type="text"
                 id="companyName"
                 value={companyName}
@@ -283,12 +290,13 @@ const AddStudents = () => {
               />
             </div>
           )}
+
           {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-secondary text-white py-2 px-4 rounded-md hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            إضافة مستخدم
+            {usersPage ? 'إضافة مستخدم' : 'إضافة طالب'}
           </button>
         </form>
       </div>

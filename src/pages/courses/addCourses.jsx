@@ -17,7 +17,9 @@ const AddCourses = () => {
   // State for form fields
   const [courseName, setCourseName] = useState('');
   const [description, setDescription] = useState('');
-  const [seo, setSeo] = useState(EMPTY_SEO);
+  // A new course may set its own URL (Slug: "" shows the field; empty = from the name).
+  const NEW_COURSE_SEO = { ...EMPTY_SEO, Slug: "" };
+  const [seo, setSeo] = useState(NEW_COURSE_SEO);
   const [courseImage, setCourseImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [price, setPrice] = useState('');
@@ -172,7 +174,7 @@ const AddCourses = () => {
 
   // Reset form fields
   const resetForm = () => {
-    setSeo(EMPTY_SEO);
+    setSeo(NEW_COURSE_SEO);
     setCourseName('');
     setDescription('');
     setCourseImage(null);
@@ -654,7 +656,7 @@ const AddCourses = () => {
                 className="h-4 w-4 text-secondary focus:ring-secondary border-gray-300 rounded"
               />
               <label htmlFor="isPartnerCourse" className="mr-2 block text-sm font-medium text-primary">
-                هل هذه دورة شريك؟
+                هل هذه دورة خاصه؟
               </label>
             </div>
           </div>

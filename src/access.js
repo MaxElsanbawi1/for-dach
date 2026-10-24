@@ -9,7 +9,7 @@
 //   undefined    - any signed-in account
 import {
   Home, FileText, Package, Contact, Users, MessageSquare, UserPlus, CreditCard,
-  Receipt, Settings, Percent, Shield, History,
+  Receipt, Settings, Percent, Shield, History, Radio,
 } from "lucide-react";
 
 export const MENU = [
@@ -31,6 +31,7 @@ export const MENU = [
     { text: "أضافة دورة جديدة", href: "/courses/add", need: "courses.add" },
     { text: "أقسام الدورات", href: "/courses/categories", need: ["categories.add", "categories.edit", "categories.delete"] },
     { text: "أضافة قسم جديد", href: "/courses/categories/add", need: "categories.add" },
+    { text: "SEO الأقسام", href: "/courses/categories/seo", need: "categories.edit" },
   ]},
   { icon: Contact, text: "الطلاب", href: "/students", subItems: [
     { text: "كل الطلاب", href: "/students/all", need: "students.view" },
@@ -57,21 +58,24 @@ export const MENU = [
     { text: "التصنيفات", href: "/articles/categories", need: "articles.categories" },
   ]},
   { icon: Package, text: "العروض", href: "/OffersImageUpload", need: ["offers.add", "offers.edit", "offers.delete"] },
-  { icon: Percent, text: "خصم الدورات المتعددة", href: "/discounts", need: "settings.edit" },
-  { icon: Contact, text: "الدورات الاكثر طلباّ و الدورات المدعومه من هدف", subItems: [
+  { icon: Percent, text: "خصم الموقع", href: "/discounts", need: "settings.edit" },
+  { icon: Contact, text: "قصم الاكثر طلبا و هدف ", subItems: [
     { text: "  الدورات المدعومه من هدف", href: "/OurPartnersImageUpload", need: ["clients.add", "clients.edit", "clients.delete"] },
     { text: "  الدورات الاكثر طلباّ", href: "/ClientImageUpload", need: ["clients.add", "clients.edit", "clients.delete"] },
   ]},
   { icon: Users, text: "المستخدمين", href: "/users", subItems: [
     { text: "كل المستخدمين", href: "/users", need: "users.view" },
     { text: "إضافة مستخدم", href: "/users/add", need: "users.add" },
+    { icon: Shield, text: "الصلاحيات", href: "/users/permissions", need: "superadmin"},
+    { icon: History, text: "السجل", href: "/activity", need: "logs.view" },
+    { icon: Radio, text: "المتصلون الآن", href: "/online", need: "superadmin" },
+    { text: "إضافة مستخدم", href: "/users/add", need: "users.add" },
   ]},
-  { icon: Shield, text: "الصلاحيات", href: "/users/permissions", need: "superadmin" },
-  { icon: History, text: "السجل", href: "/activity", need: "logs.view" },
-  { icon: MessageSquare, text: "رسائل تواصل معنا", href: "/complaints", need: ["complaints.view", "complaints.status"] },
+
   { icon: UserPlus, text: "العملاء المحتملون", href: "/onboarding", subItems: [
     { text: "الردود والزوّار", href: "/onboarding", need: ["onboarding.view", "onboarding.edit", "onboarding.delete"] },
     { text: "أسئلة التعريف", href: "/onboarding/questions", need: "onboarding.questions" },
+    { text: "رسائل تواصل معنا", href: "/complaints", need: ["complaints.view", "complaints.status"]},
   ]},
   { icon: CreditCard, text: "المدفوعات", href: "/payments", subItems: [
     { text: "سجل المدفوعات", href: "/payments", need: "orders.view" },
@@ -91,6 +95,7 @@ export const MENU = [
   ]},
   { icon: Settings, text: "الإعدادات", subItems: [
     { text: "ملفي الشخصي", href: "/ProfilePage" },
+    { text: "تحويل الروابط", href: "/settings/redirects", need: ["courses.edit", "categories.edit", "settings.edit"] },
     { text: "نسخة احتياطية لقاعدة البيانات", href: "/settings/database-backup", need: "superadmin" },
     { text: "تنبيهات المحاضرات (تليجرام)", href: "/settings/whatsapp", need: "superadmin" },
     { text: "محادثات المدربين", href: "/trainer-chats", need: "superadmin", badge: "trainerChats" },
