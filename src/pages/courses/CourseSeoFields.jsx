@@ -12,6 +12,7 @@ export const EMPTY_SEO = {
   Slug: undefined,
   SeoTitle: "",
   MetaDescription: "",
+  SeoH1: "",
   SeoIntro: "",
   ImageAlt: "",
   Faq: [], // [{ q, a }]
@@ -39,6 +40,7 @@ export const seoFromCourse = (c = {}) => ({
   SeoTitle: c.SeoTitle || "",
   MetaDescription: c.MetaDescription || "",
   Slug: c.Slug || "",
+  SeoH1: c.SeoH1 || "",
   SeoIntro: c.SeoIntro || "",
   ImageAlt: c.ImageAlt || "",
   Faq: parseFaq(c.Faq),
@@ -52,6 +54,7 @@ export function appendSeo(formData, seo, appendEncoded) {
   formData.append("SeoTitle", seo.SeoTitle.trim());
   formData.append("MetaDescription", seo.MetaDescription.trim());
   if (typeof seo.Slug === "string") appendEncoded(formData, "Slug", seo.Slug.trim());
+  appendEncoded(formData, "SeoH1", seo.SeoH1.trim());
   appendEncoded(formData, "SeoIntro", seo.SeoIntro.trim());
   appendEncoded(formData, "ImageAlt", seo.ImageAlt.trim());
   const faq = seo.Faq.map((f) => ({ q: f.q.trim(), a: f.a.trim() })).filter((f) => f.q && f.a);
@@ -82,6 +85,21 @@ export function autoSeoFor(courseName = "", courseType = "OnSite") {
         : `يقدّم معهد ACIT للتدريب في جدة دورة ${name} حضورياً في مقر المعهد.`,
     ImageAlt: `دورة ${name} في جدة - معهد ACIT`,
   };
+}
+
+/** A course URL segment from text. Same rules as courseSlug in
+ *  acit-front/src/utils/urls.js and acit-back/services/redirects.js. */
+export function courseSlug(text = "") {
+  return String(text)
+    .normalize("NFC")
+    .replace(/[\p{M}ـ]/gu, "")
+    .toLowerCase()
+    .replace(/\+/g, " plus ")
+    .replace(/#/g, " sharp ")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 200)
+    .replace(/-+$/, "");
 }
 
 export default function CourseSeoFields({ value, onChange }) {
@@ -162,6 +180,16 @@ export default function CourseSeoFields({ value, onChange }) {
         </p>
       </div>
       )}
+
+      <div className="mb-4">
+        <label className="mb-1 block font-medium">العنوان الظاهر في الصفحة (H1)</label>
+        <input
+          className={input}
+          value={value.SeoH1}
+          onChange={set("SeoH1")}
+          placeholder="اتركه فاضي ليظهر اسم الدورة. مثال: دورة CCNA في جدة"
+        />
+      </div>
 
       <div className="mb-4">
         <label className="mb-1 block font-medium">أول جملة في الصفحة</label>

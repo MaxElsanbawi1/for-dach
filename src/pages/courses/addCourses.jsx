@@ -7,7 +7,7 @@ import { useAuth } from '../../AuthContext';
 import RichTextEditor from '../../components/RichTextEditor';
 import CourseTaxFields from '../tax/CourseTaxFields';
 import { appendEncoded } from '../../encodeField';
-import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo } from './CourseSeoFields';
+import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo, courseSlug } from './CourseSeoFields';
 
 const API = "https://back.acit-net.com/api";
 
@@ -230,7 +230,18 @@ const AddCourses = () => {
     // Append other form data
     formData.append("CourseName", courseName);
     appendEncoded(formData, "Description", description);
-    appendSeo(formData, seo, appendEncoded);
+    // A new course takes its URL from the H1 when no URL is typed. Not when
+    // the name already exists: the API gives the slug to every course of that
+    // name, which would move the old course's URL.
+    let slug = seo.Slug.trim();
+    if (!slug && seo.SeoH1.trim()) {
+      const nameTaken = await fetch(`${API}/courses`)
+        .then((r) => r.json())
+        .then((list) => list.some((c) => c.CourseName === courseName))
+        .catch(() => true);
+      if (!nameTaken) slug = courseSlug(seo.SeoH1);
+    }
+    appendSeo(formData, { ...seo, Slug: slug }, appendEncoded);
     formData.append("Price", price);
     formData.append("TaxCategory", taxCategory);
     formData.append("PriceIncludesVat", priceIncludesVat ? "true" : "false");

@@ -10,6 +10,7 @@ import CourseTaxFields from '../tax/CourseTaxFields';
 import { mediaSrc } from '../../mediaSrc';
 import { appendEncoded } from '../../encodeField';
 import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo } from './CourseSeoFields';
+import { parseLessonsTime } from './lessonsTime';
 const API = "https://back.acit-net.com/api";
 
 const EditCourses = () => {
@@ -97,20 +98,10 @@ const EditCourses = () => {
 
         // Parse lessons time if exists
         if (courseData.LessonsTime) {
-          // Try different time formats
-          let timeMatch = courseData.LessonsTime.match(/من (\d{1,2}:\d{2}) حتى (\d{1,2}:\d{2})/);
-          if (!timeMatch) {
-            // Try alternative format
-            timeMatch = courseData.LessonsTime.match(/(\d{1,2}:\d{2}) - (\d{1,2}:\d{2})/);
-          }
-          if (!timeMatch) {
-            // Try simple time range
-            timeMatch = courseData.LessonsTime.match(/(\d{1,2}:\d{2}).*?(\d{1,2}:\d{2})/);
-          }
-          
-          if (timeMatch) {
-            setLessonsStartTime(timeMatch[1]);
-            setLessonsEndTime(timeMatch[2]);
+          const times = parseLessonsTime(courseData.LessonsTime);
+          if (times) {
+            setLessonsStartTime(times[0]);
+            setLessonsEndTime(times[1]);
           }
         }
 
