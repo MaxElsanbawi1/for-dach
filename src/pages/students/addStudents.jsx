@@ -75,7 +75,7 @@ const AddStudents = () => {
     };
 
     try {
-      const response = await fetch("https://back.acit-net.com/api/users", requestOptions);
+      const response = await fetch("http://localhost:3000/api/users", requestOptions);
       const result = await response.json();
 
       if (response.ok) {

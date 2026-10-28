@@ -103,7 +103,7 @@ const CourseDetails = () => {
 
         // Fetch course details
         const courseResponse = await fetch(
-          ` https://back.acit-net.com/api/courses/${courseId}`,
+          ` http://localhost:3000/api/courses/${courseId}`,
           {
             method: "GET",
             redirect: "follow",
@@ -119,7 +119,7 @@ const CourseDetails = () => {
 
         // Fetch registrations - this won't throw an error if response is not OK
         const registrationsResponse = await fetch(
-          ` https://back.acit-net.com/api/registrations/course/${courseId}`,
+          ` http://localhost:3000/api/registrations/course/${courseId}`,
           {
             method: "GET",
             redirect: "follow",
@@ -172,7 +172,7 @@ const CourseDetails = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
+        const response = await fetch("http://localhost:3000/api/courses/trainers", {
           method: "GET",
           redirect: "follow",
         });
@@ -195,7 +195,7 @@ const CourseDetails = () => {
   //   const fetchCoursePdfs = async () => {
   //     try {
   //       setPdfsLoading(true);
-  //       const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, {
+  //       const response = await fetch(` http://localhost:3000/api/courses/${courseId}/pdfs`, {
   //         method: "GET",
   //       });
   //       if (response.ok) {
@@ -218,7 +218,7 @@ const CourseDetails = () => {
   //   const fetchCourseFiles = async () => {
   //     try {
   //       setFilesLoading(true);
-  //       const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, {
+  //       const response = await fetch(` http://localhost:3000/api/courses/${courseId}/pdfs`, {
   //         method: "GET",
   //         redirect: "follow"
   //       });
@@ -281,7 +281,7 @@ const CourseDetails = () => {
 
       // API call
       const response = await fetch(
-        ` https://back.acit-net.com/api/registrations/${registrationId}`,
+        ` http://localhost:3000/api/registrations/${registrationId}`,
         {
           method: "PUT",
           headers: {
@@ -541,7 +541,7 @@ const CourseDetails = () => {
         redirect: "follow",
       };
       const response = await fetch(
-        " https://back.acit-net.com/api/registrations",
+        " http://localhost:3000/api/registrations",
         requestOptions
       );
       if (!response.ok) throw new Error("فشل التسجيل. حاول مرة أخرى.");
@@ -571,7 +571,7 @@ const CourseDetails = () => {
       // Refresh registrations
       // Re-fetch course details (only registrations part)
       const registrationsResponse = await fetch(
-        ` https://back.acit-net.com/api/registrations/course/${courseId}`,
+        ` http://localhost:3000/api/registrations/course/${courseId}`,
         { method: "GET", redirect: "follow" }
       );
       let registrationsResult = [];
@@ -624,7 +624,7 @@ const CourseDetails = () => {
   //       const filename = idx === 0 ? "postman-cloud:///1f05320b-5981-4ff0-9308-421f384716d4" : file.name;
   //       formdata.append("pdfFile", file, filename);
   //     });
-  //     const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, {
+  //     const response = await fetch(` http://localhost:3000/api/courses/${courseId}/pdfs`, {
   //       method: "POST",
   //       body: formdata,
   //       redirect: "follow"
@@ -634,7 +634,7 @@ const CourseDetails = () => {
   //     setPdfFiles([null]);
   //     e.target.reset();
   //     // Refresh list
-  //     const refresh = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, { method: "GET" });
+  //     const refresh = await fetch(` http://localhost:3000/api/courses/${courseId}/pdfs`, { method: "GET" });
   //     if (refresh.ok) {
   //       const result = await refresh.json();
   //       setCoursePdfs(Array.isArray(result) ? result : [result]);
@@ -661,7 +661,7 @@ const CourseDetails = () => {
   // };
 
   const refreshCourseDetails = async () => {
-    const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
+    const response = await fetch(` http://localhost:3000/api/courses/${courseId}`, {
       method: "GET",
       headers: getAuthHeaders(),
       redirect: "follow",
@@ -698,7 +698,7 @@ const CourseDetails = () => {
         }, []))
       );
 
-      const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
+      const response = await fetch(` http://localhost:3000/api/courses/${courseId}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: formData,
@@ -772,7 +772,7 @@ const CourseDetails = () => {
 
   const getCoursePdfDownloadUrl = (pdfItem) => {
     const fileName = getCoursePdfUrl(pdfItem).split('/').pop();
-    return ` https://back.acit-net.com/api/courses/pdf/download/${encodeURIComponent(fileName)}`;
+    return ` http://localhost:3000/api/courses/pdf/download/${encodeURIComponent(fileName)}`;
   };
 
   const handleDownloadAllCoursePdfs = (pdfUrls) => {
@@ -817,11 +817,11 @@ const CourseDetails = () => {
   //       method: "DELETE",
   //       redirect: "follow"
   //     };
-  //     const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs/${encodeURIComponent(fileName)}`, requestOptions);
+  //     const response = await fetch(` http://localhost:3000/api/courses/${courseId}/pdfs/${encodeURIComponent(fileName)}`, requestOptions);
   //     if (!response.ok) throw new Error('فشل حذف الملف');
   //     toast.success('تم حذف الملف بنجاح');
   //     // Refresh list
-  //     const refresh = await fetch(` https://back.acit-net.com/api/courses/${courseId}/pdfs`, { method: "GET" });
+  //     const refresh = await fetch(` http://localhost:3000/api/courses/${courseId}/pdfs`, { method: "GET" });
   //     if (refresh.ok) {
   //       const result = await refresh.json();
   //       setCourseFiles(result.files || []);

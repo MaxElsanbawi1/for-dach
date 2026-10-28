@@ -9,7 +9,7 @@
 //   undefined    - any signed-in account
 import {
   Home, FileText, Package, Contact, Users, MessageSquare, UserPlus, CreditCard,
-  Receipt, Settings, Percent, Shield, History, Radio,
+  Receipt, Settings, Percent, Shield, History, Radio, GraduationCap,
 } from "lucide-react";
 
 export const MENU = [
@@ -42,6 +42,7 @@ export const MENU = [
     { text: "الطلاب المسجلون من الكورسات", href: "/students/course-students", need: "students.view" },
     { text: "مسجلين داخل الكورس", href: "/students/paid-course-students", need: ["orders.view", "students.view"] },
   ]},
+  { icon: GraduationCap, text: "طلبات المدربين", href: "/trainer-applications", need: ["trainerApplications.view", "trainerApplications.status", "trainerApplications.delete"] },
   { icon: FileText, text: "الاستشارات", href: "/consultations", subItems: [
     { text: "كل الاستشارات", href: "/consultations", need: "consultations.view" },
     { text: "استشارات شبكات", href: "/consultations/networks", need: "consultations.view" },

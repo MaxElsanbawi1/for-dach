@@ -63,6 +63,7 @@ const EditCoursesPartner = lazy(() => import('./pages/courses/editCoursesPartner
 const StudentInvoice = lazy(() => import('./pages/students/StudentInvoice'));
 const CourseAttendance = lazy(() => import('./pages/courses/CourseAttendance'));
 const Consultations = lazy(() => import('./pages/consultations/Consultations'));
+const TrainerApplications = lazy(() => import('./pages/trainerApplications/TrainerApplications'));
 const TaxOverview = lazy(() => import('./pages/tax/TaxOverview'));
 const GatewayNotifications = lazy(() => import('./pages/payments/GatewayNotifications'));
 const PaymentsLog = lazy(() => import('./pages/payments/PaymentsLog'));
@@ -140,6 +141,7 @@ export default function App() {
               <Route path="/tax/settings" element={<TaxSettings />} />
               <Route path="/discounts" element={<BundleDiscounts />} />
               <Route path="/consultations" element={<Consultations />} />
+              <Route path="/trainer-applications" element={<TrainerApplications />} />
               <Route path="/consultations/networks" element={<Consultations fixedType="networks" />} />
               <Route path="/consultations/other" element={<Consultations fixedType="other" />} />
               <Route path="/consultations/software" element={<Consultations fixedType="software" />} />

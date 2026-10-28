@@ -176,7 +176,7 @@ export default function CourseSeoFields({ value, onChange }) {
           />
         </div>
         <p className="mt-1 text-xs text-gray-500">
-          اتركه فاضي ليتعمل من اسم الدورة. لو غيّرته، الرابط القديم بيتحوّل للجديد لوحده (الإعدادات ← تحويل الروابط)، وبيتطبّق على كل مواعيد الدورة.
+          بيتعمل لوحده من العنوان (H1) وأنت بتكتبه، وتقدر تعدّله بإيدك. لو فضل فاضي بيتعمل من اسم الدورة. لو اتغيّر، الرابط القديم بيتحوّل للجديد لوحده (الإعدادات ← تحويل الروابط)، وبيتطبّق على كل مواعيد الدورة.
         </p>
       </div>
       )}
@@ -186,7 +186,14 @@ export default function CourseSeoFields({ value, onChange }) {
         <input
           className={input}
           value={value.SeoH1}
-          onChange={set("SeoH1")}
+          onChange={(e) => {
+            const h1 = e.target.value;
+            // The URL follows the H1 while it still matches it (or is empty);
+            // once someone types their own URL, the H1 leaves it alone.
+            const follows =
+              typeof value.Slug === "string" && (!value.Slug || value.Slug === courseSlug(value.SeoH1));
+            onChange({ ...value, SeoH1: h1, ...(follows && { Slug: courseSlug(h1) }) });
+          }}
           placeholder="اتركه فاضي ليظهر اسم الدورة. مثال: دورة CCNA في جدة"
         />
       </div>

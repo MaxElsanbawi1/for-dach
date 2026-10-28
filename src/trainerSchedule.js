@@ -133,6 +133,7 @@ export function lecturesBetween(data, fromDay, toDay) {
     if (day < first || day > last || !courseById[s.CourseID]) return;
     out.push({
       key: `live-${s.SessionID}`,
+      sessionId: s.SessionID,
       day,
       courseId: s.CourseID,
       course: courseById[s.CourseID],

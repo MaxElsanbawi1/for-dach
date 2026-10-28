@@ -50,7 +50,7 @@ const AddCategories = () => {
     };
   
     try {
-      const response = await fetch(" https://back.acit-net.com/api/categories", requestOptions);
+      const response = await fetch(" http://localhost:3000/api/categories", requestOptions);
       const result = await response.json();
   
       if (response.ok) {

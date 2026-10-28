@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import QuizEditModal from "./QuizEditModal";
 
-const API = " https://back.acit-net.com/api";
+const API = " http://localhost:3000/api";
 
 const initialForm = {
   Title: "",

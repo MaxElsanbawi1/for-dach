@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-const API = " https://back.acit-net.com/api";
+const API = " http://localhost:3000/api";
 const initial = {
   Title: "",
   Content: "",

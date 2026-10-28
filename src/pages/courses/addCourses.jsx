@@ -9,7 +9,7 @@ import CourseTaxFields from '../tax/CourseTaxFields';
 import { appendEncoded } from '../../encodeField';
 import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo, courseSlug } from './CourseSeoFields';
 
-const API = "https://back.acit-net.com/api";
+const API = "http://localhost:3000/api";
 
 const AddCourses = () => {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ const AddCourses = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(" https://back.acit-net.com/api/categories", {
+        const response = await fetch(" http://localhost:3000/api/categories", {
           method: "GET",
           redirect: "follow",
         });
@@ -85,7 +85,7 @@ const AddCourses = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
+        const response = await fetch("http://localhost:3000/api/courses/trainers", {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`
@@ -266,11 +266,14 @@ const AddCourses = () => {
     };
     
     try {
-      const response = await fetch(" https://back.acit-net.com/api/courses", requestOptions);
+      const response = await fetch(" http://localhost:3000/api/courses", requestOptions);
       const result = await response.json();
       
       if (response.ok) {
         toast.success('تمت إضافة الدورة بنجاح!');
+        // Saved, but the typed URL was already another course's (API skips it).
+        if (result.warning) toast.warning(result.warning, { autoClose: 9000 });
+        if (result.zoom) toast.info(result.zoom);
         resetForm();
       } else {
         setError(result.message || 'فشل في إضافة الدورة');

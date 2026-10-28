@@ -34,6 +34,25 @@ const courseState = (course, now) => {
 // Only http(s) links reach an href (see safeUrl in trainerSchedule.js).
 const withScheme = safeUrl;
 
+// A server-made Zoom lecture opens through /join, which hands staff the host
+// link, so the trainer starts the meeting as host. The plain href is the fallback.
+const openAsHost = async (event, session) => {
+  if (!session?.SessionID || String(session.Platform).toLowerCase() !== "zoom") return;
+  event.preventDefault();
+  const tab = window.open("", "_blank"); // inside the click, before the await, or it is blocked as a popup
+  try {
+    const res = await fetch(`${api}/live-sessions/${session.SessionID}/join`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    const url = withScheme(data.MeetingURL) || withScheme(session.MeetingURL);
+    if (tab && url) { tab.opener = null; tab.location.href = url; } else tab?.close();
+  } catch {
+    const url = withScheme(session.MeetingURL);
+    if (tab && url) tab.location.href = url; else tab?.close();
+  }
+};
+
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("ar-EG") : "—");
 const fmtDateTime = (d) =>
   new Date(d).toLocaleString("ar-EG", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
@@ -329,7 +348,7 @@ const CourseCard = ({ course, showTrainer, nextLecture, now, extra, studentsOpen
 
   // The coming week's lecture (online session or timetable day), else the next online session further out.
   const nextSession = nextLecture
-    ? { Title: nextLecture.title, ScheduledStart: nextLecture.start, Platform: nextLecture.platform, MeetingURL: nextLecture.meetingURL }
+    ? { SessionID: nextLecture.sessionId, Title: nextLecture.title, ScheduledStart: nextLecture.start, Platform: nextLecture.platform, MeetingURL: nextLecture.meetingURL }
     : extra?.sessions
       ?.filter((s) => new Date(s.ScheduledEnd).getTime() >= now)
       .sort((a, b) => new Date(a.ScheduledStart) - new Date(b.ScheduledStart))[0];
@@ -381,6 +400,7 @@ const CourseCard = ({ course, showTrainer, nextLecture, now, extra, studentsOpen
                 {withScheme(nextSession.MeetingURL) && (
                   <a
                     href={withScheme(nextSession.MeetingURL)}
+                    onClick={(e) => openAsHost(e, nextSession)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700"
@@ -537,7 +557,7 @@ const TodayLectures = ({ lectures, now, showTrainer, confirmations, canConfirm, 
                   </span>
                 )}
                 {withScheme(l.meetingURL) && (
-                  <a href={withScheme(l.meetingURL)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700">
+                  <a href={withScheme(l.meetingURL)} onClick={(e) => openAsHost(e, { SessionID: l.sessionId, Platform: l.platform, MeetingURL: l.meetingURL })} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700">
                     <ExternalLink size={14} /> دخول
                   </a>
                 )}

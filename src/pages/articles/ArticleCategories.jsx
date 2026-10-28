@@ -4,7 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { exportExcel } from "../../components/DateExport";
 
-const API = "https://back.acit-net.com/api";
+const API = "http://localhost:3000/api";
 const emptyCategory = { name: "", slug: "", description: "", sortOrder: 0, isActive: true };
 
 const EXPORT_COLUMNS = [

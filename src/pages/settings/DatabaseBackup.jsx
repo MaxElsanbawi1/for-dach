@@ -3,7 +3,7 @@ import { Database, Download } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const API = "https://back.acit-net.com/api";
+const API = "http://localhost:3000/api";
 
 export default function DatabaseBackup() {
   const [loading, setLoading] = useState(false);

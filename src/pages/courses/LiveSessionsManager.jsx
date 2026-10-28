@@ -7,9 +7,10 @@ export default function LiveSessionsManager({ courseId }) {
   const [form, setForm] = useState(initial);
   const [editing, setEditing] = useState(null);
   const [message, setMessage] = useState("");
+  const [syncing, setSyncing] = useState(false);
 
   const request = useCallback(async (path, options = {}) => {
-    const response = await fetch(` https://back.acit-net.com/api${path}`, {
+    const response = await fetch(` http://localhost:3000/api${path}`, {
       ...options,
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json", ...options.headers },
     });
@@ -38,13 +39,27 @@ export default function LiveSessionsManager({ courseId }) {
     setForm({ Title: session.Title, Description: session.Description || "", ScheduledStart: localDate(session.ScheduledStart), ScheduledEnd: localDate(session.ScheduledEnd), MeetingURL: session.MeetingURL || "", Platform: session.Platform || "zoom" });
   };
 
+  // One Zoom link for the course + a session per lecture day, from the course's dates and hours.
+  const syncZoom = async () => {
+    setSyncing(true);
+    try {
+      const result = await request(`/live-sessions/zoom/course/${courseId}`, { method: "POST" });
+      setMessage(result.message); load();
+    } catch (error) { setMessage(error.message); } finally { setSyncing(false); }
+  };
+
   const remove = async (id) => {
     if (!confirm("هل تريد حذف الجلسة المباشرة؟")) return;
     try { await request(`/live-sessions/${id}`, { method: "DELETE" }); load(); } catch (error) { setMessage(error.message); }
   };
 
   return <section dir="rtl" className="my-6 rounded-lg border bg-slate-50 p-4">
-    <h3 className="mb-4 text-xl font-bold text-primary">إدارة الجلسات المباشرة</h3>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h3 className="text-xl font-bold text-primary">إدارة الجلسات المباشرة</h3>
+      <button type="button" disabled={syncing} onClick={syncZoom} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-60" title="رابط Zoom واحد للدورة وجلسة لكل يوم محاضرة حسب مواعيد الدورة">
+        {syncing ? "جاري إنشاء روابط Zoom..." : "إنشاء روابط Zoom من مواعيد الدورة"}
+      </button>
+    </div>
     <form onSubmit={save} className="grid gap-3 md:grid-cols-2">
       <input required className="rounded border p-2" placeholder="عنوان الجلسة" value={form.Title} onChange={(e) => setForm({ ...form, Title: e.target.value })} />
       <input required className="rounded border p-2" placeholder="رابط الاجتماع" value={form.MeetingURL} onChange={(e) => setForm({ ...form, MeetingURL: e.target.value })} />

@@ -6,7 +6,7 @@ import RichTextEditor from "../../components/RichTextEditor";
 import { appendEncoded } from "../../encodeField";
 import { useDateRange, DateRangeBar, exportExcel, fetchAllPages } from "../../components/DateExport";
 
-const API = "https://back.acit-net.com/api";
+const API = "http://localhost:3000/api";
 const API_ORIGIN = API.replace(/\/api\/?$/, "");
 const EXPORT_COLUMNS = [
   { header: "رقم المقال", key: "id" },

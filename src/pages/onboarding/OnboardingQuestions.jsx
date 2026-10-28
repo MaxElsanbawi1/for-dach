@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 
-const API = 'https://back.acit-net.com/api';
+const API = 'http://localhost:3000/api';
 
 const TYPE_LABELS = {
   SINGLE: 'اختيار واحد',

@@ -5,7 +5,7 @@ import { useAuth } from '../../../AuthContext';
 import mediaSrc from '../../../mediaSrc';
 import { exportExcel } from '../../../components/DateExport';
 
-const API = 'https://back.acit-net.com/api';
+const API = 'http://localhost:3000/api';
 
 const EXPORT_COLUMNS = [
   { header: 'رقم الفئة', key: 'CategoryID' },
