@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
 
-const API = 'http://localhost:3000/api';
+const API = 'https://back.acit-net.com/api';
 const PAGE_SIZE = 25;
 
 // The order Status column, as it should read in the table.

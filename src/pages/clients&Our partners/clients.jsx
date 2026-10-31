@@ -23,7 +23,7 @@ export default function ClientsImageUpload() {
 
   const fetchPartners = async () => {
     try {
-      const response = await fetch(" http://localhost:3000/api/clients");
+      const response = await fetch(" https://back.acit-net.com/api/clients");
       if (response.ok) {
         const data = await response.json();
         setPartners(data);
@@ -65,7 +65,7 @@ export default function ClientsImageUpload() {
         formData.append("image", selectedFile);
       }
 
-      const response = await fetch(" http://localhost:3000/api/clients", {
+      const response = await fetch(" https://back.acit-net.com/api/clients", {
         method: "POST",
         body: formData,
       });
@@ -95,7 +95,7 @@ export default function ClientsImageUpload() {
   const handleDeletePartner = async (id) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الشريك؟')) {
       try {
-        const response = await fetch(` http://localhost:3000/api/clients/${id}`, {
+        const response = await fetch(` https://back.acit-net.com/api/clients/${id}`, {
           method: "DELETE",
         });
 

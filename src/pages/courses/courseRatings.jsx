@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDateRange, DateRangeBar, exportExcel } from "../../components/DateExport";
 
-const API = "http://localhost:3000/api";
+const API = "https://back.acit-net.com/api";
 
 const getAuthHeaders = (json = false) => {
   const token = localStorage.getItem("token");

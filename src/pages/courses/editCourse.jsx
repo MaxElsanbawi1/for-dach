@@ -11,7 +11,7 @@ import { mediaSrc } from '../../mediaSrc';
 import { appendEncoded } from '../../encodeField';
 import CourseSeoFields, { EMPTY_SEO, seoFromCourse, appendSeo } from './CourseSeoFields';
 import { parseLessonsTime } from './lessonsTime';
-const API = "http://localhost:3000/api";
+const API = "https://back.acit-net.com/api";
 
 const EditCourses = () => {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ const EditCourses = () => {
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const response = await fetch(` http://localhost:3000/api/courses/${courseId}`, {
+        const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
           method: "GET",
           headers: getAuthHeaders(),
           redirect: "follow",
@@ -120,7 +120,7 @@ const EditCourses = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(" http://localhost:3000/api/categories", {
+        const response = await fetch(" https://back.acit-net.com/api/categories", {
           method: "GET",
           headers: getAuthHeaders(),
           redirect: "follow",
@@ -145,7 +145,7 @@ const EditCourses = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/courses/trainers", {
+        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
           method: "GET",
           headers: getAuthHeaders(),
           redirect: "follow",
@@ -318,7 +318,7 @@ const EditCourses = () => {
     };
     
     try {
-      const response = await fetch(` http://localhost:3000/api/courses/${courseId}`, requestOptions);
+      const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, requestOptions);
       const result = await response.json();
       
       if (response.ok) {

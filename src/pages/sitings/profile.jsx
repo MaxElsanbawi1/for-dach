@@ -30,7 +30,7 @@ const ProfilePage = () => {
 
       try {
         const response = await fetch(
-          " http://localhost:3000/api/auth/profile",
+          " https://back.acit-net.com/api/auth/profile",
           requestOptions
         );
 

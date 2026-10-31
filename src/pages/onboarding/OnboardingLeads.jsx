@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, Search, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { useDateRange, DateRangeBar, exportExcel } from '../../components/DateExport';
 
-const API = 'http://localhost:3000/api';
+const API = 'https://back.acit-net.com/api';
 const PER_PAGE = 15;
 
 const STATUS_STYLES = {

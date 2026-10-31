@@ -42,7 +42,7 @@ const Login = () => {
     };
 
     try {
-      const response = await fetch(" http://localhost:3000/api/auth/login", requestOptions);
+      const response = await fetch(" https://back.acit-net.com/api/auth/login", requestOptions);
       const text = await response.text();
       let result;
       try {

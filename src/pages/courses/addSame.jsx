@@ -63,7 +63,7 @@ const AddSameCourses = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await fetch(" http://localhost:3000/api/categories");
+        const categoriesResponse = await fetch(" https://back.acit-net.com/api/categories");
         if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
         const categoriesData = await categoriesResponse.json();
         setCategories(categoriesData);
@@ -72,7 +72,7 @@ const AddSameCourses = () => {
         if (!token) return;
 
         // Fetch trainers
-        const trainersResponse = await fetch("http://localhost:3000/api/courses/trainers", {
+        const trainersResponse = await fetch("https://back.acit-net.com/api/courses/trainers", {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -92,7 +92,7 @@ const AddSameCourses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch(" http://localhost:3000/api/courses");
+        const response = await fetch(" https://back.acit-net.com/api/courses");
         if (response.ok) {
           const data = await response.json();
           setCourses(data);
@@ -183,7 +183,7 @@ const AddSameCourses = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(" http://localhost:3000/api/courses/by-name", {
+      const response = await fetch(" https://back.acit-net.com/api/courses/by-name", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`

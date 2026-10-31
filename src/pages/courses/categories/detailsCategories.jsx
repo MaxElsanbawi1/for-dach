@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import mediaSrc from '../../../mediaSrc';
 
-const API = 'http://localhost:3000/api';
+const API = 'https://back.acit-net.com/api';
 
 const DetailsCategories = () => {
   const navigate = useNavigate();

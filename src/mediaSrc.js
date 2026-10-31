@@ -2,7 +2,7 @@
 // upload time, so older rows still point at hosts this project has moved off
 // (localhost:3000, back.businessonuae.com, ...). Anything under /uploads/ is
 // re-pointed at the backend we talk to today.
-const API_ORIGIN = "http://localhost:3000";
+const API_ORIGIN = "https://back.acit-net.com";
 
 export function mediaSrc(value) {
   const src = String(value || "").trim();

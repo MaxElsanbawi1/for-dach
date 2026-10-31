@@ -29,7 +29,7 @@ const DetailsRegistrations = () => {
 
     try {
       const response = await fetch(
-        ` http://localhost:3000/api/registrations/${registrationId}`,
+        ` https://back.acit-net.com/api/registrations/${registrationId}`,
         requestOptions
       );
 
@@ -57,7 +57,7 @@ const DetailsRegistrations = () => {
     setCreateUserError('');
 
     try {
-      const createUserResponse = await fetch(' http://localhost:3000/api/users', {
+      const createUserResponse = await fetch(' https://back.acit-net.com/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ const DetailsRegistrations = () => {
         throw new Error(userData.message || 'فشل في إنشاء حساب المستخدم');
       }
 
-      const updateRegResponse = await fetch(` http://localhost:3000/api/registrations/${registration.RegistrationID}`, {
+      const updateRegResponse = await fetch(` https://back.acit-net.com/api/registrations/${registration.RegistrationID}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -10,7 +10,7 @@ export default function LiveSessionsManager({ courseId }) {
   const [syncing, setSyncing] = useState(false);
 
   const request = useCallback(async (path, options = {}) => {
-    const response = await fetch(` http://localhost:3000/api${path}`, {
+    const response = await fetch(` https://back.acit-net.com/api${path}`, {
       ...options,
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json", ...options.headers },
     });
@@ -39,7 +39,8 @@ export default function LiveSessionsManager({ courseId }) {
     setForm({ Title: session.Title, Description: session.Description || "", ScheduledStart: localDate(session.ScheduledStart), ScheduledEnd: localDate(session.ScheduledEnd), MeetingURL: session.MeetingURL || "", Platform: session.Platform || "zoom" });
   };
 
-  // One Zoom link for the course + a session per lecture day, from the course's dates and hours.
+  // One meeting link for the course + a session per lecture day, from the course's dates and hours.
+  // The server picks the service: Zoom for courses already on it, else Google Meet (trainer seated as co-host).
   const syncZoom = async () => {
     setSyncing(true);
     try {
@@ -56,8 +57,8 @@ export default function LiveSessionsManager({ courseId }) {
   return <section dir="rtl" className="my-6 rounded-lg border bg-slate-50 p-4">
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h3 className="text-xl font-bold text-primary">إدارة الجلسات المباشرة</h3>
-      <button type="button" disabled={syncing} onClick={syncZoom} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-60" title="رابط Zoom واحد للدورة وجلسة لكل يوم محاضرة حسب مواعيد الدورة">
-        {syncing ? "جاري إنشاء روابط Zoom..." : "إنشاء روابط Zoom من مواعيد الدورة"}
+      <button type="button" disabled={syncing} onClick={syncZoom} className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-60" title="رابط اجتماع واحد للدورة وجلسة لكل يوم محاضرة حسب مواعيد الدورة - ومدرب الدورة يتضاف co-host تلقائياً">
+        {syncing ? "جاري إنشاء روابط الاجتماع..." : "إنشاء روابط الاجتماع من مواعيد الدورة"}
       </button>
     </div>
     <form onSubmit={save} className="grid gap-3 md:grid-cols-2">

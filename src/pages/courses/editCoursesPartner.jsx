@@ -9,7 +9,7 @@ import RichTextEditor from '../../components/RichTextEditor';
 import { mediaSrc } from '../../mediaSrc';
 import { appendEncoded } from '../../encodeField';
 import { parseLessonsTime } from './lessonsTime';
-const API = "http://localhost:3000/api";
+const API = "https://back.acit-net.com/api";
 
 const EditCoursesPartner = () => {
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ const EditCoursesPartner = () => {
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
-        const response = await fetch(` http://localhost:3000/api/courses/${courseId}`, {
+        const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${user?.token}`
@@ -102,7 +102,7 @@ const EditCoursesPartner = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(" http://localhost:3000/api/categories", {
+        const response = await fetch(" https://back.acit-net.com/api/categories", {
           method: "GET",
           redirect: "follow",
         });
@@ -126,7 +126,7 @@ const EditCoursesPartner = () => {
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/courses/trainers", {
+        const response = await fetch("https://back.acit-net.com/api/courses/trainers", {
           method: "GET",
           redirect: "follow",
         });
@@ -291,7 +291,7 @@ const EditCoursesPartner = () => {
     };
     
     try {
-      const response = await fetch(` http://localhost:3000/api/courses/${courseId}`, requestOptions);
+      const response = await fetch(` https://back.acit-net.com/api/courses/${courseId}`, requestOptions);
       const result = await response.json();
       
       if (response.ok) {

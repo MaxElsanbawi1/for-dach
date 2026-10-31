@@ -112,7 +112,7 @@ useEffect(() => {
 
     const fetchNotifications = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/notifications/me", {
+        const response = await fetch("https://back.acit-net.com/api/notifications/me", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (!response.ok) throw new Error('Network error');

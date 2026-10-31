@@ -42,7 +42,7 @@ const BlockedUsers = () => {
           redirect: 'follow',
         };
 
-        const response = await fetch(' http://localhost:3000/api/auth/blocked-users', requestOptions);
+        const response = await fetch(' https://back.acit-net.com/api/auth/blocked-users', requestOptions);
         if (!response.ok) {
           throw new Error('Failed to fetch blocked users');
         }

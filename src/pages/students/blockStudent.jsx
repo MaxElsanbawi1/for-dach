@@ -53,7 +53,7 @@ const BlockUnblockUserPage = () => {
 
     try {
       const response = await fetch(
-        " http://localhost:3000/api/auth/block-user",
+        " https://back.acit-net.com/api/auth/block-user",
         requestOptions
       );
       const result = await response.json();

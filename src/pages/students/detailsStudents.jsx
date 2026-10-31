@@ -42,7 +42,7 @@ const StudentsDetails = () => {
     }
     if (revealedPassword === null) {
       try {
-        const res = await fetch(` http://localhost:3000/api/users/${userId}/password`);
+        const res = await fetch(` https://back.acit-net.com/api/users/${userId}/password`);
         const data = await res.json();
         setRevealedPassword(res.ok ? data.password || data.message || 'غير متاحة' : data.message || 'غير متاحة');
       } catch {
@@ -97,7 +97,7 @@ const StudentsDetails = () => {
   const fetchStudentRegistrations = async (student) => {
     if (!student?.UserID) return;
     const registrationsResponse = await fetch(
-      ` http://localhost:3000/api/registrations?forUser=${encodeURIComponent(student.UserID)}&page=1&limit=100`
+      ` https://back.acit-net.com/api/registrations?forUser=${encodeURIComponent(student.UserID)}&page=1&limit=100`
     );
     if (!registrationsResponse.ok) return;
     const registrationsResult = await registrationsResponse.json();
@@ -132,7 +132,7 @@ const StudentsDetails = () => {
         myHeaders.append("Authorization", `Bearer ${authUser.token}`);
       }
       
-      const response = await fetch(` http://localhost:3000/api/users/${userId}`, {
+      const response = await fetch(` https://back.acit-net.com/api/users/${userId}`, {
         method: 'PUT',
         headers: myHeaders,
         body: JSON.stringify(editUserData),
@@ -160,7 +160,7 @@ const StudentsDetails = () => {
     const fetchUserDetails = async () => {
       try {
         const token = authUser?.token || localStorage.getItem('token');
-        const response = await fetch(` http://localhost:3000/api/users/${userId}`, {
+        const response = await fetch(` https://back.acit-net.com/api/users/${userId}`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -176,7 +176,7 @@ const StudentsDetails = () => {
         const result = await response.json();
         setUser(result);
 
-        const coursesResponse = await fetch(' http://localhost:3000/api/courses', {
+        const coursesResponse = await fetch(' https://back.acit-net.com/api/courses', {
           method: 'GET',
           redirect: 'follow',
         });
@@ -208,7 +208,7 @@ const StudentsDetails = () => {
     setAssignMessage('');
 
     try {
-      const response = await fetch(' http://localhost:3000/api/registrations', {
+      const response = await fetch(' https://back.acit-net.com/api/registrations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -250,7 +250,7 @@ const StudentsDetails = () => {
     setAssignMessage('');
 
     try {
-      const response = await fetch(` http://localhost:3000/api/registrations/${registrationId}`, {
+      const response = await fetch(` https://back.acit-net.com/api/registrations/${registrationId}`, {
         method: 'DELETE',
       });
 
@@ -295,7 +295,7 @@ const StudentsDetails = () => {
     setAssignMessage('');
 
     try {
-      const response = await fetch(` http://localhost:3000/api/registrations/${registration.RegistrationID}`, {
+      const response = await fetch(` https://back.acit-net.com/api/registrations/${registration.RegistrationID}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
