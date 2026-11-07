@@ -13,6 +13,7 @@ import StudentQuizResults from "./StudentQuizResults";
 import ExpandableHtml from "./ExpandableHtml";
 
 import { mediaSrc } from '../../mediaSrc';
+import { nationalIdInput, phoneInput, nationalIdProps, phoneProps } from '../../utils/digits';
 
 // Registration fields come from the public website form, so anything put into
 // the invoice HTML is escaped - otherwise a "name" carrying <img onerror=...>
@@ -489,7 +490,11 @@ const CourseDetails = () => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const handleRegFormChange = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let { value } = e.target;
+    // National ID and phone: digits only (utils/digits.js).
+    if (name === "NationalId") value = nationalIdInput(value);
+    if (name === "phonenumber") value = phoneInput(value);
     setRegForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -1292,6 +1297,7 @@ const CourseDetails = () => {
               <input
                 type="text"
                 name="NationalId"
+                {...nationalIdProps}
                 placeholder="الرقم الوطني"
                 value={regForm.NationalId}
                 onChange={handleRegFormChange}
@@ -1300,6 +1306,7 @@ const CourseDetails = () => {
               <input
                 type="text"
                 name="phonenumber"
+                {...phoneProps}
                 placeholder="رقم الهاتف"
                 value={regForm.phonenumber}
                 onChange={handleRegFormChange}

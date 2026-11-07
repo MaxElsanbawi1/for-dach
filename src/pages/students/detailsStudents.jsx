@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Printer, Edit, Save, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
 import RegistrationInvoiceButton, { useRegistrationInvoices } from '../../components/RegistrationInvoiceButton';
+import { nationalIdInput, phoneInput, nationalIdProps, phoneProps } from '../../utils/digits';
 
 const StudentsDetails = () => {
   const navigate = useNavigate();
@@ -445,9 +446,9 @@ const StudentsDetails = () => {
                 <label className="block text-sm font-medium text-primary mb-1">رقم الهاتف</label>
                 {isEditingUser ? (
                   <input
-                    type="text"
+                    {...phoneProps}
                     value={editUserData.PhoneNumber}
-                    onChange={(e) => setEditUserData({ ...editUserData, PhoneNumber: e.target.value })}
+                    onChange={(e) => setEditUserData({ ...editUserData, PhoneNumber: phoneInput(e.target.value) })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 ) : (
@@ -462,8 +463,9 @@ const StudentsDetails = () => {
                 {isEditingUser ? (
                   <input
                     type="text"
+                    {...nationalIdProps}
                     value={editUserData.NationalId}
-                    onChange={(e) => setEditUserData({ ...editUserData, NationalId: e.target.value })}
+                    onChange={(e) => setEditUserData({ ...editUserData, NationalId: nationalIdInput(e.target.value) })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 ) : (

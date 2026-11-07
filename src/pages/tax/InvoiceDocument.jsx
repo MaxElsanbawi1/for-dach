@@ -2,6 +2,7 @@ import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Trash2, Plus } from "lucide-react";
 import { API, money } from "./taxApi";
+import { phoneInput } from '../../utils/digits';
 
 /**
  * The printed invoice. One component, two modes:
@@ -216,7 +217,7 @@ const InvoiceDocument = ({
             value={buyer.phone}
             editable={editable}
             ltr
-            onChange={(v) => setBuyer("phone", v)}
+            onChange={(v) => setBuyer("phone", phoneInput(v))}
           />
           <Field
             label={<L ar="تاريخ الاشتراك" en="Start Date" />}

@@ -2,7 +2,8 @@ import { ArrowRight, UserPlus } from "lucide-react";
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { nationalIdInput, nationalIdProps } from '../../utils/digits';
 
 const BlockUnblockUserPage = () => {
   const [nationalId, setNationalId] = useState("");
@@ -143,8 +144,9 @@ const BlockUnblockUserPage = () => {
             <input
               id="nationalId"
               type="text"
+              {...nationalIdProps}
               value={nationalId}
-              onChange={(e) => setNationalId(e.target.value)}
+              onChange={(e) => setNationalId(nationalIdInput(e.target.value))}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               required
             />

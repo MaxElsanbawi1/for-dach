@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { nationalIdInput, phoneInput, nationalIdProps, phoneProps } from '../../utils/digits';
 
 // One form, two pages: /students/add always adds a student; /users/add
 // (المستخدمين ← إضافة مستخدم) lets the account pick the role.
@@ -146,8 +147,9 @@ const AddStudents = () => {
             <input
               type="text"
               id="nationalId"
+              {...nationalIdProps}
               value={nationalId}
-              onChange={(e) => setNationalId(e.target.value)}
+              onChange={(e) => setNationalId(nationalIdInput(e.target.value))}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               placeholder="أدخل الرقم القومي"
               required
@@ -224,10 +226,10 @@ const AddStudents = () => {
               رقم الهاتف
             </label>
             <input
-              type="text"
+              {...phoneProps}
               id="phoneNumber"
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              onChange={(e) => setPhoneNumber(phoneInput(e.target.value))}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
               placeholder="أدخل رقم الهاتف"
               required

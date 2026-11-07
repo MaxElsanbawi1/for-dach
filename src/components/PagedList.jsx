@@ -15,6 +15,7 @@ export function usePagedList(path, filters = {}, { limit = 50 } = {}) {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [state, setState] = useState({ rows: [], total: 0, loading: true, error: "" });
+  const [tick, setTick] = useState(0);
   const filterKey = JSON.stringify(filters);
   const seq = useRef(0);
 
@@ -46,10 +47,10 @@ export function usePagedList(path, filters = {}, { limit = 50 } = {}) {
       .catch((err) => {
         if (id === seq.current) setState((s) => ({ ...s, loading: false, error: err.message || "تعذر تحميل البيانات" }));
       });
-  }, [path, filterKey, debounced, page, limit]);
+  }, [path, filterKey, debounced, page, limit, tick]);
 
   const pages = Math.max(1, Math.ceil(state.total / limit));
-  return { ...state, page, pages, setPage, query, setQuery, limit, reload: () => setPage((p) => p) };
+  return { ...state, page, pages, setPage, query, setQuery, limit, reload: () => setTick((t) => t + 1) };
 }
 
 export function SearchBox({ value, onChange, placeholder = "بحث..." }) {

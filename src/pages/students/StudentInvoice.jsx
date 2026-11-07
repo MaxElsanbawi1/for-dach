@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import html2pdf from 'html2pdf.js';
+import html2pdf from 'html2pdf.js';
+import { phoneInput, phoneProps } from '../../utils/digits';
 
 export default function StudentInvoice() {
   const { state } = useLocation();
@@ -338,9 +339,9 @@ export default function StudentInvoice() {
               </span>
             ) : (
               <input
-                type="tel"
+                {...phoneProps}
                 value={formData.phone}
-                onChange={e => handleInputChange('phone', e.target.value)}
+                onChange={e => handleInputChange('phone', phoneInput(e.target.value))}
                 className="border border-gray-300 rounded px-3 py-2 w-40 text-center"
               />
             )}
