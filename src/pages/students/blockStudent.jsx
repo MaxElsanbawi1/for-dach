@@ -2,7 +2,8 @@ import { ArrowRight, UserPlus } from "lucide-react";
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 import { nationalIdInput, nationalIdProps } from '../../utils/digits';
 
 const BlockUnblockUserPage = () => {

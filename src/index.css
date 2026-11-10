@@ -65,6 +65,59 @@ body {
   margin: 1em 0;
 }
 
+.article-editor .ql-editor table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  cursor: pointer;
+}
+.article-editor .ql-editor table:hover {
+  outline: 2px solid var(--acit-gold);
+}
+.article-editor .ql-editor th,
+.article-editor .ql-editor td {
+  border: 1px solid #d1d5db;
+  padding: 0.5em 0.75em;
+  text-align: right;
+  vertical-align: top;
+}
+.article-editor .ql-editor th {
+  background: #f3f4f6;
+  font-weight: 700;
+}
+
+/* Blog posts only: same spacing as .article-post in acit-front/src/index.css,
+   so a post looks here the way it will on the site. */
+.article-post-editor .ql-editor {
+  font-size: 18px;
+  line-height: 1.95;
+}
+.article-post-editor .ql-editor p,
+.article-post-editor .ql-editor ul,
+.article-post-editor .ql-editor ol {
+  margin-bottom: 1em;
+}
+.article-post-editor .ql-editor li {
+  margin-bottom: 0.5em;
+}
+.article-post-editor .ql-editor p:has(+ ul),
+.article-post-editor .ql-editor p:has(+ ol) {
+  margin-bottom: 0.5em;
+}
+.article-post-editor .ql-editor h1,
+.article-post-editor .ql-editor h2 {
+  margin: 1.6em 0 0.6em;
+  line-height: 1.6;
+}
+.article-post-editor .ql-editor h3,
+.article-post-editor .ql-editor h4 {
+  margin: 1.4em 0 0.5em;
+  line-height: 1.7;
+}
+.article-post-editor .ql-editor > :first-child {
+  margin-top: 0;
+}
+
 /* Custom styles for buttons */
 .btn-primary {
   background-color: var(--acit-gold);

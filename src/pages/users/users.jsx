@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
+import { Ban, RotateCcw, Trash2 } from 'lucide-react';
 import { useAuth } from '../../AuthContext';
 import { API } from '../tax/taxApi';
 import { usePagedList, PagedTable } from '../../components/PagedList';
@@ -14,7 +14,7 @@ const EXPORT_COLUMNS = [
   { header: 'البريد الإلكتروني', key: 'Email' },
   { header: 'رقم الهاتف', key: 'PhoneNumber' },
   { header: 'الصلاحيات', key: 'Role' },
-  { header: 'محظور', key: 'IsBlocked', value: (u) => (Number(u.IsBlocked) ? 'نعم' : 'لا') },
+  { header: 'موقوف', key: 'IsBlocked', value: (u) => (Number(u.IsBlocked) ? 'نعم' : 'لا') },
   { header: 'تاريخ الإنشاء', key: 'CreatedAt', width: 20 },
 ];
 
@@ -24,10 +24,35 @@ const UsersDashboards = () => {
   const range = useDateRange();
   const filters = { staff: 1, ...range.params };
   const list = usePagedList('/users', filters);
-  const { user, access } = useAuth();
+  const { user, access, can } = useAuth();
   // Deleting accounts is the super admin's alone (the API enforces it too).
   const isSuperAdmin = !!access?.isSuperAdmin;
   const [deletingId, setDeletingId] = useState(null);
+  const [suspendingId, setSuspendingId] = useState(null);
+
+  // The API refuses these two as well; here they just never show a dead button.
+  const canSuspendRow = (u) =>
+    String(u.UserID) !== String(user?.user_id) && (isSuperAdmin || String(u.Role).toLowerCase() !== 'superadmin');
+
+  const onToggleSuspend = async (u) => {
+    const suspend = !Number(u.IsBlocked);
+    if (suspend && !window.confirm(`إيقاف حساب "${u.FullName || u.Email}"؟ مش هيقدر يدخل الداشبورد لحد ما ترجّعه.`)) return;
+    setSuspendingId(u.UserID);
+    try {
+      const res = await fetch(`${API.trim()}/users/${u.UserID}/blocked`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ IsBlocked: suspend }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.message || `HTTP ${res.status}`);
+      list.reload();
+    } catch (err) {
+      window.alert(err.message || 'تعذر تحديث حالة الحساب');
+    } finally {
+      setSuspendingId(null);
+    }
+  };
 
   const onDelete = async (u) => {
     if (!window.confirm(`حذف المستخدم "${u.FullName || u.Email}" نهائيًا؟ لا يمكن التراجع.`)) return;
@@ -55,6 +80,36 @@ const UsersDashboards = () => {
     { label: 'البريد الإلكتروني', render: (u) => u.Email },
     { label: 'رقم الهاتف', render: (u) => u.PhoneNumber || '-' },
     { label: 'الصلاحيات', render: (u) => u.Role },
+    {
+      label: 'الحالة',
+      render: (u) => (Number(u.IsBlocked)
+        ? <span className="font-medium text-red-700">موقوف</span>
+        : <span className="text-green-700">نشط</span>),
+    },
+    ...(can('users.suspend')
+      ? [{
+          label: 'إيقاف الحساب',
+          render: (u) => {
+            if (!canSuspendRow(u)) return '-';
+            const suspended = !!Number(u.IsBlocked);
+            const busy = suspendingId === u.UserID;
+            return (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onToggleSuspend(u); }}
+                disabled={busy}
+                aria-label={`${suspended ? 'إرجاع' : 'إيقاف'} ${u.FullName || u.Email}`}
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-1 disabled:opacity-50 ${
+                  suspended ? 'text-green-700 hover:bg-green-50' : 'text-amber-700 hover:bg-amber-50'
+                }`}
+              >
+                {suspended ? <RotateCcw size={16} /> : <Ban size={16} />}
+                {busy ? 'جارٍ التنفيذ...' : suspended ? 'إرجاع' : 'إيقاف'}
+              </button>
+            );
+          },
+        }]
+      : []),
     ...(isSuperAdmin
       ? [{
           label: 'حذف',

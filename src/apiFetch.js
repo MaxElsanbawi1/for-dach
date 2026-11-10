@@ -60,8 +60,16 @@ window.fetch = (input, init = {}) => {
   headers.set("X-Dash-Page", window.location.pathname);
 
   return originalFetch(input, { ...init, headers }).then((res) => {
-    if (res.status === 403) forbiddenAt = Date.now();
-    // The session ended (token expired or the account was blocked): back to login.
+    if (res.status === 403) {
+      forbiddenAt = Date.now();
+      // The account was suspended while signed in: out at once, not on the next reload.
+      res.clone().json().then((body) => {
+        if (body?.code !== "ACCOUNT_BLOCKED") return;
+        localStorage.removeItem("token");
+        window.location.assign("/login?suspended=1");
+      }).catch(() => {});
+    }
+    // The session ended (token expired): back to login.
     if (res.status === 401 && !/\/auth\/login/i.test(url) && !window.location.pathname.startsWith("/login")) {
       // For the activity log if it was a timeout (the API decides; other 401s are ignored).
       originalFetch(`${API}/auth/session-expired`, {

@@ -187,7 +187,7 @@ function StaffTab({ groups, roles, users, reload, myId }) {
                 <span className="rounded bg-gray-100 px-2 py-0.5">{roleLabel(u.Role)}</span>
                 {u.allow.length > 0 && <span className="text-green-700">+{u.allow.length}</span>}
                 {u.deny.length > 0 && <span className="text-red-700">−{u.deny.length}</span>}
-                {u.IsBlocked ? <span className="text-red-700">محظور</span> : null}
+                {u.IsBlocked ? <span className="text-red-700">موقوف</span> : null}
               </div>
             </button>
           ))}

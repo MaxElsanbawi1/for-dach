@@ -39,7 +39,7 @@ const FIELD_LABELS = {
   CategoryID: 'القسم', CategoryName: 'اسم القسم', InstructorID: 'المدرب', CourseType: 'نوع الدورة',
   FullName: 'الاسم', fullname: 'الاسم', Username: 'اسم المستخدم', Email: 'الإيميل', email: 'الإيميل',
   PhoneNumber: 'الجوال', phonenumber: 'الجوال', NationalId: 'رقم الهوية', Location: 'المدينة', location: 'المدينة',
-  IsBlocked: 'محظور', title: 'العنوان', Title: 'العنوان', name: 'الاسم', Code: 'الكود', code: 'الكود', Amount: 'القيمة',
+  IsBlocked: 'موقوف', title: 'العنوان', Title: 'العنوان', name: 'الاسم', Code: 'الكود', code: 'الكود', Amount: 'القيمة',
   CourseID: 'الدورة', Notes: 'ملاحظات', note: 'ملاحظة',
 };
 

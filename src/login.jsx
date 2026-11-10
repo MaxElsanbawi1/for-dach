@@ -4,10 +4,14 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from './AuthContext';
 
+const SUSPENDED_MESSAGE = 'تم إيقاف حسابك. تواصل مع الإدارة لإرجاعه.';
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() =>
+    new URLSearchParams(window.location.search).has('suspended') ? SUSPENDED_MESSAGE : ''
+  );
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -68,6 +72,7 @@ const Login = () => {
         navigate('/');
       } else {
         const message =
+          (result.message === 'User is blocked' && SUSPENDED_MESSAGE) ||
           result.message ||
           result.error ||
           result.error_description ||

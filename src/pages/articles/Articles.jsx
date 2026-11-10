@@ -98,7 +98,7 @@ function ArticleForm({ article, categories, onCancel, onSaved }) {
         <label className="block lg:col-span-2"><span className="text-sm font-semibold">المقتطف</span><textarea className="mt-1 w-full rounded-md border p-2" rows="2" value={form.excerpt || ""} onChange={(e) => setValue("excerpt", e.target.value)} /></label>
         <div className="block lg:col-span-2">
           <span className="text-sm font-semibold">المحتوى</span>
-          <div className="mt-1" dir="rtl">
+          <div className="article-post-editor mt-1" dir="rtl">
             <RichTextEditor
               value={form.content || ""}
               onChange={(html) => setValue("content", html)}
