@@ -187,7 +187,7 @@ export default function OnboardingQuestions() {
           </button>
         </div>
 
-        <form onSubmit={save} className="grid gap-4 md:grid-cols-2">
+        <form onSubmit={save} className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="block md:col-span-2">
             <span className="text-sm font-semibold">نص السؤال</span>
             <input
@@ -229,7 +229,7 @@ export default function OnboardingQuestions() {
                   <div key={index} className="flex items-center gap-2">
                     <span className="w-6 text-center text-sm text-gray-400">{index + 1}</span>
                     <input
-                      className="flex-1 rounded-md border border-gray-300 p-2"
+                      className="min-w-0 flex-1 rounded-md border border-gray-300 p-2"
                       value={option}
                       onChange={(e) => setOption(index, e.target.value)}
                       placeholder={`الخيار ${index + 1}`}

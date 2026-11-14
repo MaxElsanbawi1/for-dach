@@ -261,7 +261,7 @@ export default function TrainerApplications() {
                 </div>
 
                 {open && (
-                  <dl className="grid gap-3 border-t border-gray-100 bg-gray-50 p-4 text-sm md:grid-cols-2">
+                  <dl className="grid grid-cols-1 gap-3 border-t border-gray-100 bg-gray-50 p-4 text-sm md:grid-cols-2">
                     <div>
                       <dt className="text-xs font-bold text-gray-500">البريد الإلكتروني</dt>
                       <dd><a href={`mailto:${a.Email}`} className="text-primary underline" dir="ltr">{a.Email}</a></dd>

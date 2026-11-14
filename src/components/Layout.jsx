@@ -103,6 +103,19 @@ useEffect(() => {
   // Check if a menu item is active
   const isActive = (href) => location.pathname === href;
 
+  // On phones the sidebar is a drawer over the page: close it (and the user
+  // menu) whenever a page is opened, so the page is what the user sees.
+  useEffect(() => {
+    setSidebarOpen(false);
+    setUserDropdownOpen(false);
+  }, [location.pathname]);
+
+  // Lock the page behind the open drawer so a swipe scrolls the menu, not the page.
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
   // Toggle sidebar minimize
   const toggleSidebarMinimize = () => {
     setIsSidebarMinimized(!isSidebarMinimized);
@@ -143,18 +156,27 @@ useEffect(() => {
   };
 
 return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden" dir="rtl">
+    <div className="flex h-screen h-[100dvh] bg-gray-100 overflow-hidden" dir="rtl">
+      {/* Backdrop behind the mobile drawer — tap outside to close. */}
+      <div
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+        className={`lg:hidden fixed inset-0 z-[115] bg-black/40 transition-opacity duration-200 ${
+          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      />
       {/* Sidebar */}
       <aside
         className={`fixed lg:static inset-y-0 right-0 transform ${
           sidebarOpen ? 'translate-x-0' : 'translate-x-full'
         } lg:translate-x-0 transition duration-200 ease-in-out z-[120] ${
-          isSidebarMinimized ? 'w-16' : 'w-64'
-        } bg-white shadow-lg flex flex-col`}
+          isSidebarMinimized ? 'w-64 lg:w-16' : 'w-64'
+        } max-w-[85vw] bg-white shadow-lg flex flex-col`}
       >
         {/* Close Button for Mobile */}
-        <div className="lg:hidden flex items-center justify-between p-3 border-b">
-          <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-md hover:bg-gray-100">
+        <div className="lg:hidden flex items-center justify-between h-16 px-3 border-b">
+          <img src="/acit-logo.png" alt="ACIT" className="w-10" />
+          <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-md hover:bg-gray-100" aria-label="إغلاق القائمة">
             <X size={24} />
           </button>
         </div>
@@ -278,7 +300,7 @@ return (
                 <User size={24} />
               </button>
               {userDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-90">
+                <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-[130]">
                   <div className="px-4 py-3 border-b">
                     <p className="text-sm font-semibold">{user.name}</p>
                     <p className="text-xs text-gray-500">{user.role}</p>
@@ -303,23 +325,51 @@ return (
         {/* Mobile Header */}
         <header className="lg:hidden bg-white shadow-md h-16 fixed top-0 right-0 left-0 z-[110]">
           <div className="flex items-center justify-between px-4 h-full">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-md hover:bg-gray-100">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-md hover:bg-gray-100" aria-label="القائمة">
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <img src="/acit-logo.png" alt="acit Icon" className="w-10" />
-            {user.role !== 'partner' && (
-              <button 
-                className="p-2 rounded-md hover:bg-gray-100 relative"
-                onClick={handleNotificationClick}
-              >
-                <Bell size={24} />
-                {unseenCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {unseenCount}
-                  </span>
+            <img src="/acit-logo.png" alt="ACIT" className="w-10" />
+            <div className="flex items-center gap-1">
+              {user.role !== 'partner' && (
+                <button
+                  className="p-2 rounded-md hover:bg-gray-100 relative"
+                  onClick={handleNotificationClick}
+                  aria-label="الإشعارات"
+                >
+                  <Bell size={24} />
+                  {unseenCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center">
+                      {unseenCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              {/* The desktop header's account menu, so phones can sign out too. */}
+              <div className="relative">
+                <button onClick={toggleUserDropdown} className="p-2 rounded-md hover:bg-gray-100" aria-label="الحساب">
+                  <User size={24} />
+                </button>
+                {userDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-[130]">
+                    <div className="px-4 py-3 border-b">
+                      <p className="text-sm font-semibold truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.role}</p>
+                    </div>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleLogout();
+                      }}
+                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    >
+                      <LogOut size={16} className="ml-2" />
+                      <span>تسجيل الخروج</span>
+                    </a>
+                  </div>
                 )}
-              </button>
-            )}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -330,7 +380,7 @@ return (
             (rather than `hidden`) is not a scroll container, so `position:
             sticky` inside still works — the bulk-approve bar depends on it.
             Genuinely wide content scrolls in its own overflow-x-auto wrapper. */}
-        <main className="flex-1 overflow-y-auto overflow-x-clip min-w-0 p-6 lg:pr-6 pt-20 lg:pt-6">
+        <main className="flex-1 overflow-y-auto overflow-x-clip min-w-0 p-3 sm:p-6 pt-20 sm:pt-20 lg:pt-6">
           {/* Pages load on demand (main.jsx); the menu stays while one loads. */}
           <Suspense fallback={<div className="flex h-64 items-center justify-center text-gray-500">جاري التحميل...</div>}>
             <Outlet />

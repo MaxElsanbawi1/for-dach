@@ -80,7 +80,7 @@ export default function Redirects() {
         والصفحة دي لأي رابط تاني اتنقل. الموقع بيطبّق التحويل على طول، وجوجل بيشوفه بعد الـ build الجاي للموقع.
       </p>
 
-      <form onSubmit={add} className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+      <form onSubmit={add} className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
         <label className="text-sm">
           <span className="mb-1 block text-gray-600">الرابط القديم</span>
           <input

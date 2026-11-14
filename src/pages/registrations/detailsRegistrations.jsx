@@ -161,7 +161,7 @@ const DetailsRegistrations = () => {
         {registration && (
           <div className="space-y-6 printable-area">
             {/* Registration Information Section */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-primary mb-1">معرف التسجيل</label>
                 <p className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">

@@ -200,7 +200,7 @@ export default function QuizPdfManager({ courseId }) {
         </span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <input
           className="rounded border p-2 md:col-span-2"
           type="file"
@@ -312,7 +312,7 @@ export default function QuizPdfManager({ courseId }) {
                   return (
                     <div key={`review-${question.QuestionText}-${index}`} className="border-b p-3 last:border-b-0">
                       <b>{index + 1}. {question.QuestionText}</b>
-                      <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                         {question.options.map((option, optionIndex) => (
                           <button
                             type="button"
@@ -342,7 +342,7 @@ export default function QuizPdfManager({ courseId }) {
                     </span>
                   )}
                 </div>
-                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                   {question.options.map((option, optionIndex) => (
                     <button
                       type="button"

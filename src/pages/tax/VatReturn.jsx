@@ -117,7 +117,7 @@ const VatReturn = () => {
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
         <div>
           <label className="block text-sm text-gray-600 mb-1">من تاريخ</label>
           <input

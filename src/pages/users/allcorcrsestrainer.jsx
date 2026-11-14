@@ -380,7 +380,7 @@ const CourseCard = ({ course, showTrainer, nextLecture, now, extra, studentsOpen
           <span className={`shrink-0 self-start rounded-full px-3 py-1 text-sm font-semibold ${left.cls}`}>{left.text}</span>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className={`rounded-lg border p-3 ${isLive ? "border-green-300 bg-green-50" : "border-gray-200 bg-gray-50"}`}>
             <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-gray-700">
               <Video size={16} /> المحاضرة الجاية

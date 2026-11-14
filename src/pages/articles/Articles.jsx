@@ -92,7 +92,7 @@ function ArticleForm({ article, categories, onCancel, onSaved }) {
         <h2 className="text-xl font-bold text-gray-900">{editing ? "تعديل المقال" : "مقال جديد"}</h2>
         <button type="button" onClick={onCancel} className="rounded-md border px-4 py-2 text-sm">رجوع</button>
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <label className="block"><span className="text-sm font-semibold">العنوان</span><input className="mt-1 w-full rounded-md border p-2" value={form.title} onChange={(e) => { setValue("title", e.target.value); if (!editing) setValue("slug", slugify(e.target.value)); }} /></label>
         <label className="block"><span className="text-sm font-semibold">الرابط (Slug)</span><input className="mt-1 w-full rounded-md border p-2" value={form.slug} onChange={(e) => setValue("slug", slugify(e.target.value))} /></label>
         <label className="block lg:col-span-2"><span className="text-sm font-semibold">المقتطف</span><textarea className="mt-1 w-full rounded-md border p-2" rows="2" value={form.excerpt || ""} onChange={(e) => setValue("excerpt", e.target.value)} /></label>
@@ -205,7 +205,7 @@ export default function Articles() {
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900">المقالات</h1><p className="text-sm text-gray-500">إنشاء المقالات ونشرها وفلترتها وإعادة ترتيبها.</p></div><button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 font-semibold text-white"><Plus size={18} />مقال جديد</button></div>
       <DateRangeBar range={dateRange} onExport={exportAll} count={total} />
       <div className="rounded-lg bg-white p-4 shadow">
-        <div className="mb-4 grid gap-3 md:grid-cols-5">
+        <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
           <div className="relative md:col-span-2"><Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" /><input className="w-full rounded-md border p-2 pr-9" placeholder="بحث في المقالات..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })} /></div>
           <select className="rounded-md border p-2" value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}><option value="">كل الحالات</option><option value="PUBLISHED">منشور</option><option value="DRAFT">مسودة</option></select>
           <select className="rounded-md border p-2" value={filters.featured} onChange={(e) => setFilters({ ...filters, featured: e.target.value, page: 1 })}><option value="">المميّز</option><option value="true">المميّزة فقط</option></select>

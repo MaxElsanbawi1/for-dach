@@ -58,7 +58,7 @@ function SessionHoursInput({ value, onChange, inherited, disabled }) {
 
 function PermissionGroups({ groups, isOn, sourceOf, onToggle, disabled }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {groups.map((group) => (
         <div key={group.key} className="rounded-lg border border-gray-200">
           <div className="border-b bg-gray-50 px-4 py-2 font-semibold text-gray-800">{group.label}</div>
@@ -164,7 +164,7 @@ function StaffTab({ groups, roles, users, reload, myId }) {
   const isSelf = selected && String(selected.UserID) === String(myId);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
       <div className="rounded-lg border border-gray-200 bg-white">
         <div className="border-b p-3">
           <input
@@ -332,7 +332,7 @@ function RolesTab({ groups, roles, reload }) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
       <div className="space-y-3">
         <div className="divide-y rounded-lg border border-gray-200 bg-white">
           {roles.map((r) => (

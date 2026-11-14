@@ -147,7 +147,7 @@ export default function QuizEditModal({ quizId, onClose, onSaved }) {
 
         {!loading && quiz && (
           <>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <input
                 className="rounded border p-2 md:col-span-3"
                 placeholder="عنوان الاختبار"
@@ -219,7 +219,7 @@ export default function QuizEditModal({ quizId, onClose, onSaved }) {
                         حذف السؤال
                       </button>
                     </div>
-                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                    <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                       {question.options.map((option, oIndex) => (
                         <label
                           key={oIndex}

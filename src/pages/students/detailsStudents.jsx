@@ -356,11 +356,11 @@ const StudentsDetails = () => {
     <>
       <div className="bg-white rounded-lg shadow p-6">
         {/* Page Title and Buttons */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h2 className="text-2xl font-bold text-primary flex items-center">
             تفاصيل الطالب
           </h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {!isEditingUser ? (
               <button
                 onClick={handleEditUserClick}
@@ -402,7 +402,7 @@ const StudentsDetails = () => {
         {user && (
           <div className="space-y-6 printable-area">
             {/* User Information Section */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-primary mb-1">رقم المستخدم</label>
                 <p className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
@@ -541,7 +541,7 @@ const StudentsDetails = () => {
                 </div>
               )}
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-primary mb-1">اختر الكورس من الداشبورد</label>
                   <div className="relative">

@@ -71,7 +71,7 @@ function Details({ details, permLabel, roleLabel }) {
     return typeof value === 'object' ? JSON.stringify(value) : String(value);
   };
   return (
-    <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[200px_1fr]">
+    <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-[200px_1fr]">
       {entries.map(([key, value]) => (
         <React.Fragment key={key}>
           <dt className="font-medium text-gray-500">{FIELD_LABELS[key] || key}</dt>

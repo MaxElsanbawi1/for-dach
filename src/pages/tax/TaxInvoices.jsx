@@ -145,7 +145,7 @@ const TaxInvoices = () => {
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5 mb-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5 mb-4">
         <div>
           <label className="block text-sm text-gray-600 mb-1">من تاريخ</label>
           <input

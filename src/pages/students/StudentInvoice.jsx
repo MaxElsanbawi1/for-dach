@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import html2pdf from 'html2pdf.js';
+import html2pdf from 'html2pdf.js';
 import { phoneInput, phoneProps } from '../../utils/digits';
 
 export default function StudentInvoice() {
@@ -101,11 +101,11 @@ export default function StudentInvoice() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex bg-gray-200 rounded-t-lg mb-6">
+      <div className="flex overflow-x-auto bg-gray-200 rounded-t-lg mb-6">
         {['Acitnet', 'Acitnet', 'Acitnet', 'Acitnet', 'Acitnet', 'Acitnet', 'Acitnet'].map((tab, index) => (
           <button
             key={index}
-            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-300 first:rounded-tr-lg last:rounded-tl-lg"
+            className="shrink-0 whitespace-nowrap px-4 py-2 text-sm text-gray-600 hover:bg-gray-300 first:rounded-tr-lg last:rounded-tl-lg"
           >
             {tab}
           </button>
@@ -130,10 +130,10 @@ export default function StudentInvoice() {
                 type="text"
                 value={formData.courseName}
                 onChange={e => handleInputChange('courseName', e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2 flex-1 text-center"
+                className="border border-gray-300 rounded px-3 py-2 flex-1 min-w-0 text-center"
               />
             )}
-            <span className="text-sm text-gray-600 w-8">شهادة</span>
+            <span className="text-sm text-gray-600 shrink-0">شهادة</span>
           </div>
 
           {/* Course Price */}
@@ -323,7 +323,7 @@ export default function StudentInvoice() {
                 type="email"
                 value={formData.email}
                 onChange={e => handleInputChange('email', e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2 flex-1 text-center"
+                className="border border-gray-300 rounded px-3 py-2 flex-1 min-w-0 text-center"
               />
             )}
           </div>

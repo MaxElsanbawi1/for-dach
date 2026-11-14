@@ -61,7 +61,7 @@ export default function LiveSessionsManager({ courseId }) {
         {syncing ? "جاري إنشاء روابط الاجتماع..." : "إنشاء روابط الاجتماع من مواعيد الدورة"}
       </button>
     </div>
-    <form onSubmit={save} className="grid gap-3 md:grid-cols-2">
+    <form onSubmit={save} className="grid grid-cols-1 gap-3 md:grid-cols-2">
       <input required className="rounded border p-2" placeholder="عنوان الجلسة" value={form.Title} onChange={(e) => setForm({ ...form, Title: e.target.value })} />
       <input required className="rounded border p-2" placeholder="رابط الاجتماع" value={form.MeetingURL} onChange={(e) => setForm({ ...form, MeetingURL: e.target.value })} />
       <input required type="datetime-local" className="rounded border p-2" value={form.ScheduledStart} onChange={(e) => setForm({ ...form, ScheduledStart: e.target.value })} />

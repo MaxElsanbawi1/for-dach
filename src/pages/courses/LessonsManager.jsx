@@ -130,7 +130,7 @@ export default function LessonsManager({ courseId }) {
   return (
     <section dir="rtl" className="my-6 rounded-lg border bg-slate-50 p-4">
       <h3 className="mb-4 text-xl font-bold text-primary">إدارة دروس الدورة</h3>
-      <form onSubmit={save} className="grid gap-3 md:grid-cols-2">
+      <form onSubmit={save} className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <input
           required
           className="rounded border p-2"
@@ -197,7 +197,7 @@ export default function LessonsManager({ courseId }) {
               </span>
             </div>
 
-            <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto] md:items-center">
+            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-center">
               <input
                 type="file"
                 multiple

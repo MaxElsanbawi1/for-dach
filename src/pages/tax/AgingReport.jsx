@@ -168,7 +168,7 @@ const AgingReport = () => {
       </p>
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
           <div>
             <label className="block text-sm text-gray-600 mb-1">حتى تاريخ</label>
             <input

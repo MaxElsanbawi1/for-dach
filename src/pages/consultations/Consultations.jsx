@@ -175,7 +175,7 @@ export default function Consultations({ fixedType = '' }) {
         </button>
       </div>
 
-      <div className="mb-5 grid gap-4 md:grid-cols-1">
+      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-1">
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
@@ -215,7 +215,7 @@ export default function Consultations({ fixedType = '' }) {
               اكتب الاسم والبريد الإلكتروني كما هما في الطلب لتأكيد الحذف.
             </p>
 
-            <div className="mb-4 grid gap-3 rounded-md border border-red-200 bg-white p-3 md:grid-cols-2">
+            <div className="mb-4 grid grid-cols-1 gap-3 rounded-md border border-red-200 bg-white p-3 md:grid-cols-2">
               <div>
                 <span className="block text-xs font-bold text-gray-500">الاسم الموجود في الطلب</span>
                 <span className="text-sm font-semibold text-gray-900">{deleteTarget.FullName || 'غير محدد'}</span>
@@ -226,7 +226,7 @@ export default function Consultations({ fixedType = '' }) {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-gray-700">الاسم</label>
                 <input

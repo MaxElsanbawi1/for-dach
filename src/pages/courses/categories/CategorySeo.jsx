@@ -253,7 +253,7 @@ export default function CategorySeo() {
         </p>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_1fr]">
         {/* Category list */}
         <aside className="rounded-lg border border-gray-200 bg-white">
           <div className="relative border-b p-3">

@@ -110,7 +110,7 @@ export default function ArticleCategories() {
 
       <form onSubmit={save} className="rounded-lg bg-white p-5 shadow">
         <div className="mb-4 flex items-center gap-2 font-bold text-gray-900"><Plus size={18} />{editing ? "تعديل التصنيف" : "تصنيف جديد"}</div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-semibold">الاسم</span>
             <input className="mt-1 w-full rounded-md border p-2" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: editing ? form.slug : slugify(e.target.value) })} />
